@@ -17,7 +17,7 @@ module.exports = {
     )
     .addStringOption((option) =>
       option
-        .setName("description")
+        .setName("caption")
         .setDescription("Brief summary of what your family did")
         .setRequired(true)
     )
@@ -35,13 +35,13 @@ module.exports = {
     ),
   async execute(interaction: ChatInputCommandInteraction) {
     const location = interaction.options.getString("location");
-    const description = interaction.options.getString('description')
+    const caption = interaction.options.getString('caption')
     const numMembers = interaction.options.getInteger("members");
     const picture = interaction.options.getAttachment("picture");
     const userId = interaction.user.id;
 
     await interaction.reply(
-      `UserId: ${userId}\nLocation: ${location}\nDescription: ${description}\nMembers: ${numMembers}\nPicture: ${picture?.url}`
+      `UserId: ${userId}\nLocation: ${location}\nDescription: ${caption}\nMembers: ${numMembers}\nPicture: ${picture?.url}`
     );
   },
 };
