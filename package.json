@@ -18,6 +18,7 @@
   },
   "homepage": "https://github.com/alexanderhwang02/upe-discord-bot#readme",
   "dependencies": {
+    "@discordjs/rest": "^1.1.0",
     "discord.js": "^14.3.0"
   },
   "devDependencies": {
