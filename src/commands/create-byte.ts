@@ -9,14 +9,29 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("name")
-        .setDescription("Name of Byte Family")
+        .setDescription(
+          "This is the name that will be displayed on leaderboard rankings."
+        )
         .setRequired(true)
     )
+
     .addIntegerOption((option) =>
       option
         .setName("members")
         .setDescription("How many inductees are in this byte?")
         .setRequired(true)
+    )
+    .addUserOption((option) =>
+      option
+        .setName("head")
+        .setDescription("Who is head of this byte?")
+        .setRequired(true)
+    )
+    .addUserOption((option) =>
+      option
+        .setName("co-head")
+        .setDescription("[OPTIONAL] Who is co-head of this byte?")
+        .setRequired(false)
     ),
   async execute(interaction: ChatInputCommandInteraction) {
     let newByte = await new Byte({

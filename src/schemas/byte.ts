@@ -1,18 +1,26 @@
-const { Schema, model } = require("mongoose");
+import { Schema, Types, model } from "mongoose";
 
-const byteSchema = new Schema({
-  _id: Schema.Types.ObjectId,
+export interface IEvent {
+  location: "campus" | "westwood" | "la";
+  num_mems: number;
+  pic: string;
+  caption: string;
+}
+
+export interface IByte {
+  _id: Types.ObjectId;
+  name: string;
+  byte_ids: string[];
+  events: IEvent[];
+  total_mems: number;
+}
+
+const byteSchema = new Schema<IByte>({
+  _id: Types.ObjectId,
   name: String,
   byte_ids: [String],
-  events: [
-    {
-      location: String,
-      num_mems: Number,
-      pic: String,
-      caption: String,
-    },
-  ],
+  events: Array<IEvent>,
   total_mems: Number,
 });
 
-module.exports = model("Byte", byteSchema);
+module.exports = model<IByte>("Byte", byteSchema);
