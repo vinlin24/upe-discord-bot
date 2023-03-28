@@ -3,7 +3,8 @@ import { BaseInteraction, Collection, SlashCommandBuilder } from "discord.js";
 const fs = require("node:fs");
 const path = require("node:path");
 const { Client, GatewayIntentBits } = require("discord.js");
-const { token } = require("../config.json");
+const { token, connectionString } = require("../config.json");
+const { connect } = require('mongoose');
 
 console.log("Bot is starting...");
 
@@ -52,3 +53,6 @@ client.on("interactionCreate", async (interaction: BaseInteraction) => {
 
 // Login to Discord with your client's token
 client.login(token);
+(async () => {
+  connect(connectionString).catch(console.error);
+})();

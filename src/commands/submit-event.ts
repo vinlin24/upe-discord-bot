@@ -1,4 +1,6 @@
+const Byte = require("../schemas/byte");
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+const mongoose = require("mongoose");
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -34,14 +36,19 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction: ChatInputCommandInteraction) {
-    const location = interaction.options.getString("location");
-    const caption = interaction.options.getString('caption')
-    const numMembers = interaction.options.getInteger("members");
-    const picture = interaction.options.getAttachment("picture");
-    const userId = interaction.user.id;
+    const newEvent = {
+      location: interaction.options.getString("location"),
+      num_mems: interaction.options.getInteger("members"),
+      pic: interaction.options.getAttachment("picture")?.url,
+      caption: interaction.options.getString("caption") 
+    }
 
-    await interaction.reply(
-      `UserId: ${userId}\nLocation: ${location}\nDescription: ${caption}\nMembers: ${numMembers}\nPicture: ${picture?.url}`
-    );
+    const byte = await Byte.findOne({byte_ids: interaction.user.id})
+    byte.events.push(newEvent)
+    await byte.save().catch(console.error)
+    await interaction.reply({ 
+      content: `Successfully saved event:`,
+    });
+    console.log(byte)
   },
 };
