@@ -1,4 +1,4 @@
-const Byte = require("../schemas/byte");
+const Byte = require("../../schemas/byte");
 import {
   ChatInputCommandInteraction,
   PermissionFlagsBits,

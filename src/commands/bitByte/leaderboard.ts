@@ -1,7 +1,7 @@
-const Byte = require("../schemas/byte");
+const Byte = require("../../schemas/byte");
 import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
 const mongoose = require("mongoose");
-import type { IByte, IEvent } from "../schemas/byte";
+import type { IByte, IEvent } from "../../schemas/byte";
 
 function getEventPoints(
   attended: number,
