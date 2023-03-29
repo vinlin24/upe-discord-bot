@@ -1,11 +1,16 @@
 const Byte = require("../schemas/byte");
-import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import {
+  ChatInputCommandInteraction,
+  PermissionFlagsBits,
+  SlashCommandBuilder,
+} from "discord.js";
 const mongoose = require("mongoose");
 
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("createbyte")
     .setDescription("Initialize a new byte.")
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addStringOption((option) =>
       option
         .setName("name")
@@ -14,7 +19,6 @@ module.exports = {
         )
         .setRequired(true)
     )
-
     .addIntegerOption((option) =>
       option
         .setName("members")

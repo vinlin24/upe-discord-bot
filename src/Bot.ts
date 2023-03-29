@@ -1,4 +1,4 @@
-import { BaseInteraction, Collection, SlashCommandBuilder } from "discord.js";
+import { BaseInteraction, Collection, MessageComponentInteraction, SlashCommandBuilder } from "discord.js";
 
 const fs = require("node:fs");
 const path = require("node:path");
@@ -16,6 +16,12 @@ client.commands = new Collection();
 const commandsPath = path.join(__dirname, "commands");
 const commandFiles = fs
   .readdirSync(commandsPath)
+  .filter((file: string) => file.endsWith(".ts"));
+
+client.commands = new Collection();
+const selectMenuPath = path.join(__dirname, "selectMenus");
+const selectMenuFiles = fs
+  .readdirSync(selectMenuPath)
   .filter((file: string) => file.endsWith(".ts"));
 
 for (const file of commandFiles) {
@@ -49,6 +55,17 @@ client.on("interactionCreate", async (interaction: BaseInteraction) => {
       ephemeral: true,
     });
   }
+});
+
+client.on("interactionCreate", async (interaction: MessageComponentInteraction) => {
+	if (!interaction.isStringSelectMenu()) return;
+
+  const { selectMenus } = client;
+  const { customId } = interaction;
+
+	if (interaction.customId === 'select') {
+		await interaction.update({ content: 'Something was selected!', embeds: [], components: [] });
+	}
 });
 
 // Login to Discord with your client's token
