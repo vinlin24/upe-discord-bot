@@ -1,10 +1,15 @@
-import { BaseInteraction, Collection, MessageComponentInteraction } from "discord.js";
-
-import * as fs from 'fs';
-import * as path from 'path';
+import {
+  BaseInteraction,
+  Collection, EmbedBuilder, MessageComponentInteraction
+} from "discord.js";
+import * as fs from "fs";
+import * as path from "path";
+import { eventPages } from "./event-pages";
+import type { IEvent } from "./schemas/byte";
 const { Client, GatewayIntentBits } = require("discord.js");
 const { token, connectionString } = require("../config.json");
-const { connect } = require('mongoose');
+const { connect, mongoose } = require("mongoose");
+const Byte = require("./schemas/byte");
 
 console.log("Bot is starting...");
 
@@ -13,23 +18,32 @@ export const client = new Client({
 });
 
 client.commands = new Collection();
-const foldersPath = path.join(__dirname, 'commands');
-const commandFolders = fs.readdirSync(foldersPath);
+client.selectMenus = new Collection();
+client.buttons = new Collection();
+
+const cmdFoldersPath = path.join(__dirname, "commands");
+const commandFolders = fs.readdirSync(cmdFoldersPath);
 
 for (const folder of commandFolders) {
-	const commandsPath = path.join(foldersPath, folder);
-	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts'));
-	for (const file of commandFiles) {
-		const filePath = path.join(commandsPath, file);
-		const command = require(filePath);
-		// Set a new item in the Collection with the key as the command name and the value as the exported module
-		if ('data' in command && 'execute' in command) {
-			client.commands.set(command.data.name, command);
-		} else {
-			console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
-		}
-	}
+  const commandsPath = path.join(cmdFoldersPath, folder);
+  const commandFiles = fs
+    .readdirSync(commandsPath)
+    .filter((file) => file.endsWith(".ts"));
+  for (const file of commandFiles) {
+    const filePath = path.join(commandsPath, file);
+    const command = require(filePath);
+    // Set a new item in the Collection with the key as the command name and the value as the exported module
+    if ("data" in command && "execute" in command) {
+      client.commands.set(command.data.name, command);
+    } else {
+      console.log(
+        `[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`
+      );
+    }
+  }
 }
+
+client.selectMenus.set();
 
 // When the client is ready, run this code (only once)
 client.once("ready", () => {
@@ -56,16 +70,26 @@ client.on("interactionCreate", async (interaction: BaseInteraction) => {
   }
 });
 
-client.on("interactionCreate", async (interaction: MessageComponentInteraction) => {
-	if (!interaction.isStringSelectMenu()) return;
+client.on(
+  "interactionCreate",
+  async (interaction: MessageComponentInteraction) => {
+    if (!interaction.isStringSelectMenu()) return;
 
-  const { selectMenus } = client;
-  const { customId } = interaction;
+    if (interaction.customId === "byteselector") {
+      console.log(interaction.values[0].toString());
 
-	if (interaction.customId === 'select') {
-		await interaction.update({ content: 'Something was selected!', embeds: [], components: [] });
-	}
-});
+      const selected : Array<IEvent> = (await Byte.findById(interaction.values[0])).events
+      let pages : Array<EmbedBuilder> = selected.map(entry => {
+        return new EmbedBuilder()
+          .setTitle(entry.caption)
+          .setThumbnail(entry.pic)
+      })
+
+      eventPages(interaction, pages)
+
+    }
+  }
+);
 
 // Login to Discord with your client's token
 client.login(token);

@@ -96,19 +96,7 @@ module.exports = {
         {name: "Points", value: leaderboard.reduce((output, row) => output + row.points + "\n", "" ), inline: true}
       )
 
-    console.log(leaderboard);
+    await interaction.reply({embeds: [leaderboardEmbed], ephemeral: false})
 
-    const selectMenu = new ActionRowBuilder<StringSelectMenuBuilder>()
-        .addComponents(
-          new StringSelectMenuBuilder()
-          .setCustomId("select")
-          .setPlaceholder("Look through a byte's events")
-          .addOptions(
-            // leaderboard.map(entry => {return {label: entry.name, description: "hi"}})
-            leaderboard.map(entry => {return {label: entry.name, value: entry.name}})
-          ),
-        )
-
-    await interaction.reply({embeds: [leaderboardEmbed], components: [selectMenu], ephemeral: false})
   },
 };
