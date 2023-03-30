@@ -10,7 +10,7 @@ import {
 export async function eventPages(
   interaction: MessageComponentInteraction,
   pages: Array<EmbedBuilder>,
-  time: number = 60000
+  time: number = 300000
 ) {
   await interaction.deferReply();
 

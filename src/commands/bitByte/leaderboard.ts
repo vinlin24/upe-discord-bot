@@ -2,23 +2,8 @@ const Byte = require("../../schemas/byte");
 import { ChatInputCommandInteraction, SlashCommandBuilder, EmbedBuilder, ActionRowBuilder, StringSelectMenuBuilder } from "discord.js";
 const mongoose = require("mongoose");
 import type { IByte, IEvent } from "../../schemas/byte";
+import { getEventPoints } from "../../functions/get-points"
 
-function getEventPoints(
-  attended: number,
-  totalBytes: number,
-  location: "campus" | "westwood" | "la" | "jeopardy"
-): number {
-  if (location == "jeopardy")
-    return 0 //TODO: Implement Jeopardy Point Calculation
-
-  let distanceMap = new Map<string, number>([
-    ["campus", 1],
-    ["westwood", 1.25],
-    ["la", 1.75],
-  ]);
-
-  return 100 * (attended / totalBytes) * distanceMap.get(location)!;
-}
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -39,7 +24,7 @@ module.exports = {
       entry.name = byte.name;
       entry.points = byte.events.reduce(
         (sum, event) =>
-          sum + getEventPoints(event.num_mems, byte.total_mems, event.location),
+          sum + getEventPoints(event, byte.total_mems),
         0
       );
       leaderboard.push(entry);

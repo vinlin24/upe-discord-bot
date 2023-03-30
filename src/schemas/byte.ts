@@ -5,6 +5,7 @@ export interface IEvent {
   num_mems: number;
   pic: string;
   caption: string;
+  date: Date;
 }
 
 export interface IByte {

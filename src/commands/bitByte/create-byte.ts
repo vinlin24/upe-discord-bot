@@ -48,7 +48,7 @@ module.exports = {
 
     await newByte.save().catch(console.error);
     await interaction.reply({
-      content: `Successfully saved event: ${newByte._id}`,
+      content: `Successfully created byte: ${newByte.name}`,
     });
   },
 };

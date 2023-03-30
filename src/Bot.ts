@@ -1,11 +1,14 @@
 import {
   BaseInteraction,
-  Collection, EmbedBuilder, MessageComponentInteraction
+  Collection,
+  EmbedBuilder,
+  MessageComponentInteraction,
 } from "discord.js";
 import * as fs from "fs";
 import * as path from "path";
 import { eventPages } from "./event-pages";
-import type { IEvent } from "./schemas/byte";
+import type { IByte, IEvent } from "./schemas/byte";
+import { getEventPoints } from "./functions/get-points";
 const { Client, GatewayIntentBits } = require("discord.js");
 const { token, connectionString } = require("../config.json");
 const { connect, mongoose } = require("mongoose");
@@ -78,15 +81,19 @@ client.on(
     if (interaction.customId === "byteselector") {
       console.log(interaction.values[0].toString());
 
-      const selected : Array<IEvent> = (await Byte.findById(interaction.values[0])).events
-      let pages : Array<EmbedBuilder> = selected.map(entry => {
+      const selected: IByte = await Byte.findById(interaction.values[0]);
+      const events: Array<IEvent> = selected.events;
+      let pages: Array<EmbedBuilder> = events.map((entry) => {
         return new EmbedBuilder()
           .setTitle(entry.caption)
           .setThumbnail(entry.pic)
-      })
+          .addFields({
+            name: "Points Earned",
+            value: `${getEventPoints(entry, selected.total_mems)}`,
+          }, {name: "Date", value: entry.date.toLocaleDateString()});
+      });
 
-      eventPages(interaction, pages)
-
+      eventPages(interaction, pages);
     }
   }
 );
