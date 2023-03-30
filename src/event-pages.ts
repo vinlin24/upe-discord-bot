@@ -35,12 +35,14 @@ export async function eventPages(
   const next = new ButtonBuilder()
     .setCustomId("next")
     .setEmoji("▶️")
-    .setStyle(ButtonStyle.Primary);
+    .setStyle(ButtonStyle.Primary)
+    .setDisabled(pages.length <= 1)
 
   const end = new ButtonBuilder()
     .setCustomId("end")
     .setEmoji("⏭️")
-    .setStyle(ButtonStyle.Primary);
+    .setStyle(ButtonStyle.Primary)
+    .setDisabled(pages.length <= 1)
 
   const buttonRow = new ActionRowBuilder<ButtonBuilder>().addComponents(
     first,
