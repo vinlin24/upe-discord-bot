@@ -2,6 +2,7 @@ const Byte = require("../../schemas/byte");
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { IByte } from "src/schemas/byte";
 const mongoose = require("mongoose");
+import { getEventPoints } from "../../functions/get-points"
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -41,15 +42,14 @@ module.exports = {
     const num_attended = interaction.options.getInteger("members")
 
     const newEvent = {
-      location: interaction.options.getString("location"),
-      num_mems: num_attended,
-      pic: interaction.options.getAttachment("picture")?.url,
-      caption: interaction.options.getString("caption"),
-      date: interaction.createdAt 
+      location: interaction.options.getString("location")!,
+      num_mems: num_attended!,
+      pic: interaction.options.getAttachment("picture")?.url!,
+      caption: interaction.options.getString("caption")!,
+      date: interaction.createdAt!
     }
 
     const byte = await Byte.findOne({byte_ids: interaction.user.id})
-
 
     if (byte.total_mems < num_attended!) {
       await interaction.reply({content: `Error: There are less than ${num_attended} inductees in your byte.`})
@@ -59,7 +59,7 @@ module.exports = {
     byte.events.push(newEvent)
     await byte.save().catch(console.error)
     await interaction.reply({ 
-      content: `Successfully saved event: ${interaction.options.getString("location")}\n${interaction.options.getAttachment("picture")?.url}`,
+      content: `Successfully saved event\nLocation: ${interaction.options.getString("location")}\nPoints Earned: ${getEventPoints(newEvent, byte.total_mems)} ${interaction.options.getAttachment("picture")?.url}`,
     });
     console.log(byte)
   },

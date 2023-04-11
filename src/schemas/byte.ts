@@ -1,7 +1,7 @@
 import { Schema, Types, model } from "mongoose";
 
 export interface IEvent {
-  location: "campus" | "westwood" | "la" | "jeopardy";
+  location: string;
   num_mems: number;
   pic: string;
   caption: string;
