@@ -2,8 +2,9 @@ const Byte = require("../../schemas/byte");
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { IByte } from "src/schemas/byte";
 const mongoose = require("mongoose");
-import { getEventPoints } from "../../functions/get-points"
-
+import { getEventPoints } from "../../functions/get-points";
+import { image } from "image-downloader";
+const download = require("image-downloader");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("submit")
@@ -22,7 +23,7 @@ module.exports = {
     .addStringOption((option) =>
       option
         .setName("caption")
-        .setDescription("Brief summary of what your family did")
+        .setDescription("Brief summary of what you did")
         .setRequired(true)
     )
     .addIntegerOption((option) =>
@@ -39,28 +40,57 @@ module.exports = {
         .setRequired(true)
     ),
   async execute(interaction: ChatInputCommandInteraction) {
-    const num_attended = interaction.options.getInteger("members")
+    const num_attended = interaction.options.getInteger("members");
 
     const newEvent = {
       location: interaction.options.getString("location")!,
       num_mems: num_attended!,
       pic: interaction.options.getAttachment("picture")?.url!,
       caption: interaction.options.getString("caption")!,
-      date: interaction.createdAt!
-    }
+      date: interaction.createdAt!,
+    };
 
-    const byte = await Byte.findOne({byte_ids: interaction.user.id})
+    const byte = await Byte.findOne({ byte_ids: interaction.user.id });
 
     if (byte.total_mems < num_attended!) {
-      await interaction.reply({content: `Error: There are less than ${num_attended} inductees in your byte.`})
-      return
+      await interaction.reply({
+        content: `Error: There are less than ${num_attended} inductees in your byte.`,
+      });
+      return;
     }
+    const IMAGES_DIR = "../../event-pics/";
+    const imageFileName =
+      Date.now() + newEvent.pic.substring(newEvent.pic.lastIndexOf("."));
 
-    byte.events.push(newEvent)
-    await byte.save().catch(console.error)
-    await interaction.reply({ 
-      content: `Successfully saved event\nLocation: ${interaction.options.getString("location")}\nPoints Earned: ${getEventPoints(newEvent, byte.total_mems)} ${interaction.options.getAttachment("picture")?.url}`,
-    });
-    console.log(byte)
+    await download
+      .image({
+        url: newEvent.pic,
+        dest: `${IMAGES_DIR + imageFileName}`,
+        // extractFilename: false,
+      })
+      .then((filename: any) => console.log(filename))
+      .catch((err: any) => console.error(err));
+
+    // byte.events.push(newEvent)
+    // await byte.save().catch(console.error)
+
+    interaction
+      .reply({
+        content: `Location: ${interaction.options.getString(
+          "location"
+        )}\nPoints Earned: ${getEventPoints(newEvent, byte.total_mems)}`,
+        files: [{ attachment: "event-pics/" + imageFileName }],
+      })
+      .then((msg) => {});
+
+    await interaction
+      .fetchReply()
+      .then((reply) => {
+        newEvent.pic = reply.attachments.first()?.proxyURL!;
+      })
+      .catch(console.error);
+
+    byte.events.push(newEvent);
+    await byte.save().catch(console.error);
   },
 };
