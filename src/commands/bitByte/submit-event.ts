@@ -59,7 +59,7 @@ module.exports = {
       return;
     }
     const IMAGES_DIR = "../../event-pics/";
-    const imageFileName =
+    let imageFileName =
       Date.now() + newEvent.pic.substring(newEvent.pic.lastIndexOf("."));
 
     await download
@@ -68,7 +68,7 @@ module.exports = {
         dest: `${IMAGES_DIR + imageFileName}`,
         // extractFilename: false,
       })
-      .then((filename: any) => console.log(filename))
+      .then((filename: any) => {imageFileName = filename.filename})
       .catch((err: any) => console.error(err));
 
     // byte.events.push(newEvent)
@@ -79,7 +79,7 @@ module.exports = {
         content: `Location: ${interaction.options.getString(
           "location"
         )}\nPoints Earned: ${getEventPoints(newEvent, byte.total_mems)}`,
-        files: [{ attachment: "event-pics/" + imageFileName }],
+        files: [{ attachment: imageFileName }],
       })
       .then((msg) => {});
 
