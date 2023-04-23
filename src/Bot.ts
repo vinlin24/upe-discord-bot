@@ -84,7 +84,7 @@ client.on(
       let pages: Array<EmbedBuilder> = events.map((entry) => {
         return new EmbedBuilder()
           .setTitle(entry.caption)
-          .setThumbnail(entry.pic)
+          .setImage(entry.pic)
           .addFields({
             name: "Points Earned",
             value: `${getEventPoints(entry, selected.total_mems)}`,
