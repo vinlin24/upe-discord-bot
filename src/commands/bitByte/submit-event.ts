@@ -8,11 +8,11 @@ const download = require("image-downloader");
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("submit")
-    .setDescription("Get points for events with your Byte family!")
+    .setDescription("Get points for events with your bits!")
     .addStringOption((option) =>
       option
         .setName("location")
-        .setDescription("Where did your family hang out?")
+        .setDescription("Where did you hang out?")
         .setRequired(true)
         .addChoices(
           { name: "On-campus", value: "campus" },
@@ -29,7 +29,7 @@ module.exports = {
     .addIntegerOption((option) =>
       option
         .setName("members")
-        .setDescription("How many members attended?")
+        .setDescription("How many bits attended?")
         .setRequired(true)
         .setMinValue(1)
     )

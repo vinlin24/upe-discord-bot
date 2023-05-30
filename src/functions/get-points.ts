@@ -2,7 +2,9 @@ import type { IEvent } from "../schemas/byte";
 
 export const getEventPoints = (event: IEvent, totalBytes: number): number => {
   const { location, caption, num_mems } = event;
-  if (location == "jeopardy") return 0; //TODO: Implement Jeopardy Point handling
+  if (location == "Jeopardy") {
+    return parseInt(caption)
+  } 
 
   let distanceMap = new Map<string, number>([
     ["campus", 1],

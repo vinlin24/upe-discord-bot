@@ -83,7 +83,7 @@ client.on(
       const events: Array<IEvent> = selected.events;
       let pages: Array<EmbedBuilder> = events.map((entry) => {
         return new EmbedBuilder()
-          .setTitle(entry.caption)
+          .setTitle(entry.location === "Jeopardy" ? "Jeopardy" : entry.caption)
           .setImage(entry.pic)
           .addFields({
             name: "Points Earned",
