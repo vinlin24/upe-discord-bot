@@ -4,7 +4,9 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node src/Bot.ts"
+    "start": "ts-node src/Bot.ts",
+    "deploy:global": "ts-node src/deploy-global.ts",
+    "deploy:testing": "ts-node src/deploy-testing.ts"
   },
   "repository": {
     "type": "git",
