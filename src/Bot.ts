@@ -7,8 +7,8 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { eventPages } from "./event-pages";
-import type { IByte, IEvent } from "./schemas/byte";
 import { getEventPoints } from "./functions/get-points";
+import type { IByte, IEvent } from "./schemas/byte";
 const { Client, GatewayIntentBits } = require("discord.js");
 const { token, connectionString } = require("../config.json");
 const { connect, mongoose } = require("mongoose");
@@ -17,7 +17,11 @@ const Byte = require("./schemas/byte");
 console.log("Bot is starting...");
 
 export const client = new Client({
-  intents: [GatewayIntentBits.Guilds],
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMembers,
+    GatewayIntentBits.GuildPresences,
+  ],
 });
 
 client.commands = new Collection();
@@ -88,7 +92,7 @@ client.on(
           .addFields({
             name: "Points Earned",
             value: `${getEventPoints(entry, selected.total_mems)}`,
-          }, {name: "Date", value: entry.date.toLocaleDateString()});
+          }, { name: "Date", value: entry.date.toLocaleDateString() });
       });
 
       eventPages(interaction, pages);
