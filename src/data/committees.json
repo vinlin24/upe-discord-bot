@@ -1,0 +1,117 @@
+{
+  "committees": [
+    {
+      "name": "Web",
+      "team": "Core",
+      "description": [
+        "Maintains and updates the UPE website and test bank infrastructure",
+        "Keeps track of member and candidate information",
+        "Updates the tutoring schedule every quarter"
+      ]
+    },
+    {
+      "name": "Advocacy",
+      "team": "Core",
+      "description": [
+        "Assists advocacy director(s) and chair(s) in bringing about positive forward change in the CS community",
+        "Makes UPE accessible and approachable to students",
+        "Leads UPE involvement with on-campus initiatives to create changes within the CS department (e.g. CS Town Hall)",
+        "Conducts surveys to gather feedback on the needs of the CS community",
+        "Collaborates with other student-led organizations and faculty to advocate for student interests within the CS community (eg. Ethics requirement reform and other curricula reform)",
+        "Streamlines process of creating new diversity, equity, and inclusion initiatives (eg. CS Welcome Day, broadening participation in computing via outreach to local high schools)"
+      ]
+    },
+    {
+      "name": "Design & Publicity",
+      "team": "Core",
+      "description": [
+        "Works with the CS department to send email blasts and publicize flagship events",
+        "Coordinates with chairs and committees to chalk events in lecture halls, make announcements, etc. to keep us on top of our game!",
+        "Coordinate UPE social media accounts (e.g. Instagram @uclaupe, Facebook, LinkedIn, newsletter)",
+        "Design graphics adhering to a brand standard for use in publicization of events"
+      ]
+    },
+    {
+      "name": "Finance & Facilities",
+      "team": "Core",
+      "description": [
+        "Collaborates with other UPE committees to help plan purchases (food, prizes, games) and event locations",
+        "Helps finance committee maintain contact with the CS department to handle reimbursements and other monetary matters"
+      ]
+    },
+    {
+      "name": "Induction & Membership",
+      "team": "Internal",
+      "description": [
+        "Designs and manages the UPE Induction, Intern, and Tutor programs",
+        "Handles communication with inductees, tutors, and interns quickly and effectively",
+        "Plans candidate orientation needs (presurvey form, room booking)",
+        "Keeps interns, tutors, and inductees checked off for various requirements",
+        "Ensures all interns, tutors and inductees satisfy their requirements and know how to satisfy their requirements",
+        "Schedules tutoring hours for inductees/tutors/interns/officers with web and tutoring chairs",
+        "Ensures inductees are completing tutoring hours"
+      ]
+    },
+    {
+      "name": "Mentorship",
+      "team": "Internal",
+      "description": [
+        "Helps lead 3-4 mentorship events per quarter, including but not limited to Recruitment Preparation Workshops, Summer Planning Workshops, and CS Research Panels. ",
+        "Helps our fellow CS majors land jobs at their dream companies",
+        "Offers quarterly resume reviews and class planning office hours",
+        "Coordinates inductee mock interviews (booking room, scheduling officers, etc.)",
+        "Follows up with participants to further improve future events"
+      ]
+    },
+    {
+      "name": "Social",
+      "team": "Internal",
+      "description": [
+        "Make the year as fun as possible for all UPE members! ",
+        "Ensures that all inductees complete their social requirement by providing 4-6 events per quarter",
+        "Plans officer exclusive events, like parties, fun outings, spontaneous trips, whatever fun things you can think of! The sky's the limit.",
+        "Organizes annual officer retreats (fall, spring)",
+        "Organizes annual end of the year banquet for officers (venue, dinner, senior gifts, etc.)",
+        "Organize CS BBQ for CS faculty, staff, and students"
+      ]
+    },
+    {
+      "name": "Tutoring",
+      "team": "Internal",
+      "description": [
+        "Make sure students in Computer Science classes have all the support they need",
+        "Help facilitate midterm review sessions and project hacks for lower division and upper division CS classes.",
+        "Design study guides for lower division CS classes so students can quickly review for exams"
+      ]
+    },
+    {
+      "name": "Entrepreneurship",
+      "team": "External",
+      "description": [
+        "Helps plan a variety of networking events, roughly 1-2 per quarter, such as Poker Networking Nights, Alumni-Entrepreneur Mixer dinners, all designed to facilitate improved networking between UCLA students and successful entrepreneurs",
+        "Helps develop new ideas to improve entrepreneurial culture and spirit within the UCLA community - examples include the Hot Ones Panel, Foundathon",
+        "Works with entrepreneurship director to boost entrepreneurial culture amongst UCLA students"
+      ]
+    },
+    {
+      "name": "Corporate",
+      "team": "External",
+      "description": [
+        "Plans 2-4 events per quarter, such as info sessions, tech talks, and company tours, with companies.",
+        "Reaches out to recruiters/engineers to see if they would be interested in having events.",
+        "Works with Facebook, Google, Citadel, Blizzard, and many others.",
+        "Works with the CS department to help attract and onboard new affiliates."
+      ]
+    },
+    {
+      "name": "Alumni",
+      "team": "External",
+      "description": [
+        "Promotes better relationships between current and graduated UPE members.",
+        "Helps plan alumni events, including panels and quarterly alumni mixers for current students and UCLA alumni to chat and connect.",
+        "Shares UPE alumnis’ perspectives with the rest of the CS community.",
+        "Comes with fresh ideas on how to better improve alumni relations."
+      ]
+    }
+  ]
+}
