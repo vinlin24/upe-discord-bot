@@ -13,8 +13,7 @@ import {
   isMissingPermissionsError,
 } from "../../utils/errors.utils";
 import { clearRole } from "../../utils/moderation.utils";
-
-const INDUCTEES_ROLE_ID = "778438274695036957";
+import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
 module.exports = {
   data: new SlashCommandBuilder()
