@@ -51,10 +51,20 @@ async function assignInducteesRole(
     return;
   }
 
+  const usernames = parseInducteeUsernamesFromCSV();
+  if (usernames === "File Not Found") {
+    await interaction.reply({
+      embeds: [makeErrorEmbed(
+        "Could not find the file with inductee information!",
+      )],
+      ephemeral: true,
+    });
+    return;
+  }
+
   // Not sure how long this takes with many inductees, so just in case.
   await interaction.deferReply();
 
-  const usernames = parseInducteeUsernamesFromCSV();
   const [members, notFound] = await getMembersFromUsernames(usernames, guild);
   const [succeeded, failed] = await assignInducteesRoleToMembers(members);
 
@@ -62,13 +72,20 @@ async function assignInducteesRole(
   await interaction.editReply({ embeds: [embed] });
 }
 
-function parseInducteeUsernamesFromCSV(): string[] {
+function parseInducteeUsernamesFromCSV(): string[] | "File Not Found" {
+  if (!fs.existsSync(INDUCTEE_INFO_CSV_PATH)) {
+    console.error(`ERROR: file at path ${INDUCTEE_INFO_CSV_PATH} not found.`);
+    return "File Not Found";
+  }
+
   const content = fs.readFileSync(INDUCTEE_INFO_CSV_PATH).toString();
   const [header, ...rows] = CSV.parse(content);
+
   if (header === undefined || rows.length === 0) {
     console.error(`WARNING: ${INDUCTEE_INFO_CSV_PATH} is empty!`);
     return [];
   }
+
   const usernameColumnIndex = header.indexOf("Discord Username");
   const usernames = rows.map(row => row[usernameColumnIndex]);
   return usernames;
