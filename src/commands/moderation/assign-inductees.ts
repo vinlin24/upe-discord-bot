@@ -10,6 +10,7 @@ import {
   PermissionFlagsBits,
   Role,
   SlashCommandBuilder,
+  bold,
   inlineCode,
 } from "discord.js";
 
@@ -80,12 +81,13 @@ async function updateInducteeMembers(
   await interaction.deferReply();
 
   const [
-    succeeded,
-    notFound,
+    affected,
+    skipped,
+    missing,
     failed,
   ] = await findAndUpdateMembersWithInfo(inducteesInfo, guild);
 
-  const embed = prepareResponseEmbed(succeeded, notFound, failed, role);
+  const embed = prepareResponseEmbed(affected, skipped, missing, failed, role);
   await interaction.editReply({ embeds: [embed] });
 }
 
@@ -137,26 +139,38 @@ function parseInducteeInfoFromCSV():
   return inducteesInfo;
 }
 
+/**
+ * Trivalent return value type for the functions that make API requests. We want
+ * to know if it succeeded or failed, but also if there was no need to make a
+ * change in the first place (no mutation request made).
+ */
+const enum APIResult {
+  /** A request was made and it succeeded. */
+  SUCCESS,
+  /** A request was made and it failed. */
+  FAILURE,
+  /** A request was not made because there was no need to. */
+  SKIPPED,
+}
+
 async function findAndUpdateMembersWithInfo(
   inducteesInfo: InducteeInfo[],
   guild: Guild,
 ): Promise<[
-  succeededMembers: GuildMember[],
-  notFoundUsers: InducteeInfo[],
-  failedMembers: GuildMember[]
+  newInductees: GuildMember[],
+  skippedInductees: GuildMember[],
+  missingMembers: InducteeInfo[],
+  failedMembers: GuildMember[],
 ]> {
-  const succeededMembers: GuildMember[] = [];
-  const notFoundUsers: InducteeInfo[] = [];
+  const newInductees: GuildMember[] = [];
+  const skippedInductees: GuildMember[] = [];
+  const missingMembers: InducteeInfo[] = [];
   const failedMembers: GuildMember[] = [];
 
   for (const inducteeInfo of inducteesInfo) {
-    const {
-      firstName,
-      lastName,
-      discordUsername: providedUsername,
-    } = inducteeInfo;
+    const { discordUsername: providedUsername } = inducteeInfo;
 
-    // Make the API call.
+    // Search for the member by username.
     const members = await guild.members.fetch({
       query: providedUsername,
       limit: 1,
@@ -167,84 +181,147 @@ async function findAndUpdateMembersWithInfo(
 
     // Query returned no results or the username doesn't match for some reason.
     if (!member || member.user.username !== providedUsername) {
-      notFoundUsers.push(inducteeInfo);
+      missingMembers.push(inducteeInfo);
       continue;
     }
 
     // Do the actual updating.
-    const nickname = `${firstName} ${lastName}`;
-    const success =
-      await assignInducteeRole(member) &&
-      await updateMemberNickname(member, nickname);
-
-    if (success) {
-      succeededMembers.push(member);
-    } else {
-      failedMembers.push(member);
+    const result = await makeUpdateCallsToDiscordAPI(member, inducteeInfo);
+    switch (result) {
+      case APIResult.SUCCESS:
+        newInductees.push(member);
+        break;
+      case APIResult.FAILURE:
+        failedMembers.push(member);
+        break;
+      case APIResult.SKIPPED:
+        skippedInductees.push(member);
+        break;
     }
   }
 
-  return [succeededMembers, notFoundUsers, failedMembers];
+  return [newInductees, skippedInductees, missingMembers, failedMembers];
 }
 
-async function assignInducteeRole(member: GuildMember): Promise<boolean> {
+async function makeUpdateCallsToDiscordAPI(
+  member: GuildMember,
+  inducteeInfo: InducteeInfo,
+): Promise<APIResult> {
+  const { firstName, lastName } = inducteeInfo;
+
+  const nickname = `${firstName} ${lastName}`;
+  const roleResult = await assignInducteeRole(member);
+  const nickResult = await updateMemberNickname(member, nickname);
+
+  // Determine overall result state. Note that the above operations do NOT form
+  // a transaction. It's possible that a role is assigned but the
+  // nickname-changing failed or vice versa.
+  if (roleResult === APIResult.SKIPPED && nickResult === APIResult.SKIPPED) {
+    return APIResult.SKIPPED;
+  }
+  if (roleResult === APIResult.FAILURE || nickResult === APIResult.FAILURE) {
+    return APIResult.FAILURE;
+  }
+  return APIResult.SUCCESS;
+}
+
+async function assignInducteeRole(member: GuildMember): Promise<APIResult> {
+  if (member.roles.cache.has(INDUCTEES_ROLE_ID)) {
+    return APIResult.SKIPPED;
+  }
+
   try {
     await member.roles.add(INDUCTEES_ROLE_ID);
-    return true;
+    return APIResult.SUCCESS;
   } catch (error) {
     const { code, message } = error as DiscordAPIError;
     console.error(
       `FAILED to assign Inductees role to @${member.user.username}: ` +
       `DiscordAPIError[${code}] ${message}`,
     );
-    return false;
+    return APIResult.FAILURE;
   }
 }
 
 async function updateMemberNickname(
   member: GuildMember,
   nickname: string,
-): Promise<boolean> {
+): Promise<APIResult> {
+  if (member.nickname === nickname) {
+    return APIResult.SKIPPED;
+  }
+
   try {
     await member.setNickname(
       nickname,
       `/${COMMAND_NAME}: used inductee's provided preferred name`,
     );
-    return true;
+    return APIResult.SUCCESS;
   } catch (error) {
     const { code, message } = error as DiscordAPIError;
     console.error(
       `FAILED to update @${member.user.username} nickname to '${nickname}': ` +
       `DiscordAPIError[${code}] ${message}`,
     );
-    return false;
+    return APIResult.FAILURE;
   }
 }
 
 function prepareResponseEmbed(
-  succeeded: GuildMember[],
-  notFound: InducteeInfo[],
+  affected: GuildMember[],
+  skipped: GuildMember[],
+  missing: InducteeInfo[],
   failed: GuildMember[],
   role: Role,
 ): EmbedBuilder {
-  const successString = succeeded.length > 0 ? (
-    `✅ Assigned ${role} and updated nickname for ${succeeded.length} members!`
-  ) : "";
+  function formatSuccessString(): string {
+    const numSucceeded = affected.length + skipped.length;
+    if (numSucceeded === 0) return "";
 
-  const notFoundString = notFound.length > 0 ? (
-    "⚠️ It doesn't seem like these users are in the server:\n" +
-    notFound.map(info => {
+    const updatedString = (
+      `✅ Assigned ${role} and updated nickname for ` +
+      `${bold(numSucceeded.toString())} members!`
+    );
+
+    let affectedString = `${bold(affected.length.toString())} affected`;
+    if (affected.length > 0) {
+      affectedString += `:\n${affected.join(", ")}`;
+    }
+    else {
+      affectedString += "."
+    }
+
+    return `${updatedString} ${affectedString}`;
+  }
+
+  function formatMissingString(): string {
+    if (missing.length === 0) return "";
+
+    const formattedUserList = missing.map(info => {
       const { firstName, lastName, discordUsername: username } = info;
       return inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`;
-    }).join(", ")
-  ) : "";
+    }).join(", ");
 
-  const failedString = failed.length > 0 ? (
-    "🚨 I wasn't allowed to update these members:\n" +
-    failed.join(", ")
-  ) : "";
+    return (
+      `⚠️ It doesn't seem like these ${bold(missing.length.toString())} ` +
+      `users are in the server:\n${formattedUserList}`
+    );
+  }
 
-  const allGood = notFound.length === 0 && failed.length === 0;
+  function formatFailedString(): string {
+    if (failed.length === 0) return "";
+
+    return (
+      `🚨 I wasn't allowed to update these ${bold(failed.length.toString())}` +
+      `members:\n${failed.join(", ")}`
+    );
+  }
+
+  const successString = formatSuccessString();
+  const missingString = formatMissingString();
+  const failedString = formatFailedString();
+
+  const allGood = missing.length === 0 && failed.length === 0;
   if (allGood) {
     const embed = new EmbedBuilder()
       .setDescription(successString || "🤔 No inductees to assign!")
@@ -254,7 +331,7 @@ function prepareResponseEmbed(
 
   const descriptionWithErrors = [
     successString,
-    notFoundString,
+    missingString,
     failedString,
   ].filter(Boolean).join("\n\n");
 
