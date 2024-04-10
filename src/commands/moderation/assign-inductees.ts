@@ -32,6 +32,10 @@ module.exports = {
   execute: updateInducteeMembers,
 };
 
+// ========================================================================== //
+// #region APPLICATION LAYER
+
+/** Top-level command callback. */
 async function updateInducteeMembers(
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
@@ -91,12 +95,23 @@ async function updateInducteeMembers(
   await interaction.editReply({ embeds: [embed] });
 }
 
+// #endregion
+// ========================================================================== //
+// #region DATA ACCESS LAYER
+
+/**
+ * DTO for the relevant inductee information used to update their corresponding
+ * Discord users.
+ */
 type InducteeInfo = {
   firstName: string;
   lastName: string;
   discordUsername: string;
 };
 
+/**
+ * Top-level function for loading inductee information from our source of truth.
+ */
 function parseInducteeInfoFromCSV():
   InducteeInfo[] | "File Not Found" | "File Malformed" {
   if (!fs.existsSync(INDUCTEE_INFO_CSV_PATH)) {
@@ -139,6 +154,10 @@ function parseInducteeInfoFromCSV():
   return inducteesInfo;
 }
 
+// #endregion
+// ========================================================================== //
+// #region BUSINESS LAYER
+
 /**
  * Trivalent return value type for the functions that make API requests. We want
  * to know if it succeeded or failed, but also if there was no need to make a
@@ -153,6 +172,14 @@ const enum APIResult {
   SKIPPED,
 }
 
+/**
+ * Top-level business logic function. Given the inductee DTOs, find their
+ * corresponding Discord users within the UPE server and make the appropriate
+ * updates on them to reflect their inductee status. This function does NOT
+ * short-circuit on the first failure. Instead, it gives every struct a chance
+ * to process and returns a tuple, which is as partition of the provided
+ * inductees representing their different success/failure states.
+ */
 async function findAndUpdateMembersWithInfo(
   inducteesInfo: InducteeInfo[],
   guild: Guild,
@@ -267,6 +294,11 @@ async function updateMemberNickname(
   }
 }
 
+// #endregion
+// ========================================================================== //
+// #region PRESENTATION LAYER
+
+/** Top-level function for preparing the embed to display back to the caller. */
 function prepareResponseEmbed(
   affected: GuildMember[],
   skipped: GuildMember[],
@@ -274,52 +306,9 @@ function prepareResponseEmbed(
   failed: GuildMember[],
   role: Role,
 ): EmbedBuilder {
-  function formatSuccessString(): string {
-    const numSucceeded = affected.length + skipped.length;
-    if (numSucceeded === 0) return "";
-
-    const updatedString = (
-      `✅ Assigned ${role} and updated nickname for ` +
-      `${bold(numSucceeded.toString())} members!`
-    );
-
-    let affectedString = `${bold(affected.length.toString())} affected`;
-    if (affected.length > 0) {
-      affectedString += `:\n${affected.join(", ")}`;
-    }
-    else {
-      affectedString += "."
-    }
-
-    return `${updatedString} ${affectedString}`;
-  }
-
-  function formatMissingString(): string {
-    if (missing.length === 0) return "";
-
-    const formattedUserList = missing.map(info => {
-      const { firstName, lastName, discordUsername: username } = info;
-      return inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`;
-    }).join(", ");
-
-    return (
-      `⚠️ It doesn't seem like these ${bold(missing.length.toString())} ` +
-      `users are in the server:\n${formattedUserList}`
-    );
-  }
-
-  function formatFailedString(): string {
-    if (failed.length === 0) return "";
-
-    return (
-      `🚨 I wasn't allowed to update these ${bold(failed.length.toString())}` +
-      `members:\n${failed.join(", ")}`
-    );
-  }
-
-  const successString = formatSuccessString();
-  const missingString = formatMissingString();
-  const failedString = formatFailedString();
+  const successString = formatSuccessString(affected, skipped, role);
+  const missingString = formatMissingString(missing);
+  const failedString = formatFailedString(failed);
 
   const allGood = missing.length === 0 && failed.length === 0;
   if (allGood) {
@@ -338,3 +327,52 @@ function prepareResponseEmbed(
   const embed = makeErrorEmbed(descriptionWithErrors);
   return embed;
 }
+
+function formatSuccessString(
+  affected: GuildMember[],
+  skipped: GuildMember[],
+  role: Role,
+): string {
+  const numSucceeded = affected.length + skipped.length;
+  if (numSucceeded === 0) return "";
+
+  const updatedString = (
+    `✅ Assigned ${role} and updated nickname for ` +
+    `${bold(numSucceeded.toString())} members!`
+  );
+
+  let affectedString = `${bold(affected.length.toString())} affected`;
+  if (affected.length > 0) {
+    affectedString += `:\n${affected.join(", ")}`;
+  }
+  else {
+    affectedString += "."
+  }
+
+  return `${updatedString} ${affectedString}`;
+}
+
+function formatMissingString(missing: InducteeInfo[]): string {
+  if (missing.length === 0) return "";
+
+  const formattedUserList = missing.map(info => {
+    const { firstName, lastName, discordUsername: username } = info;
+    return inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`;
+  }).join(", ");
+
+  return (
+    `⚠️ It doesn't seem like these ${bold(missing.length.toString())} ` +
+    `users are in the server:\n${formattedUserList}`
+  );
+}
+
+function formatFailedString(failed: GuildMember[]): string {
+  if (failed.length === 0) return "";
+
+  return (
+    `🚨 I wasn't allowed to update these ${bold(failed.length.toString())}` +
+    `members:\n${failed.join(", ")}`
+  );
+}
+
+// #endregion
