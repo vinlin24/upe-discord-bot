@@ -1,4 +1,4 @@
-import { DiscordAPIError } from "discord.js";
+import { Colors, DiscordAPIError, EmbedBuilder } from "discord.js";
 
 /**
  * See: https://discord.com/developers/docs/topics/opcodes-and-status-codes
@@ -26,4 +26,32 @@ export function isMissingPermissionsError(
   error: unknown,
 ): error is DiscordAPIErrorWithCode<50013> {
   return error instanceof DiscordAPIError && error.code === 50013;
+}
+
+export function makeErrorEmbed(message: string): EmbedBuilder;
+export function makeErrorEmbed(title: string, message: string): EmbedBuilder;
+export function makeErrorEmbed(
+  arg1: string,
+  arg2?: string,
+): EmbedBuilder {
+  let message: string;
+  let title: string | undefined;
+
+  if (arg2 === undefined) {
+    message = arg1;
+    title = undefined;
+  } else {
+    message = arg2;
+    title = arg1;
+  }
+
+  const embed = new EmbedBuilder()
+    .setDescription(message)
+    .setColor(Colors.Red);
+
+  if (title) {
+    embed.setTitle(title);
+  }
+
+  return embed;
 }
