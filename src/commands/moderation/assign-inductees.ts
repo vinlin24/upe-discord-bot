@@ -23,6 +23,7 @@ const INDUCTEE_INFO_CSV_PATH = "inductees.csv"; // Placed at CWD for now.
 const FIRST_NAME_COL_NAME = "Preferred First Name";
 const LAST_NAME_COL_NAME = "Preferred Last Name";
 const DISCORD_USERNAME_COL_NAME = "Discord Username";
+const PREFERRED_EMAIL_COL_NAME = "Preferred Email for Communications";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -111,6 +112,7 @@ type InducteeInfo = {
   firstName: string;
   lastName: string;
   discordUsername: string;
+  email: string;
 };
 
 /**
@@ -149,10 +151,17 @@ function parseInducteeInfoFromCSV():
     return "File Malformed";
   }
 
+  const emailColumnIndex = header.indexOf(PREFERRED_EMAIL_COL_NAME);
+  if (emailColumnIndex === -1) {
+    console.error(`ERROR: no '${PREFERRED_EMAIL_COL_NAME}' column`);
+    return "File Malformed";
+  }
+
   const inducteesInfo: InducteeInfo[] = rows.map(row => ({
     firstName: row[firstNameColumnIndex],
     lastName: row[lastNameColumnIndex],
     discordUsername: row[usernameColumnIndex],
+    email: row[emailColumnIndex],
   }));
 
   return inducteesInfo;
@@ -401,7 +410,12 @@ function logAllMissingInductees(missing: InducteeInfo[]): void {
   for (const { firstName, lastName, discordUsername } of missing) {
     console.error(`${firstName} ${lastName} (@${discordUsername})`);
   }
-  console.error("ENDWARNING");
+  console.error(
+    "ENDWARNING. The following are the email addresses you can use to " +
+    "contact these users to let them know their Discord username is " +
+    "invalid and/or they are not in the server:",
+  );
+  console.error(missing.map(info => info.email).join(","))
 }
 
 // #endregion
