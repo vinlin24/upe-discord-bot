@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  EmbedBuilder,
   PermissionFlagsBits,
   Role,
   SlashCommandBuilder,
@@ -15,9 +16,11 @@ import {
 import { clearRole } from "../../utils/moderation.utils";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
+const COMMAND_NAME = "resetinductees";
+
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName("resetinductees")
+    .setName(COMMAND_NAME)
     .setDescription("Remove the Inductees role from every member.")
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
   execute: clearInducteesRole,
@@ -52,10 +55,13 @@ async function clearRoleAndReply(
   role: Role,
   interaction: ChatInputCommandInteraction,
 ): Promise<void> {
+  await interaction.deferReply();
+
   const numInductees = role.members.size;
+  const { user: caller } = interaction;
 
   try {
-    await clearRole(role);
+    await clearRole(role, `@${caller.username}: /${COMMAND_NAME}`);
   } catch (error) {
     if (isMissingAccessError(error) || isMissingPermissionsError(error)) {
       console.error("ERROR: bot is not allowed to remove roles.");
@@ -68,12 +74,13 @@ async function clearRoleAndReply(
     throw error; // Propagate to outer handler.
   }
 
-  console.log(`Removed role "${role.name}" from ${numInductees} members.`);
+  console.log(`ACK: Removed role @${role.name} from ${numInductees} members.`);
 
-  await interaction.reply({
-    content:
+  const embed = new EmbedBuilder()
+    .setColor(role.color)
+    .setDescription(
       `Removed ${roleMention(INDUCTEES_ROLE_ID)} ` +
-      `from all members (${bold(numInductees.toString())} affected).`,
-    allowedMentions: { parse: [] },
-  });
+      `from all members (${bold(numInductees.toString())} affected).`
+    );
+  await interaction.editReply({ embeds: [embed] });
 }

@@ -23,6 +23,7 @@ const INDUCTEE_INFO_CSV_PATH = "inductees.csv"; // Placed at CWD for now.
 const FIRST_NAME_COL_NAME = "Preferred First Name";
 const LAST_NAME_COL_NAME = "Preferred Last Name";
 const DISCORD_USERNAME_COL_NAME = "Discord Username";
+const PREFERRED_EMAIL_COL_NAME = "Preferred Email for Communications";
 
 module.exports = {
   data: new SlashCommandBuilder()
@@ -93,6 +94,10 @@ async function updateInducteeMembers(
 
   const embed = prepareResponseEmbed(affected, skipped, missing, failed, role);
   await interaction.editReply({ embeds: [embed] });
+
+  // Dump the full list of people to reach out to for being missing from the
+  // server/malformed username, in case the list was truncated in the embed.
+  logAllMissingInductees(missing);
 }
 
 // #endregion
@@ -107,6 +112,7 @@ type InducteeInfo = {
   firstName: string;
   lastName: string;
   discordUsername: string;
+  email: string;
 };
 
 /**
@@ -145,10 +151,18 @@ function parseInducteeInfoFromCSV():
     return "File Malformed";
   }
 
+  const emailColumnIndex = header.indexOf(PREFERRED_EMAIL_COL_NAME);
+  if (emailColumnIndex === -1) {
+    console.error(`ERROR: no '${PREFERRED_EMAIL_COL_NAME}' column`);
+    return "File Malformed";
+  }
+
   const inducteesInfo: InducteeInfo[] = rows.map(row => ({
     firstName: row[firstNameColumnIndex],
     lastName: row[lastNameColumnIndex],
-    discordUsername: row[usernameColumnIndex],
+    // Strip the "@", if they included it.
+    discordUsername: row[usernameColumnIndex].replace("@", ""),
+    email: row[emailColumnIndex],
   }));
 
   return inducteesInfo;
@@ -298,6 +312,10 @@ async function updateMemberNickname(
 // ========================================================================== //
 // #region PRESENTATION LAYER
 
+// To prevent exceeding message/embed character limit.
+const MAX_FAILED_MENTIONS = 10;
+const MAX_MISSING_MENTIONS = 10;
+
 /** Top-level function for preparing the embed to display back to the caller. */
 function prepareResponseEmbed(
   affected: GuildMember[],
@@ -340,14 +358,7 @@ function formatSuccessString(
     `✅ Assigned ${role} and updated nickname for ` +
     `${bold(numSucceeded.toString())} members!`
   );
-
-  let affectedString = `${bold(affected.length.toString())} affected`;
-  if (affected.length > 0) {
-    affectedString += `:\n${affected.join(", ")}`;
-  }
-  else {
-    affectedString += "."
-  }
+  const affectedString = `${bold(affected.length.toString())} affected.`;
 
   return `${updatedString} ${affectedString}`;
 }
@@ -355,10 +366,22 @@ function formatSuccessString(
 function formatMissingString(missing: InducteeInfo[]): string {
   if (missing.length === 0) return "";
 
-  const formattedUserList = missing.map(info => {
+  function infoToBulletPoint(info: InducteeInfo): string {
     const { firstName, lastName, discordUsername: username } = info;
-    return inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`;
-  }).join(", ");
+    return (
+      "* " + inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`
+    );
+  }
+
+  let formattedUserList = missing
+    .slice(0, MAX_MISSING_MENTIONS)
+    .map(infoToBulletPoint)
+    .join("\n");
+
+  if (missing.length > MAX_MISSING_MENTIONS) {
+    const numOmitted = missing.length - MAX_MISSING_MENTIONS;
+    formattedUserList += `\n* ...(${bold(numOmitted.toString())} more)...`;
+  }
 
   return (
     `⚠️ It doesn't seem like these ${bold(missing.length.toString())} ` +
@@ -369,10 +392,31 @@ function formatMissingString(missing: InducteeInfo[]): string {
 function formatFailedString(failed: GuildMember[]): string {
   if (failed.length === 0) return "";
 
+  let mentionsString = failed.slice(0, MAX_FAILED_MENTIONS).join(", ");
+  if (failed.length > MAX_FAILED_MENTIONS) {
+    const numOmitted = failed.length - MAX_FAILED_MENTIONS;
+    mentionsString += `, ...(${bold(numOmitted.toString())} more)...`;
+  }
+
   return (
     `🚨 I wasn't allowed to update these ${bold(failed.length.toString())}` +
-    `members:\n${failed.join(", ")}`
+    `members:\n${mentionsString}`
   );
+}
+
+function logAllMissingInductees(missing: InducteeInfo[]): void {
+  if (missing.length === 0) return;
+
+  console.error("WARNING: The following users were not found in the server:");
+  for (const { firstName, lastName, discordUsername } of missing) {
+    console.error(`${firstName} ${lastName} (@${discordUsername})`);
+  }
+  console.error(
+    "ENDWARNING. The following are the email addresses you can use to " +
+    "contact these users to let them know their Discord username is " +
+    "invalid and/or they are not in the server:",
+  );
+  console.error(missing.map(info => info.email).join(","))
 }
 
 // #endregion
