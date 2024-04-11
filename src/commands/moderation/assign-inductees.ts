@@ -93,6 +93,10 @@ async function updateInducteeMembers(
 
   const embed = prepareResponseEmbed(affected, skipped, missing, failed, role);
   await interaction.editReply({ embeds: [embed] });
+
+  // Dump the full list of people to reach out to for being missing from the
+  // server/malformed username, in case the list was truncated in the embed.
+  logAllMissingInductees(missing);
 }
 
 // #endregion
@@ -298,6 +302,10 @@ async function updateMemberNickname(
 // ========================================================================== //
 // #region PRESENTATION LAYER
 
+// To prevent exceeding message/embed character limit.
+const MAX_FAILED_MENTIONS = 10;
+const MAX_MISSING_MENTIONS = 50;
+
 /** Top-level function for preparing the embed to display back to the caller. */
 function prepareResponseEmbed(
   affected: GuildMember[],
@@ -340,14 +348,7 @@ function formatSuccessString(
     `✅ Assigned ${role} and updated nickname for ` +
     `${bold(numSucceeded.toString())} members!`
   );
-
-  let affectedString = `${bold(affected.length.toString())} affected`;
-  if (affected.length > 0) {
-    affectedString += `:\n${affected.join(", ")}`;
-  }
-  else {
-    affectedString += "."
-  }
+  const affectedString = `${bold(affected.length.toString())} affected.`;
 
   return `${updatedString} ${affectedString}`;
 }
@@ -355,10 +356,20 @@ function formatSuccessString(
 function formatMissingString(missing: InducteeInfo[]): string {
   if (missing.length === 0) return "";
 
-  const formattedUserList = missing.map(info => {
+  function infoToMentionString(info: InducteeInfo): string {
     const { firstName, lastName, discordUsername: username } = info;
     return inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`;
-  }).join(", ");
+  }
+
+  let formattedUserList = missing
+    .slice(0, MAX_MISSING_MENTIONS)
+    .map(infoToMentionString)
+    .join(", ");
+
+  if (missing.length > MAX_MISSING_MENTIONS) {
+    const numOmitted = missing.length - MAX_MISSING_MENTIONS;
+    formattedUserList += `, ...(${numOmitted} more)...`;
+  }
 
   return (
     `⚠️ It doesn't seem like these ${bold(missing.length.toString())} ` +
@@ -369,10 +380,26 @@ function formatMissingString(missing: InducteeInfo[]): string {
 function formatFailedString(failed: GuildMember[]): string {
   if (failed.length === 0) return "";
 
+  let mentionsString = failed.slice(0, MAX_FAILED_MENTIONS).join(", ");
+  if (failed.length > MAX_FAILED_MENTIONS) {
+    const numOmitted = failed.length - MAX_FAILED_MENTIONS;
+    mentionsString += `, ...(${numOmitted} more)...`;
+  }
+
   return (
     `🚨 I wasn't allowed to update these ${bold(failed.length.toString())}` +
-    `members:\n${failed.join(", ")}`
+    `members:\n${mentionsString}`
   );
+}
+
+function logAllMissingInductees(missing: InducteeInfo[]): void {
+  if (missing.length === 0) return;
+
+  console.error("WARNING: The following users were not found in the server:");
+  for (const { firstName, lastName, discordUsername } of missing) {
+    console.error(`${firstName} ${lastName} (@${discordUsername})`);
+  }
+  console.error("ENDWARNING");
 }
 
 // #endregion
