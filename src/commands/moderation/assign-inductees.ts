@@ -304,7 +304,7 @@ async function updateMemberNickname(
 
 // To prevent exceeding message/embed character limit.
 const MAX_FAILED_MENTIONS = 10;
-const MAX_MISSING_MENTIONS = 50;
+const MAX_MISSING_MENTIONS = 10;
 
 /** Top-level function for preparing the embed to display back to the caller. */
 function prepareResponseEmbed(
@@ -356,19 +356,21 @@ function formatSuccessString(
 function formatMissingString(missing: InducteeInfo[]): string {
   if (missing.length === 0) return "";
 
-  function infoToMentionString(info: InducteeInfo): string {
+  function infoToBulletPoint(info: InducteeInfo): string {
     const { firstName, lastName, discordUsername: username } = info;
-    return inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`;
+    return (
+      "* " + inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`
+    );
   }
 
   let formattedUserList = missing
     .slice(0, MAX_MISSING_MENTIONS)
-    .map(infoToMentionString)
-    .join(", ");
+    .map(infoToBulletPoint)
+    .join("\n");
 
   if (missing.length > MAX_MISSING_MENTIONS) {
     const numOmitted = missing.length - MAX_MISSING_MENTIONS;
-    formattedUserList += `, ...(${numOmitted} more)...`;
+    formattedUserList += `\n* ...(${bold(numOmitted.toString())} more)...`;
   }
 
   return (
@@ -383,7 +385,7 @@ function formatFailedString(failed: GuildMember[]): string {
   let mentionsString = failed.slice(0, MAX_FAILED_MENTIONS).join(", ");
   if (failed.length > MAX_FAILED_MENTIONS) {
     const numOmitted = failed.length - MAX_FAILED_MENTIONS;
-    mentionsString += `, ...(${numOmitted} more)...`;
+    mentionsString += `, ...(${bold(numOmitted.toString())} more)...`;
   }
 
   return (
