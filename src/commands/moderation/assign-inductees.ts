@@ -160,7 +160,8 @@ function parseInducteeInfoFromCSV():
   const inducteesInfo: InducteeInfo[] = rows.map(row => ({
     firstName: row[firstNameColumnIndex],
     lastName: row[lastNameColumnIndex],
-    discordUsername: row[usernameColumnIndex],
+    // Strip the "@", if they included it.
+    discordUsername: row[usernameColumnIndex].replace("@", ""),
     email: row[emailColumnIndex],
   }));
 
