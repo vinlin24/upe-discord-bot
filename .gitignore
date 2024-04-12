@@ -108,4 +108,4 @@ config.json
 event-pics/
 
 # Various data files
-inductees.csv
+*.csv

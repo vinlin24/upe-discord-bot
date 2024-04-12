@@ -160,12 +160,30 @@ function parseInducteeInfoFromCSV():
   const inducteesInfo: InducteeInfo[] = rows.map(row => ({
     firstName: row[firstNameColumnIndex],
     lastName: row[lastNameColumnIndex],
-    // Strip the "@", if they included it.
-    discordUsername: row[usernameColumnIndex].replace("@", ""),
+    discordUsername: cleanProvidedUsername(row[usernameColumnIndex]),
     email: row[emailColumnIndex],
   }));
 
   return inducteesInfo;
+}
+
+/**
+ * Apply some post-processing on the provided response for the Discord username
+ * to catch and correct some common mistakes.
+ */
+function cleanProvidedUsername(providedUsername: string): string {
+  // Mistake: "@username" instead of "username".
+  if (providedUsername.startsWith("@")) {
+    providedUsername = providedUsername.slice(1);
+  }
+
+  // Mistake: "username#0" instead of "username".
+  const discriminatorIndex = providedUsername.indexOf("#");
+  if (discriminatorIndex !== -1) {
+    providedUsername = providedUsername.slice(0, discriminatorIndex);
+  }
+
+  return providedUsername;
 }
 
 // #endregion
@@ -208,8 +226,15 @@ async function findAndUpdateMembersWithInfo(
   const missingMembers: InducteeInfo[] = [];
   const failedMembers: GuildMember[] = [];
 
-  for (const inducteeInfo of inducteesInfo) {
-    const { discordUsername: providedUsername } = inducteeInfo;
+  for (const [index, inducteeInfo] of inducteesInfo.entries()) {
+    // e.g. [5/79]
+    const progressString = `[${index + 1}/${inducteesInfo.length}]`;
+
+    const {
+      firstName,
+      lastName,
+      discordUsername: providedUsername,
+    } = inducteeInfo;
 
     // Search for the member by username.
     const members = await guild.members.fetch({
@@ -220,23 +245,39 @@ async function findAndUpdateMembersWithInfo(
     // Unpack the singular member.
     const [member] = members.values();
 
-    // Query returned no results or the username doesn't match for some reason.
-    if (!member || member.user.username !== providedUsername) {
+    // Query returned no results.
+    if (!member) {
       missingMembers.push(inducteeInfo);
       continue;
     }
 
+    // Username doesn't match for some reason: might need to check on that.
+    if (member.user.username !== providedUsername) {
+      console.log(
+        `${progressString} WARNING: found @${member.user.username} from ` +
+        `searching with provided username "${providedUsername}", but they ` +
+        "are not an exact match",
+      );
+    }
+
     // Do the actual updating.
     const result = await makeUpdateCallsToDiscordAPI(member, inducteeInfo);
+
+    // Process and log result.
+    const nameForLogs = `${firstName} ${lastName} (${providedUsername})`;
+
     switch (result) {
       case APIResult.SUCCESS:
         newInductees.push(member);
+        console.log(`${progressString} SUCCESS: ${nameForLogs}`);
         break;
       case APIResult.FAILURE:
         failedMembers.push(member);
+        console.error(`${progressString} FAILURE: ${nameForLogs}`);
         break;
       case APIResult.SKIPPED:
         skippedInductees.push(member);
+        console.log(`${progressString} SKIPPED: ${nameForLogs}`);
         break;
     }
   }
