@@ -8,6 +8,7 @@ import {
   bold,
 } from "discord.js";
 
+import { addBroadcastOption } from "../../utils/options.utils";
 import {
   ADVOCACY_ROLE_ID,
   ALUMNI_ROLE_ID,
@@ -26,22 +27,18 @@ import {
   WEB_ROLE_ID,
 } from "../../utils/snowflakes.utils";
 
+const commandDefinition = new SlashCommandBuilder()
+  .setName("committee")
+  .setDescription("List details about a committee within UPE!")
+  .addRoleOption(input => input
+    .setName("committee_mention")
+    .setDescription("Role of the committee to view.")
+    .setRequired(true)
+  );
+addBroadcastOption(commandDefinition);
+
 module.exports = {
-  data: new SlashCommandBuilder()
-    .setName("committee")
-    .setDescription("List details about a committee within UPE!")
-    .addRoleOption(input => input
-      .setName("committee_mention")
-      .setDescription("Role of the committee to view.")
-      .setRequired(true)
-    )
-    // TODO: Adding a flag for "broadcast"/"hidden" seems like it can be common
-    // across different commands, so this addition can be refactored into a
-    // helper function if need be.
-    .addBooleanOption(input => input
-      .setName("broadcast")
-      .setDescription("Whether to respond publicly instead of ephemerally.")
-    ),
+  data: commandDefinition,
   execute: listCommitteeDetails,
 };
 
