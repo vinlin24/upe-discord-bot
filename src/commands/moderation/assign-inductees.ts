@@ -158,10 +158,10 @@ function parseInducteeInfoFromCSV():
   }
 
   const inducteesInfo: InducteeInfo[] = rows.map(row => ({
-    firstName: row[firstNameColumnIndex],
-    lastName: row[lastNameColumnIndex],
+    firstName: row[firstNameColumnIndex].trim(),
+    lastName: row[lastNameColumnIndex].trim(),
     discordUsername: cleanProvidedUsername(row[usernameColumnIndex]),
-    email: row[emailColumnIndex],
+    email: row[emailColumnIndex].trim(),
   }));
 
   return inducteesInfo;
@@ -182,6 +182,12 @@ function cleanProvidedUsername(providedUsername: string): string {
   if (discriminatorIndex !== -1) {
     providedUsername = providedUsername.slice(0, discriminatorIndex);
   }
+
+  // Mistake: "Username" instead of "username".
+  providedUsername = providedUsername.toLowerCase();
+
+  // Mistake: "username " instead of "username".
+  providedUsername = providedUsername.trim();
 
   return providedUsername;
 }
@@ -227,14 +233,15 @@ async function findAndUpdateMembersWithInfo(
   const failedMembers: GuildMember[] = [];
 
   for (const [index, inducteeInfo] of inducteesInfo.entries()) {
-    // e.g. [5/79]
-    const progressString = `[${index + 1}/${inducteesInfo.length}]`;
-
     const {
       firstName,
       lastName,
       discordUsername: providedUsername,
     } = inducteeInfo;
+
+    // e.g. [5/79]
+    const progressString = `[${index + 1}/${inducteesInfo.length}]`;
+    const nameForLogs = `${firstName} ${lastName} (${providedUsername})`;
 
     // Search for the member by username.
     const members = await guild.members.fetch({
@@ -248,6 +255,7 @@ async function findAndUpdateMembersWithInfo(
     // Query returned no results.
     if (!member) {
       missingMembers.push(inducteeInfo);
+      console.error(`${progressString} MISSING: ${nameForLogs}`);
       continue;
     }
 
@@ -264,8 +272,6 @@ async function findAndUpdateMembersWithInfo(
     const result = await makeUpdateCallsToDiscordAPI(member, inducteeInfo);
 
     // Process and log result.
-    const nameForLogs = `${firstName} ${lastName} (${providedUsername})`;
-
     switch (result) {
       case APIResult.SUCCESS:
         newInductees.push(member);
