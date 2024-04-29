@@ -1,6 +1,10 @@
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import heicConvert from "heic-convert";
 import download from "image-downloader";
 import { Model } from "mongoose";
+import fs from "node:fs";
+import path from "node:path";
+import { promisify } from "node:util";
 import { IByte } from "src/schemas/byte";
 import { getEventPoints } from "../../functions/get-points";
 const Byte = require("../../schemas/byte") as Model<IByte>;
@@ -78,6 +82,9 @@ module.exports = {
       dest: `${IMAGES_DIR + imageFileName}`,
     });
     imageFileName = downloadResult.filename;
+    if (downloadResult.filename.match(/\.heic$/i)) {
+      imageFileName = await convertHeicToJpg(downloadResult.filename);
+    }
 
     interaction
       .reply({
@@ -111,4 +118,25 @@ function generateImageFileName(url: string, byteName: string): string {
     .replace(/\s+/g, "-")
     .toLowerCase();
   return `${timestamp}-${normalizedByteName}${fileExtension}`;
+}
+
+async function convertHeicToJpg(heicPath: string): Promise<string> {
+  const inputBuffer = await promisify(fs.readFile)(heicPath);
+  const outputBuffer = await heicConvert({
+    buffer: inputBuffer,
+    format: "JPEG",
+    quality: 1,
+  });
+
+  const {
+    name: withoutExtension,
+    dir: outputDir,
+  } = path.parse(heicPath);
+  const newFilePath = path.join(outputDir, `${withoutExtension}.jpg`);
+  await promisify(fs.writeFile)(newFilePath, Buffer.from(outputBuffer));
+
+  // Delete the original HEIC file.
+  await promisify(fs.unlink)(heicPath);
+
+  return newFilePath;
 }

@@ -24,11 +24,13 @@
     "cheerio": "^1.0.0-rc.12",
     "csv-string": "^4.1.1",
     "discord.js": "^14.8.0",
+    "heic-convert": "^2.1.0",
     "image-downloader": "^4.3.0",
     "mongoose": "^7.0.3"
   },
   "devDependencies": {
     "@types/cheerio": "^0.22.35",
+    "@types/heic-convert": "^1.2.3",
     "@types/node": "^18.15.10",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.2"
