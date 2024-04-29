@@ -1,16 +1,18 @@
 import {
-    ActionRowBuilder,
-    ButtonBuilder,
-    ButtonStyle,
-    ComponentType,
-    EmbedBuilder,
-    MessageComponentInteraction
+  ActionRowBuilder,
+  AttachmentBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ComponentType,
+  EmbedBuilder,
+  MessageComponentInteraction
 } from "discord.js";
 
 export async function eventPages(
   interaction: MessageComponentInteraction,
   pages: Array<EmbedBuilder>,
-  time: number = 300000
+  images: AttachmentBuilder[],
+  time: number = 300000,
 ) {
   await interaction.deferReply();
 
@@ -54,6 +56,7 @@ export async function eventPages(
   const currentPage = await interaction.editReply({
     embeds: [pages[index]],
     components: [buttonRow],
+    files: [images[index]],
   });
 
   const collector = await currentPage.createMessageComponentCollector({
@@ -87,6 +90,7 @@ export async function eventPages(
     await currentPage.edit({
       embeds: [pages[index]],
       components: [buttonRow],
+      files: [images[index]],
     });
 
     collector.resetTimer();
@@ -96,6 +100,7 @@ export async function eventPages(
     await currentPage.edit({
       embeds: [pages[index]],
       components: [],
+      files: [images[index]],
     });
   });
 }

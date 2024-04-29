@@ -1,4 +1,5 @@
 import {
+  AttachmentBuilder,
   BaseInteraction,
   Collection,
   EmbedBuilder,
@@ -85,17 +86,23 @@ client.on(
 
       const selected: IByte = await Byte.findById(interaction.values[0]);
       const events: Array<IEvent> = selected.events;
+      const images: AttachmentBuilder[] = [];
+
       let pages: Array<EmbedBuilder> = events.map((entry) => {
+        const imagePath = path.join(__dirname, "..", "event-pics", entry.pic);
+        const file = new AttachmentBuilder(imagePath);
+        images.push(file);
+
         return new EmbedBuilder()
           .setTitle(entry.location === "Jeopardy" ? "Jeopardy" : entry.caption)
-          .setImage(entry.pic)
+          .setImage(`attachment://${entry.pic}`)
           .addFields({
             name: "Points Earned",
             value: `${getEventPoints(entry, selected.total_mems)}`,
           }, { name: "Date", value: entry.date.toLocaleDateString() });
       });
 
-      eventPages(interaction, pages);
+      eventPages(interaction, pages, images);
     }
   }
 );

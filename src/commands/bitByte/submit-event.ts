@@ -86,6 +86,11 @@ module.exports = {
       imageFileName = await convertHeicToJpg(downloadResult.filename);
     }
 
+    // Use the filename of the image saved to the server's filesystem instead of
+    // Discord's attachment URL. This is because the attachment URL may expire,
+    // and it also causes issues with unsupported formats like HEIC.
+    newEvent.pic = path.basename(imageFileName);
+
     interaction
       .reply({
         content: `Location: ${interaction.options.getString(
@@ -93,13 +98,6 @@ module.exports = {
         )}\nPoints Earned: ${getEventPoints(newEvent, byte.total_mems)}`,
         files: [{ attachment: imageFileName }],
       });
-
-    await interaction
-      .fetchReply()
-      .then((reply) => {
-        newEvent.pic = reply.attachments.first()?.proxyURL!;
-      })
-      .catch(console.error);
 
     byte.events.push(newEvent);
     await byte.save().catch(console.error);
