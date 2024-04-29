@@ -1,10 +1,10 @@
-const Byte = require("../../schemas/byte");
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
+import download from "image-downloader";
+import { Model } from "mongoose";
 import { IByte } from "src/schemas/byte";
-const mongoose = require("mongoose");
 import { getEventPoints } from "../../functions/get-points";
-import { image } from "image-downloader";
-const download = require("image-downloader");
+const Byte = require("../../schemas/byte") as Model<IByte>;
+
 module.exports = {
   data: new SlashCommandBuilder()
     .setName("submit")
@@ -52,27 +52,32 @@ module.exports = {
 
     const byte = await Byte.findOne({ byte_ids: interaction.user.id });
 
+    if (!byte) {
+      await interaction.reply({
+        content: "Error: You are not a byte!",
+        ephemeral: true,
+      });
+      console.warn(
+        `@${interaction.user.username} is not a byte but tried to submit.`
+      );
+      return;
+    }
+
     if (byte.total_mems < num_attended!) {
       await interaction.reply({
         content: `Error: There are less than ${num_attended} inductees in your byte.`,
       });
       return;
     }
+
     const IMAGES_DIR = "../../event-pics/";
-    let imageFileName =
-      Date.now() + newEvent.pic.substring(newEvent.pic.lastIndexOf("."));
+    let imageFileName = generateImageFileName(newEvent.pic, byte.name);
 
-    await download
-      .image({
-        url: newEvent.pic,
-        dest: `${IMAGES_DIR + imageFileName}`,
-        // extractFilename: false,
-      })
-      .then((filename: any) => {imageFileName = filename.filename})
-      .catch((err: any) => console.error(err));
-
-    // byte.events.push(newEvent)
-    // await byte.save().catch(console.error)
+    const downloadResult = await download.image({
+      url: newEvent.pic,
+      dest: `${IMAGES_DIR + imageFileName}`,
+    });
+    imageFileName = downloadResult.filename;
 
     interaction
       .reply({
@@ -80,8 +85,7 @@ module.exports = {
           "location"
         )}\nPoints Earned: ${getEventPoints(newEvent, byte.total_mems)}`,
         files: [{ attachment: imageFileName }],
-      })
-      .then((msg) => {});
+      });
 
     await interaction
       .fetchReply()
@@ -94,3 +98,17 @@ module.exports = {
     await byte.save().catch(console.error);
   },
 };
+
+function generateImageFileName(url: string, byteName: string): string {
+  const timestamp = Date.now();
+  const fileExtension = url.substring(
+    url.lastIndexOf("."),
+    url.indexOf("?"), // Discord attaches query params to the end of the URL.
+  );
+  // Replace spaces with dashes and converting to lowercase. Not bullet-proof as
+  // someone can still use illegal filename characters, but it's good enough.
+  const normalizedByteName = byteName
+    .replace(/\s+/g, "-")
+    .toLowerCase();
+  return `${timestamp}-${normalizedByteName}${fileExtension}`;
+}
