@@ -115,6 +115,7 @@ function generateImageFileName(url: string, byteName: string): string {
   // Replace spaces with dashes and converting to lowercase. Not bullet-proof as
   // someone can still use illegal filename characters, but it's good enough.
   const normalizedByteName = byteName
+    .replace(/[,&]/, "")
     .replace(/\s+/g, "-")
     .toLowerCase();
   return `${timestamp}-${normalizedByteName}${fileExtension}`;
