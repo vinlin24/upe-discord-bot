@@ -24,8 +24,10 @@
     "cheerio": "^1.0.0-rc.12",
     "csv-string": "^4.1.1",
     "discord.js": "^14.8.0",
+    "googleapis": "^144.0.0",
     "image-downloader": "^4.3.0",
-    "mongoose": "^7.0.3"
+    "mongoose": "^7.0.3",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/cheerio": "^0.22.35",
