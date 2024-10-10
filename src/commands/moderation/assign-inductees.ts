@@ -14,6 +14,9 @@ import {
   inlineCode,
 } from "discord.js";
 
+import { z } from "zod";
+import { GOOGLE_CREDENTIALS_PATH, GOOGLE_INDUCTEE_DATA_SHEET_NAME, GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID, sheetsRowToInducteeData, type InducteeData } from "../../listeners/inductee-join.listener";
+import { GoogleSheetsService } from "../../services/sheets.service";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
@@ -62,23 +65,38 @@ async function updateInducteeMembers(
     return;
   }
 
-  const inducteesInfo = parseInducteeInfoFromCSV();
-  if (inducteesInfo === "File Not Found") {
+  // Legacy approach (downloading CSV file from responses):
+
+  // const inducteesInfo = parseInducteeInfoFromCSV();
+  // if (inducteesInfo === "File Not Found") {
+  //   await interaction.reply({
+  //     ephemeral: true,
+  //     embeds: [makeErrorEmbed(
+  //       "Could not find the file with inductee information!",
+  //     )],
+  //   });
+  //   return;
+  // }
+  // if (inducteesInfo === "File Malformed") {
+  //   await interaction.reply({
+  //     ephemeral: true,
+  //     embeds: [makeErrorEmbed(
+  //       "Inductee info file has an unexpected format!",
+  //     )],
+  //   })
+  //   return;
+  // }
+
+  // New approach (dynamically using Sheets):
+
+  const inducteesInfo = await getInducteeInfoFromSheets();
+  if (inducteesInfo === "Failed") {
     await interaction.reply({
       ephemeral: true,
       embeds: [makeErrorEmbed(
-        "Could not find the file with inductee information!",
+        "Failed to retrieve inductee data from Google Sheets.",
       )],
     });
-    return;
-  }
-  if (inducteesInfo === "File Malformed") {
-    await interaction.reply({
-      ephemeral: true,
-      embeds: [makeErrorEmbed(
-        "Inductee info file has an unexpected format!",
-      )],
-    })
     return;
   }
 
@@ -165,6 +183,46 @@ function parseInducteeInfoFromCSV():
   }));
 
   return inducteesInfo;
+}
+
+async function getInducteeInfoFromSheets(): Promise<InducteeData[] | "Failed"> {
+  const sheetsService = GoogleSheetsService.fromCredentialsFile(
+    GOOGLE_CREDENTIALS_PATH,
+    GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID,
+  );
+
+  const sheetsData = await sheetsService.getValues(
+    GOOGLE_INDUCTEE_DATA_SHEET_NAME,
+  );
+  if (sheetsData === null) {
+    console.error("Failed to read inductee data from Google Sheets.");
+    return "Failed";
+  }
+
+  const inducteesData: InducteeData[] = [];
+  // TODO: This loop is duplicated from inductee-join.listener.ts.
+  for (let rowIndex = 1; rowIndex < sheetsData.length; rowIndex++) {
+    const row = sheetsData[rowIndex];
+    try {
+      const inducteeData = sheetsRowToInducteeData(row);
+      if (inducteeData === null) {
+        continue;
+      }
+      inducteesData.push(inducteeData);
+    }
+    catch (error) {
+      if (error instanceof z.ZodError) {
+        console.error(
+          `Error validating inductee response data (row ${rowIndex + 1}): ` +
+          error.message,
+        );
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  return inducteesData;
 }
 
 /**

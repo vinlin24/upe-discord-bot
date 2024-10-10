@@ -44,6 +44,18 @@ export class GoogleSheetsService {
     private readonly spreadsheetId: string,
   ) { }
 
+  public static fromCredentialsFile(
+    credentialsPath: string,
+    spreadsheetId: string,
+  ): GoogleSheetsService {
+    const credentials = loadServiceAccountCredentials(credentialsPath);
+    const client = initGoogleSheetsClient(
+      credentials.client_email,
+      credentials.private_key,
+    );
+    return new GoogleSheetsService(client, spreadsheetId);
+  }
+
   public async getValues(
     sheetName: string,
     cellRange?: string,

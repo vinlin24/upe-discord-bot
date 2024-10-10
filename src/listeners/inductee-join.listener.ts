@@ -52,7 +52,7 @@ export abstract class DiscordEventListener<Event extends keyof ClientEvents> {
 }
 
 // TODO: Is there a less brittle way of modeling the response row?
-const HoursSignupFormResponseRowSchema = z.tuple([
+export const HoursSignupFormResponseRowSchema = z.tuple([
   // [0] timestamp
   z.string(),
   // [1] emailAddress
@@ -74,18 +74,37 @@ const HoursSignupFormResponseRowSchema = z.tuple([
   // [9] extraInfo (optional)
 ]);
 
-type HoursSignupFormResponseRow =
+export type HoursSignupFormResponseRow =
   z.infer<typeof HoursSignupFormResponseRowSchema>;
 
 // TODO: Is there a less brittle way of configuring these constants?
-const GOOGLE_CREDENTIALS_PATH = "google-credentials.json";
-const GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID = "14zb0cHd7HAz5q9M-OMizi1gboEKEDI1uZlDTM1ZJuOc";
-const GOOGLE_INDUCTEE_DATA_SHEET_NAME = "Form Responses 1";
+export const GOOGLE_CREDENTIALS_PATH = "google-credentials.json";
+export const GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID = "14zb0cHd7HAz5q9M-OMizi1gboEKEDI1uZlDTM1ZJuOc";
+export const GOOGLE_INDUCTEE_DATA_SHEET_NAME = "Form Responses 1";
 
-type InducteeData = {
+export type InducteeData = {
   discordUsername: string;
   firstName: string;
   lastName: string;
+  email: string;
+}
+
+export function sheetsRowToInducteeData(row: string[]): InducteeData | null {
+  const validatedRow = HoursSignupFormResponseRowSchema.parse(row);
+  const inducteeOrTutor = validatedRow[7];
+  if (inducteeOrTutor !== "Fall 2024 Inductee") {
+    return null;
+  }
+  const firstName = validatedRow[2];
+  const lastName = validatedRow[3];
+  const discordUsername = validatedRow[8];
+  const email = validatedRow[1];
+  return {
+    discordUsername,
+    firstName,
+    lastName,
+    email,
+  }
 }
 
 export class InducteeJoinListener
@@ -142,10 +161,13 @@ export class InducteeJoinListener
     }
 
     for (let rowIndex = 1; rowIndex < inducteesSheetData.length; rowIndex++) {
-      const row: any[] = inducteesSheetData[rowIndex];
-      let validatedRow: HoursSignupFormResponseRow;
+      const row = inducteesSheetData[rowIndex];
       try {
-        validatedRow = HoursSignupFormResponseRowSchema.parse(row);
+        const inducteeData = sheetsRowToInducteeData(row);
+        if (inducteeData === null) {
+          continue;
+        }
+        this.inducteesCache.set(inducteeData.discordUsername, inducteeData);
       }
       catch (error) {
         if (error instanceof z.ZodError) {
@@ -157,20 +179,6 @@ export class InducteeJoinListener
         }
         throw error;
       }
-
-      const inducteeOrTutor = validatedRow[7];
-      if (inducteeOrTutor !== "Fall 2024 Inductee") {
-        continue;
-      }
-      const firstName = validatedRow[2];
-      const lastName = validatedRow[3];
-      const discordUsername = validatedRow[8];
-      const inducteeData: InducteeData = {
-        discordUsername,
-        firstName,
-        lastName,
-      }
-      this.inducteesCache.set(discordUsername, inducteeData);
     }
   }
 
