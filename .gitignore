@@ -110,6 +110,9 @@ event-pics/
 # Various data files
 *.csv
 
+# Sensitive configuration data
+*.json
+
 # Personal VS Code workspace settings
 .vscode*/
 *.code-workspace

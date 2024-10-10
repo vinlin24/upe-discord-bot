@@ -30,4 +30,7 @@
         "node_modules",
         "dist"
     ],
+    "ts-node": {
+        "files": true,
+    },
 }

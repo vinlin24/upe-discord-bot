@@ -1,15 +1,17 @@
 import {
   BaseInteraction,
+  Client,
   Collection,
   EmbedBuilder,
-  MessageComponentInteraction,
+  GatewayIntentBits,
+  MessageComponentInteraction
 } from "discord.js";
 import * as fs from "fs";
 import * as path from "path";
 import { eventPages } from "./event-pages";
 import { getEventPoints } from "./functions/get-points";
+import { InducteeJoinListener } from "./listeners/inductee-join.listener";
 import type { IByte, IEvent } from "./schemas/byte";
-const { Client, GatewayIntentBits } = require("discord.js");
 const { token, connectionString } = require("../config.json");
 const { connect, mongoose } = require("mongoose");
 const Byte = require("./schemas/byte");
@@ -50,6 +52,7 @@ for (const folder of commandFolders) {
   }
 }
 
+// @ts-expect-error this was here already for some reason.
 client.selectMenus.set();
 
 // When the client is ready, run this code (only once)
@@ -75,6 +78,7 @@ client.on("interactionCreate", async (interaction: BaseInteraction) => {
   }
 });
 
+// @ts-expect-error bruh why is this an error
 client.on(
   "interactionCreate",
   async (interaction: MessageComponentInteraction) => {
@@ -99,6 +103,23 @@ client.on(
     }
   }
 );
+
+// TODO: Implement proper framework for generalizing and registering listeners.
+const inducteeJoinListener = new InducteeJoinListener();
+inducteeJoinListener.register(client);
+
+function cleanUp() {
+  client.destroy();
+  mongoose.connection.close();
+}
+
+process.on("SIGINT", () => {
+  console.warn("Caught interrupt signal.");
+  cleanUp();
+  process.exit(0);
+});
+
+process.on("exit", cleanUp);
 
 // Login to Discord with your client's token
 client.login(token);
