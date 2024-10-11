@@ -18,6 +18,7 @@ import { z } from "zod";
 import { GOOGLE_CREDENTIALS_PATH, GOOGLE_INDUCTEE_DATA_SHEET_NAME, GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID, sheetsRowToInducteeData, type InducteeData } from "../../listeners/inductee-join.listener";
 import { GoogleSheetsService } from "../../services/sheets.service";
 import { makeErrorEmbed } from "../../utils/errors.utils";
+import { cleanProvidedUsername } from "../../utils/input.utils";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
 const COMMAND_NAME = "assigninductees";
@@ -223,31 +224,6 @@ async function getInducteeInfoFromSheets(): Promise<InducteeData[] | "Failed"> {
   }
 
   return inducteesData;
-}
-
-/**
- * Apply some post-processing on the provided response for the Discord username
- * to catch and correct some common mistakes.
- */
-function cleanProvidedUsername(providedUsername: string): string {
-  // Mistake: "@username" instead of "username".
-  if (providedUsername.startsWith("@")) {
-    providedUsername = providedUsername.slice(1);
-  }
-
-  // Mistake: "username#0" instead of "username".
-  const discriminatorIndex = providedUsername.indexOf("#");
-  if (discriminatorIndex !== -1) {
-    providedUsername = providedUsername.slice(0, discriminatorIndex);
-  }
-
-  // Mistake: "Username" instead of "username".
-  providedUsername = providedUsername.toLowerCase();
-
-  // Mistake: "username " instead of "username".
-  providedUsername = providedUsername.trim();
-
-  return providedUsername;
 }
 
 // #endregion

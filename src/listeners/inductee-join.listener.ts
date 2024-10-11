@@ -11,6 +11,7 @@ import {
   initGoogleSheetsClient,
   loadServiceAccountCredentials
 } from "../services/sheets.service";
+import { cleanProvidedUsername } from "../utils/input.utils";
 import { INDUCTEES_ROLE_ID } from "../utils/snowflakes.utils";
 
 export abstract class DiscordEventListener<Event extends keyof ClientEvents> {
@@ -58,21 +59,43 @@ export const HoursSignupFormResponseRowSchema = z.tuple([
   // [1] emailAddress
   z.string().email(),
   // [2] firstName
-  z.string(),
+  z.string().trim(),
   // [3] lastName
-  z.string(),
+  z.string().trim(),
   // [4] firstTimeSlot
-  z.string(),
+  z.string().trim(),
   // [5] secondTimeSlot
-  z.string(),
+  z.string().trim(),
   // [6] thirdTimeSlot
-  z.string(),
+  z.string().trim(),
   // [7] inducteeOrTutor
   z.literal("Fall 2024 Inductee").or(z.literal("UPE Tutor Program")),
   // [8] discordUsername
-  z.string(),
+  z.string().transform(cleanProvidedUsername),
   // [9] extraInfo (optional)
-]);
+  // TODO: Bruh there's gotta be a better way for this.
+]).or(z.tuple([
+  // [0] timestamp
+  z.string(),
+  // [1] emailAddress
+  z.string().email(),
+  // [2] firstName
+  z.string().trim(),
+  // [3] lastName
+  z.string().trim(),
+  // [4] firstTimeSlot
+  z.string().trim(),
+  // [5] secondTimeSlot
+  z.string().trim(),
+  // [6] thirdTimeSlot
+  z.string().trim(),
+  // [7] inducteeOrTutor
+  z.literal("Fall 2024 Inductee").or(z.literal("UPE Tutor Program")),
+  // [8] discordUsername
+  z.string().transform(cleanProvidedUsername),
+  // [9] extraInfo (optional)
+  z.string().trim(),
+]));
 
 export type HoursSignupFormResponseRow =
   z.infer<typeof HoursSignupFormResponseRowSchema>;
