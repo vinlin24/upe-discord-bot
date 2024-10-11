@@ -112,6 +112,7 @@ event-pics/
 
 # Sensitive configuration data
 *.json
+droplet.txt
 
 # Personal VS Code workspace settings
 .vscode*/
