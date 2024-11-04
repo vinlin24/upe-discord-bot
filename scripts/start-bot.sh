@@ -1,3 +1,4 @@
 #!/bin/bash
 
-npm start | tee -a bot.log
+echo "[$(date)]" >> bot.log
+node . | tee -a bot.log

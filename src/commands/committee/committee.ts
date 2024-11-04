@@ -69,7 +69,8 @@ type CommitteeJSON = {
   committees: CommitteeData[];
 };
 
-const { committees } = require("../../data/committees.json") as CommitteeJSON;
+// TODO: Brittle path manipulation.
+const { committees } = require("../../../committees.json") as CommitteeJSON;
 
 async function listCommitteeDetails(
   interaction: ChatInputCommandInteraction,

@@ -2,7 +2,7 @@
   "name": "upe-discord-bot",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/Bot.js",
   "scripts": {
     "start": "ts-node src/Bot.ts",
     "deploy:global": "ts-node src/deploy-global.ts",

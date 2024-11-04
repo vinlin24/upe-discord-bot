@@ -12,12 +12,18 @@ fi
 DROPLET_IP="$(cat droplet.txt)"
 DROPLET_USER=root
 
+# Ensure dependencies are updated.
 ssh "${DROPLET_USER}@${DROPLET_IP}" << EOF
     cd ~/upe-discord-bot
     git pull
     npm install
 EOF
 
+# Compile locally since the droplet can't handle it apparently.
+tsc
+scp -r dist "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot"
+
+# Sync any additional files.
 if [ $# -gt 0 ]; then
-    scp "$@" "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot"
+    scp -r "$@" "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot"
 fi
