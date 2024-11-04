@@ -2,6 +2,7 @@
 # NOTE: This script assumes you have an SSH key set up and the droplet IP
 # address saved in a local droplet.txt file.
 
+set -e
 set -x
 
 if [ ! -f droplet.txt ]; then
