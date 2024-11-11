@@ -1,9 +1,7 @@
 const Byte = require("../../schemas/byte");
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
-import { IByte } from "src/schemas/byte";
-const mongoose = require("mongoose");
 import { getEventPoints } from "../../functions/get-points";
-import { image } from "image-downloader";
+const mongoose = require("mongoose");
 const download = require("image-downloader");
 module.exports = {
   data: new SlashCommandBuilder()
@@ -38,9 +36,24 @@ module.exports = {
         .setName("picture")
         .setDescription("Please attach a picture of the event")
         .setRequired(true)
+    )
+    .addUserOption((option) =>
+      option
+        .setName("byte")
+        .setDescription("The byte to get the points for")
     ),
   async execute(interaction: ChatInputCommandInteraction) {
     const num_attended = interaction.options.getInteger("members");
+
+    const userBehalf = interaction.options.getUser("byte") ?? interaction.user;
+    const byte = await Byte.findOne({ byte_ids: userBehalf.id });
+    if (!byte) {
+      await interaction.reply({
+        content: `Error: ${userBehalf.username} is not one of the recognized bytes.`,
+        ephemeral: true,
+      });
+      return;
+    }
 
     const newEvent = {
       location: interaction.options.getString("location")!,
@@ -49,8 +62,6 @@ module.exports = {
       caption: interaction.options.getString("caption")!,
       date: interaction.createdAt!,
     };
-
-    const byte = await Byte.findOne({ byte_ids: interaction.user.id });
 
     if (byte.total_mems < num_attended!) {
       await interaction.reply({
@@ -68,7 +79,7 @@ module.exports = {
         dest: `${IMAGES_DIR + imageFileName}`,
         // extractFilename: false,
       })
-      .then((filename: any) => {imageFileName = filename.filename})
+      .then((filename: any) => { imageFileName = filename.filename })
       .catch((err: any) => console.error(err));
 
     // byte.events.push(newEvent)
@@ -81,7 +92,7 @@ module.exports = {
         )}\nPoints Earned: ${getEventPoints(newEvent, byte.total_mems)}`,
         files: [{ attachment: imageFileName }],
       })
-      .then((msg) => {});
+      .then((msg) => { });
 
     await interaction
       .fetchReply()
