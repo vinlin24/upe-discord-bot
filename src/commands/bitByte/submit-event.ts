@@ -1,6 +1,7 @@
 const Byte = require("../../schemas/byte");
 import { ChatInputCommandInteraction, SlashCommandBuilder } from "discord.js";
 import { getEventPoints } from "../../functions/get-points";
+import type { IEvent } from "../../schemas/byte";
 const mongoose = require("mongoose");
 const download = require("image-downloader");
 module.exports = {
@@ -55,7 +56,7 @@ module.exports = {
       return;
     }
 
-    const newEvent = {
+    const newEvent: IEvent = {
       location: interaction.options.getString("location")!,
       num_mems: num_attended!,
       pic: interaction.options.getAttachment("picture")?.url!,
