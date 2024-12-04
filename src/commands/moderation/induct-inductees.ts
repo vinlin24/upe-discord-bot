@@ -22,7 +22,11 @@ module.exports = {
   data: new SlashCommandBuilder()
     .setName(COMMAND_NAME)
     .setDescription("Exchange everyone's inductee role for the members role.")
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator),
+    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
+    .addBooleanOption((option) => option
+      .setName("preserve")
+      .setDescription("Preserve inductee role, just add members role.")
+    ),
   execute: inductAll,
 };
 
@@ -59,13 +63,21 @@ async function inductAll(
     return;
   }
 
-  await exchangeRoleForAllInductees(inducteesRole, membersRole, interaction);
+  const preserveInductees = !!interaction.options.getBoolean("preserve");
+
+  await exchangeRoleForAllInductees(
+    inducteesRole,
+    membersRole,
+    interaction,
+    preserveInductees,
+  );
 }
 
 async function exchangeRoleForAllInductees(
   inducteesRole: Role,
   membersRole: Role,
   interaction: ChatInputCommandInteraction,
+  preserveInductees: boolean = false,
 ): Promise<void> {
   await interaction.deferReply();
 
@@ -78,7 +90,9 @@ async function exchangeRoleForAllInductees(
   for (const guildMember of inducteesRole.members.values()) {
     try {
       await guildMember.roles.add(membersRole, reason);
-      await guildMember.roles.remove(inducteesRole, reason);
+      if (!preserveInductees) {
+        await guildMember.roles.remove(inducteesRole, reason);
+      }
       numSucceeded += 1;
     }
     catch (error) {
