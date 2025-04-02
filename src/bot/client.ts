@@ -7,7 +7,7 @@ import interactionDispatchListener from "./listeners/interaction-dispatch.listen
 import readyListener from "./listeners/ready.listener";
 import { commandLoader, listenerLoader } from "./loaders";
 
-export type ClientFactoryOptions = {
+export type ClientManagerOptions = {
   commandsRoot: Path;
   listenersRoot: Path;
   databaseConnectionString: string;
@@ -23,19 +23,19 @@ export class ClientManager {
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildPresences,
-  ] as const satisfies GatewayIntentBits[];
+  ] as const satisfies readonly GatewayIntentBits[];
 
   public static readonly INITIAL_LISTENERS = [
     readyListener,
     interactionDispatchListener,
-  ] as const satisfies DiscordEventListener<any>[];
+  ] as const satisfies readonly DiscordEventListener<any>[];
 
   private readonly client = new Client({
     intents: ClientManager.CLIENT_INTENTS,
   });
   private initialized = false;
 
-  public constructor(private readonly options: ClientFactoryOptions) { }
+  public constructor(private readonly options: ClientManagerOptions) { }
 
   public async initialize(): Promise<Client> {
     if (this.initialized) {
