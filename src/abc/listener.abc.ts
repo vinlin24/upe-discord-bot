@@ -10,10 +10,10 @@ export abstract class DiscordEventListener<Event extends keyof ClientEvents> {
   public abstract readonly event: Event;
 
   /** Whether this listener should fire only once. */
-  public readonly once = false;
+  public readonly once: boolean = false;
 
   /** ID to identify a listener class. Should be unique. */
-  public readonly id = this.constructor.name;
+  public readonly id: string = this.constructor.name;
 
   /** Filters that must pass before the main event handler can run. */
   public filters: DiscordEventFilter<Event>[] = [];
