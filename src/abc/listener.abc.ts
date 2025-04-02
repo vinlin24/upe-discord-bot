@@ -19,7 +19,8 @@ export abstract class DiscordEventListener<Event extends keyof ClientEvents> {
   public filters: DiscordEventFilter<Event>[] = [];
 
   /** Pipeline execution engine to manage handler lifecycle. */
-  private readonly pipeline = new ListenerExecutionPipeline(this);
+  private readonly pipeline: ListenerExecutionPipeline<Event>
+    = new ListenerExecutionPipeline(this);
 
   /** Shorthand for formatting this listener's details, such as for logging. */
   public get logName(): string {

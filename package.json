@@ -1,24 +1,27 @@
 {
   "name": "upe-discord-bot",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/Bot.js",
+  "description": "UPE induction Discord bot",
+  "main": "dist/index.js",
   "scripts": {
-    "start": "ts-node src/Bot.ts",
-    "deploy:global": "ts-node src/deploy-global.ts",
-    "deploy:testing": "ts-node src/deploy-testing.ts"
+    "prestart": "npm run build",
+    "start": "node .",
+    "prebuild": "rm -rf dist",
+    "build": "tsc",
+    "dev": "ts-node src/index.ts",
+    "sync": "ts-node src/index.ts --sync"
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/alexanderhwang02/upe-discord-bot.git"
+    "url": "git+https://github.com/vinlin24/upe-discord-bot.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "bugs": {
-    "url": "https://github.com/alexanderhwang02/upe-discord-bot/issues"
+    "url": "https://github.com/vinlin24/upe-discord-bot/issues"
   },
-  "homepage": "https://github.com/alexanderhwang02/upe-discord-bot#readme",
+  "homepage": "https://github.com/vinlin24/upe-discord-bot#readme",
   "dependencies": {
     "@discordjs/rest": "^1.1.0",
     "cheerio": "^1.0.0-rc.12",
