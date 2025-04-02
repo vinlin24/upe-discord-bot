@@ -1,4 +1,8 @@
-import type { Awaitable, ChatInputCommandInteraction } from "discord.js";
+import type {
+  Awaitable,
+  ChatInputCommandInteraction,
+  InteractionReplyOptions,
+} from "discord.js";
 
 import type { SlashCommandHandler } from "./command.abc";
 
@@ -45,5 +49,22 @@ export abstract class SlashCommandCheck<
   ): Awaitable<any> {
     console.error(`${error.name} in ${this.logName}:`);
     console.error(error);
+  }
+
+  /**
+   * Shorthand for replying to the interaction only if it has not already been
+   * replied to.
+   *
+   * Return whether a new reply was sent.
+   */
+  protected async safeReply(
+    interaction: ChatInputCommandInteraction,
+    options: InteractionReplyOptions,
+  ): Promise<boolean> {
+    if (interaction.replied) {
+      return false;
+    }
+    await interaction.reply(options);
+    return true;
   }
 }

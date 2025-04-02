@@ -1,4 +1,4 @@
-import type { GuildId } from "./types/branded.types";
+import type { GuildId, UserId } from "./types/branded.types";
 
 declare global {
   type EnvironmentVariables = {
@@ -25,10 +25,19 @@ declare global {
      * Client application ID generated on the Discord Developer Dashboard.
      */
     APPLICATION_ID: string;
+
+    // /////////////////// //
+    //      Snowflakes     //
+    // /////////////////// //
+
     /**
      * ID of the UPE server, the sole server this bot serves.
      */
     UPE_GUILD_ID: GuildId;
+    /**
+     * ID of the user developing/maintaining this bot.
+     */
+    DEVELOPER_USER_ID: UserId;
 
     // //////////////////////////// //
     //      3rd Party Services      //
