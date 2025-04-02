@@ -15,7 +15,16 @@ async function main(): Promise<void> {
     listenersRoot: HANDLERS_ROOT,
     databaseConnectionString: process.env.DB_CONNECTION_STRING,
     databaseName: process.env.DB_NAME,
+    botToken: process.env.BOT_TOKEN,
+    applicationId: process.env.APPLICATION_ID,
+    guildId: process.env.UPE_GUILD_ID,
   });
+
+  if (process.argv.includes("--sync")) {
+    console.warn("[SYNC] Only deploying commands. Bot will not log in.");
+    await clientManager.deployCommands();
+    return;
+  }
 
   const client = await clientManager.initialize();
 
