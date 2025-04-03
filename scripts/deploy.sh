@@ -49,5 +49,7 @@ npm run sync
 ssh "${DROPLET_USER}@${DROPLET_IP}" << EOF
     cd ~/upe-discord-bot &&
     pm2 delete terabyte 2>/dev/null
-    pm2 start ~/upe-discord-bot/scripts/start-bot.sh --name terabyte
+    pm2 start ~/upe-discord-bot/scripts/start-bot.sh \
+        --no-autorestart \
+        --name terabyte
 EOF

@@ -32,7 +32,7 @@ class ShutdownCommand extends SlashCommandHandler {
       await interaction.reply(content);
     }
     catch { } // Just don't prevent shutdown.
-    process.exit(0); // NOTE: Must be 0 to prevent auto-restart by PM2.
+    process.exit(0);
   }
 }
 
