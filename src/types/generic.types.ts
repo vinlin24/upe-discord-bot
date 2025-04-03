@@ -24,3 +24,8 @@ export function getEnumFromName<StringEnum extends Record<string, string>>(
  */
 export type ArrayToUnion<T extends readonly any[]>
   = T extends readonly (infer U)[] ? U : never;
+
+/** Narrow the type of an array if it has at least one element. */
+export function isNonEmptyArray<T>(array: T[]): array is [T, ...T[]] {
+  return array.length > 0;
+}

@@ -21,6 +21,12 @@ export type UrlString = Branded<string, "UrlString">;
 /** Represents a Unix timestamp, in seconds. */
 export type UnixSeconds = Branded<number, "UnixSeconds">;
 
+/** Represents a time duration, in seconds. */
+export type Seconds = Branded<number, "Seconds">;
+
+/** Represents a time duration, in milliseconds. */
+export type Milliseconds = Branded<number, "Milliseconds">;
+
 // Discord Snowflakes.
 
 export type GuildId = Branded<Snowflake, "GuildId">;
