@@ -12,6 +12,9 @@ export type Branded<T, B> = T & Brand<B>;
 /** Represents a filesystem path. */
 export type Path = Branded<string, "Path">;
 
+/** Represents a URL. */
+export type UrlString = Branded<string, "UrlString">;
+
 export type GuildId = Branded<Snowflake, "GuildId">;
 export type ChannelId = Branded<Snowflake, "ChannelId">;
 export type RoleId = Branded<Snowflake, "RoleId">;
