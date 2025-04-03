@@ -1,4 +1,5 @@
 import { Colors, DiscordAPIError, EmbedBuilder } from "discord.js";
+import { MongoError } from "mongodb";
 
 /**
  * See: https://discord.com/developers/docs/topics/opcodes-and-status-codes
@@ -54,4 +55,12 @@ export function makeErrorEmbed(
   }
 
   return embed;
+}
+
+export type MongoErrorWithCode<Opcode extends number>
+  = MongoError & { code: Opcode };
+
+export function isMongoDuplicateKeyError(error: unknown)
+  : error is MongoErrorWithCode<11000> {
+  return error instanceof MongoError && error.code === 11000;
 }

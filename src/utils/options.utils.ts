@@ -8,6 +8,7 @@ type AnySlashCommandBuilder =
   | SlashCommandBuilder
   | Omit<SlashCommandBuilder, "addSubcommand" | "addSubcommandGroup">;
 
+/** @deprecated Use the extended builder class instead. */
 export function addBroadcastOption(
   commandDefinition: AnySlashCommandBuilder,
   required: boolean = false,
@@ -17,4 +18,14 @@ export function addBroadcastOption(
     .setDescription("Whether to respond publicly instead of ephemerally.")
     .setRequired(required)
   );
+}
+
+export class ExtendedSlashCommandBuilder extends SlashCommandBuilder {
+  public addBroadcastOption(required: boolean = false) {
+    return this.addBooleanOption(input => input
+      .setName("broadcast")
+      .setDescription("Whether to respond publicly instead of ephemerally.")
+      .setRequired(required)
+    );
+  }
 }
