@@ -107,6 +107,9 @@ abstract class HandlerLoader<Handler> {
 }
 
 class CommandLoader extends HandlerLoader<SlashCommandHandler> {
+  private readonly componentSubscriptions
+    = new Collection<string, SlashCommandHandler>();
+
   public constructor() {
     super(SlashCommandHandler);
   }
@@ -117,6 +120,28 @@ class CommandLoader extends HandlerLoader<SlashCommandHandler> {
 
   protected override isHandlerFile(path: Path): boolean {
     return path.endsWith(".command.js") || path.endsWith(".command.ts");
+  }
+
+  public override reset(): void {
+    super.reset();
+    this.componentSubscriptions.clear();
+  }
+
+  public override async load(modulePath: Path): Promise<SlashCommandHandler> {
+    // First pass: load like normal.
+    const handler = await super.load(modulePath);
+    // Second pass: register subscription, if exists.
+    for (const id of handler.componentIds) {
+      if (this.componentSubscriptions.has(id)) {
+        throw new Error(`component custom ID already in use: ${id}`);
+      }
+      this.componentSubscriptions.set(id, handler);
+    }
+    return handler;
+  }
+
+  public getSubscribedHandler(componentId: string): SlashCommandHandler | null {
+    return this.componentSubscriptions.get(componentId) ?? null;
   }
 }
 

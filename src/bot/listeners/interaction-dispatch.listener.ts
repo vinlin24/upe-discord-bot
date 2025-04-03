@@ -1,4 +1,10 @@
-import { ChannelType, Events, type Interaction } from "discord.js";
+import {
+  ChannelType,
+  Events,
+  type ChatInputCommandInteraction,
+  type Interaction,
+  type MessageComponentInteraction,
+} from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import { EMOJI_THUMBS_UP } from "../../utils/emojis.utils";
@@ -10,10 +16,17 @@ class InteractionDispatchListener extends
   public override readonly event = Events.InteractionCreate;
 
   public override async execute(interaction: Interaction): Promise<void> {
-    if (!interaction.isChatInputCommand()) {
-      return;
+    if (interaction.isChatInputCommand()) {
+      return await this.handleChatInputCommandInteraction(interaction);
     }
+    if (interaction.isMessageComponent()) {
+      return await this.handleMessageComponentInteraction(interaction);
+    }
+  }
 
+  private async handleChatInputCommandInteraction(
+    interaction: ChatInputCommandInteraction,
+  ): Promise<void> {
     const { commandName, channel, user: caller } = interaction;
 
     const command = commandLoader.get(commandName);
@@ -54,6 +67,24 @@ class InteractionDispatchListener extends
         "falling back to a generic response.",
       );
       await interaction.reply({ content: EMOJI_THUMBS_UP, ephemeral: true });
+    }
+  }
+
+  private async handleMessageComponentInteraction(
+    interaction: MessageComponentInteraction,
+  ): Promise<void> {
+    const handler = commandLoader.getSubscribedHandler(interaction.customId);
+    if (handler === null) {
+      return;
+    }
+    try {
+      await handler.dispatchComponent(interaction);
+    }
+    catch (error) {
+      console.error(
+        "[DISPATCH] Uncaught error in component event execution pipeline:"
+      );
+      console.error(error);
     }
   }
 }

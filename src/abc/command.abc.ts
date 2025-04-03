@@ -3,6 +3,7 @@ import {
   ChatInputCommandInteraction,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
   type GuildMember,
+  type MessageComponentInteraction,
 } from "discord.js";
 
 import { highestPrivilege, Privilege } from "../middleware/privilege.middleware";
@@ -16,6 +17,9 @@ export abstract class SlashCommandHandler {
 
   /** Checks that must pass before the main command handler can run. */
   public checks: SlashCommandCheck[] = [];
+
+  /** Custom IDs of any message components to subscribe to. */
+  public componentIds: string[] = [];
 
   /** Pipeline execution engine to manage handler lifecycle. */
   private readonly pipeline = new CommandExecutionPipeline(this);
@@ -38,6 +42,11 @@ export abstract class SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Awaitable<any>;
 
+  /** Callback to execute on message component interactions subscribed to. */
+  public onComponent(
+    interaction: MessageComponentInteraction,
+  ): Awaitable<any> { }
+
   /** Fallback callback for if the main callback throws an `Error`. */
   public handleError(
     error: Error,
@@ -47,11 +56,29 @@ export abstract class SlashCommandHandler {
     console.error(error);
   }
 
-  /** Run full execution pipeline. */
+  /** Fallback callback for if the component handler throws an `Error`. */
+  public handleComponentError(
+    error: Error,
+    interaction: MessageComponentInteraction,
+  ): Awaitable<any> {
+    console.error(
+      `${error.name} in ${this.logName} component ${interaction.customId}:`,
+    );
+    console.error(error);
+  }
+
+  /** Run full execution pipeline for a slash command invocation. */
   public async dispatch(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     await this.pipeline.run(interaction);
+  }
+
+  /** Run full execution pipeline for a message component interaction event. */
+  public async dispatchComponent(
+    interaction: MessageComponentInteraction,
+  ): Promise<void> {
+    await this.pipeline.runComponent(interaction);
   }
 
   /** Allow callers of developer privilege to bypass checks. */
@@ -85,6 +112,12 @@ class CommandExecutionPipeline {
     await this.executeChecks(interaction)
       && await this.executeMain(interaction)
       && await this.executePostHooks(interaction);
+  }
+
+  public async runComponent(
+    interaction: MessageComponentInteraction,
+  ): Promise<void> {
+    await this.executeComponent(interaction);
   }
 
   private async executeChecks(
@@ -163,6 +196,27 @@ class CommandExecutionPipeline {
           console.error(`Error handler of ${filter.logName} threw: ${error}`);
           throw error;
         }
+      }
+    }
+  }
+
+  private async executeComponent(
+    interaction: MessageComponentInteraction,
+  ): Promise<void> {
+    try {
+      await this.handler.onComponent(interaction);
+    }
+    catch (error) {
+      this.assertErrorThrown(error);
+      try {
+        await this.handler.handleComponentError(error, interaction);
+      }
+      catch (error) {
+        console.error(
+          `Error handler of ${this.handler.logName} component ` +
+          `${interaction.customId} threw: ${error}`,
+        )
+        throw error;
       }
     }
   }
