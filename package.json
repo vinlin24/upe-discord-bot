@@ -31,11 +31,13 @@
     "dotenv": "^16.4.7",
     "googleapis": "^144.0.0",
     "image-downloader": "^4.3.0",
+    "lodash": "^4.17.21",
     "mongoose": "^7.0.3",
     "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/cheerio": "^0.22.35",
+    "@types/lodash": "^4.17.16",
     "@types/mongodb": "^4.0.6",
     "@types/node": "^18.15.10",
     "copyfiles": "^2.4.1",
