@@ -4,6 +4,7 @@ import type {
   InteractionReplyOptions,
 } from "discord.js";
 
+import { makeErrorEmbed } from "../utils/errors.utils";
 import type { SlashCommandHandler } from "./command.abc";
 
 export type SlashCommandCheckDetails<
@@ -34,7 +35,13 @@ export abstract class SlashCommandCheck<
   public onFail(
     details: Details & { pass: false },
     interaction: ChatInputCommandInteraction,
-  ): Awaitable<any> { }
+  ): Awaitable<any> {
+    // Default to a generic error message if not overriden.
+    return this.safeReply(interaction, {
+      embeds: [makeErrorEmbed("You cannot run this command!")],
+      ephemeral: true,
+    });
+  }
 
   /** Callback to run after the main command handler completes. */
   public postHook(

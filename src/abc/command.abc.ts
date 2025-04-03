@@ -2,8 +2,10 @@ import {
   Awaitable,
   ChatInputCommandInteraction,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
+  type GuildMember,
 } from "discord.js";
 
+import { highestPrivilege, Privilege } from "../middleware/privilege.middleware";
 import { makeErrorEmbed } from "../utils/errors.utils";
 import type { SlashCommandCheck, SlashCommandCheckDetails } from "./check.abc";
 
@@ -52,6 +54,11 @@ export abstract class SlashCommandHandler {
     await this.pipeline.run(interaction);
   }
 
+  /** Allow callers of developer privilege to bypass checks. */
+  public setDevBypass(state: boolean): void {
+    this.pipeline.devBypass = state;
+  }
+
   /** Shorthand for replying ephemerally with an embed-wrapped message. */
   protected async replyError(
     interaction: ChatInputCommandInteraction,
@@ -70,6 +77,8 @@ class CommandExecutionPipeline {
     SlashCommandCheckDetails & { pass: true },
   ][] = [];
 
+  public devBypass: boolean = false;
+
   public constructor(private readonly handler: SlashCommandHandler) { }
 
   public async run(interaction: ChatInputCommandInteraction): Promise<void> {
@@ -83,7 +92,17 @@ class CommandExecutionPipeline {
   ): Promise<boolean> {
     this.passedChecks.length = 0; // Reset.
 
+    const member = interaction.member as GuildMember;
+
     for (const check of this.handler.checks) {
+      if (this.devBypass && highestPrivilege(member) >= Privilege.Developer) {
+        console.log(
+          `[CHECK] /${interaction.commandName} checks bypassed ` +
+          `for developer @${member.user.username}`,
+        );
+        return true;
+      }
+
       try {
         const details = await check.predicate(interaction);
         if (!details.pass) {
