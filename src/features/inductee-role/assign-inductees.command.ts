@@ -16,7 +16,6 @@ import {
 import { z } from "zod";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
-import { GoogleSheetsService } from "../../services/sheets.service";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { cleanProvidedUsername } from "../../utils/input.utils";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
@@ -27,6 +26,7 @@ import {
   sheetsRowToInducteeData,
   type InducteeData,
 } from "./inductee-join.listener";
+import { GoogleSheetsService } from "./sheets.service";
 
 /** @deprecated Now using Google Sheets. */
 const INDUCTEE_INFO_CSV_PATH = "inductees.csv"; // Placed at CWD for now.

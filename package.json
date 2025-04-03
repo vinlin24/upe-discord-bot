@@ -22,7 +22,7 @@
   "bugs": {
     "url": "https://github.com/vinlin24/upe-discord-bot/issues"
   },
-  "homepage": "https://github.com/vinlin24/upe-discord-bot#readme",
+  "homepage": "https://github.com/vinlin24/upe-discord-bot",
   "dependencies": {
     "@discordjs/rest": "^1.1.0",
     "cheerio": "^1.0.0-rc.12",

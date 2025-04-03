@@ -2,14 +2,14 @@ import { Events, type GuildMember } from "discord.js";
 import { z } from "zod";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
+import { cleanProvidedUsername } from "../../utils/input.utils";
+import { PROJECT_ASSETS_ROOT, resolvePath } from "../../utils/paths.utils";
+import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 import {
   GoogleSheetsService,
   initGoogleSheetsClient,
   loadServiceAccountCredentials,
-} from "../../services/sheets.service";
-import { cleanProvidedUsername } from "../../utils/input.utils";
-import { PROJECT_ASSETS_ROOT, resolvePath } from "../../utils/paths.utils";
-import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
+} from "./sheets.service";
 
 // TODO: Is there a less brittle way of modeling the response row?
 export const HoursSignupFormResponseRowSchema = z.tuple([

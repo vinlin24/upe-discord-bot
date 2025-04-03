@@ -1,4 +1,8 @@
-import { roleMention, type ChatInputCommandInteraction, type GuildMember } from "discord.js";
+import {
+  roleMention,
+  type ChatInputCommandInteraction,
+  type GuildMember,
+} from "discord.js";
 
 import { SlashCommandCheck } from "../abc/check.abc";
 import type { RoleId } from "../types/branded.types";
