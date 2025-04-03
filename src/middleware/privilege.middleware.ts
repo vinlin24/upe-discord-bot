@@ -72,10 +72,14 @@ export class PrivilegeCheck extends SlashCommandCheck<Payload> {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const { member, callerPrivilege } = details;
+    console.log(
+      `[CHECK] ${this.handler.id} blocked for @${member.user.username}: ` +
+      `privilege ${Privilege[callerPrivilege]} < ${Privilege[this.level]}.`,
+    );
 
     const diffBlock = codeBlock("diff", (
-      `+ Your highest: ${Privilege[this.level]}\n` +
-      `- Min required: ${Privilege[callerPrivilege]}`
+      `+ Your highest: ${Privilege[callerPrivilege]}\n` +
+      `- Min required: ${Privilege[this.level]}`
     ));
     const content = (
       `${userMention(member.id)}, you do not have sufficient privilege ` +
