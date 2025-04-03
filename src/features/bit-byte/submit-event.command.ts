@@ -62,7 +62,7 @@ class SubmitEventCommand extends SlashCommandHandler {
     )
     .addRoleOption(input => input
       .setName("group_role")
-      .setDescription("Role associated with the bit-byte group to submit for")
+      .setDescription("Role associated with the bit-byte group to submit for.")
       .setRequired(true)
     )
     .toJSON();
