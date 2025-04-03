@@ -1,4 +1,4 @@
-import { Events, type Interaction } from "discord.js";
+import { ChannelType, Events, type Interaction } from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import { EMOJI_THUMBS_UP } from "../../utils/emojis.utils";
@@ -14,12 +14,25 @@ class InteractionDispatchListener extends
       return;
     }
 
-    const command = commandLoader.get(interaction.commandName);
+    const { commandName, channel, user: caller } = interaction;
+
+    const command = commandLoader.get(commandName);
     if (command === null) {
       return;
     }
 
-    console.log(`[DISPATCH] ${command.id} by @${interaction.user.username}.`);
+    // Commands should only be used in text channels within the server (no DMs).
+    if (channel?.type !== ChannelType.GuildText) {
+      console.error(
+        "[DISPATCH] Invalid channel type: " +
+        `${channel && ChannelType[channel.type]}`,
+      );
+      return;
+    }
+
+    console.log(
+      `[DISPATCH] ${command.id} by @${caller.username} in #${channel.name}`,
+    );
     try {
       await command.dispatch(interaction);
     }
