@@ -2,17 +2,16 @@ import cheerio from "cheerio";
 import {
   bold,
   ChatInputCommandInteraction,
-  ColorResolvable,
   EmbedBuilder,
-  hyperlink,
+  hyperlink
 } from "discord.js";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
 import type { UrlString } from "../../types/branded.types";
 import { ExtendedSlashCommandBuilder } from "../../utils/options.utils";
+import { UPE_BLUE } from "../../utils/upe.utils";
 
 const INDUCTION_LINKTREE_URL = "https://linktr.ee/upe_induction" as UrlString;
-const UPE_BLUE: ColorResolvable = "#3067d3";
 
 type LinkEntry = {
   redirectLink?: UrlString;

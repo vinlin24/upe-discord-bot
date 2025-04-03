@@ -9,6 +9,9 @@ type Brand<B> = { [__brand]: B };
  */
 export type Branded<T, B> = T & Brand<B>;
 
+/** Extract the brand tag of a branded type. */
+export type BrandOf<T> = T extends Brand<infer Tag> ? Tag : never;
+
 /** Represents a filesystem path. */
 export type Path = Branded<string, "Path">;
 

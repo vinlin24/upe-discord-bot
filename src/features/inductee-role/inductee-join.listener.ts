@@ -8,6 +8,7 @@ import {
   loadServiceAccountCredentials,
 } from "../../services/sheets.service";
 import { cleanProvidedUsername } from "../../utils/input.utils";
+import { PROJECT_ASSETS_ROOT, resolvePath } from "../../utils/paths.utils";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
 // TODO: Is there a less brittle way of modeling the response row?
@@ -59,8 +60,10 @@ export type HoursSignupFormResponseRow =
   z.infer<typeof HoursSignupFormResponseRowSchema>;
 
 // TODO: Is there a less brittle way of configuring these constants?
-export const GOOGLE_CREDENTIALS_PATH = "google-credentials.json";
-export const GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID = "14zb0cHd7HAz5q9M-OMizi1gboEKEDI1uZlDTM1ZJuOc";
+export const GOOGLE_CREDENTIALS_PATH
+  = resolvePath(PROJECT_ASSETS_ROOT, "google-credentials.json");
+export const GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID
+  = "14zb0cHd7HAz5q9M-OMizi1gboEKEDI1uZlDTM1ZJuOc";
 export const GOOGLE_INDUCTEE_DATA_SHEET_NAME = "Form Responses 1";
 
 export type InducteeData = {
