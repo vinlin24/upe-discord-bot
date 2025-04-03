@@ -6,7 +6,12 @@ export function resolvePath(...components: (string | Path)[]): Path {
   return path.resolve(...components) as Path;
 }
 
-export const PROJECT_SOURCE_ROOT = resolvePath(__dirname, "..");
-export const PROJECT_ROOT = resolvePath(PROJECT_SOURCE_ROOT, "..");
+export const PROJECT_SOURCE_ROOT
+  = resolvePath(__dirname, "..");
+export const PROJECT_ROOT
+  = resolvePath(PROJECT_SOURCE_ROOT, "..");
 
-export const PROJECT_ASSETS_ROOT = resolvePath(PROJECT_SOURCE_ROOT, "assets");
+export const PROJECT_ASSETS_ROOT
+  = resolvePath(PROJECT_SOURCE_ROOT, "assets");
+export const PROJECT_FEATURES_ROOT
+  = resolvePath(PROJECT_SOURCE_ROOT, "features");

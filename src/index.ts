@@ -1,18 +1,14 @@
-import path from "node:path";
-
 import { configDotenv } from "dotenv";
 
 import { ClientManager } from "./bot/client";
-import type { Path } from "./types/branded.types";
+import { PROJECT_FEATURES_ROOT } from "./utils/paths.utils";
 
 configDotenv();
 
-const HANDLERS_ROOT = path.join(__dirname, "features") as Path;
-
 async function main(): Promise<void> {
   const clientManager = new ClientManager({
-    commandsRoot: HANDLERS_ROOT,
-    listenersRoot: HANDLERS_ROOT,
+    commandsRoot: PROJECT_FEATURES_ROOT,
+    listenersRoot: PROJECT_FEATURES_ROOT,
     databaseConnectionString: process.env.DB_CONNECTION_STRING,
     databaseName: process.env.DB_NAME,
     botToken: process.env.BOT_TOKEN,
