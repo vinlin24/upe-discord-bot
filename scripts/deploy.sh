@@ -1,6 +1,6 @@
 #!/bin/bash
 # NOTE: This script assumes you have an SSH key set up and the droplet IP
-# address saved in a local droplet.txt file.
+# address saved in a local `droplet.txt` file.
 
 set -e
 set -x
@@ -21,10 +21,16 @@ ssh "${DROPLET_USER}@${DROPLET_IP}" << EOF
 EOF
 
 # Compile locally since the droplet can't handle it apparently.
-tsc
-scp -r dist "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot"
+npm run build
 
-# Sync any additional files.
-if [ $# -gt 0 ]; then
-    scp -r "$@" "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot"
-fi
+# Sync any important files outside of the build process.
+scp .env "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot"
+
+# Sync application commands.
+npm run sync
+
+# Start a fresh version of the `terabyte` process.
+ssh "${DROPLET_USER}@${DROPLET_IP}" << EOF
+    pm2 delete terabyte 2>/dev/null
+    pm2 start ~/upe-discord-bot/scripts/start-bot.sh --name terabyte
+EOF
