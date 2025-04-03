@@ -3,6 +3,7 @@
  * to catch and correct some common mistakes.
  */
 export function cleanProvidedUsername(providedUsername: string): string {
+  // Mistake: "username " instead of "username".
   providedUsername = providedUsername.trim();
 
   // Mistake: "@username" instead of "username".
@@ -18,9 +19,6 @@ export function cleanProvidedUsername(providedUsername: string): string {
 
   // Mistake: "Username" instead of "username".
   providedUsername = providedUsername.toLowerCase();
-
-  // Mistake: "username " instead of "username".
-  providedUsername = providedUsername.trim();
 
   return providedUsername;
 }

@@ -15,7 +15,7 @@ import {
 } from "discord.js";
 
 import { z } from "zod";
-import { GOOGLE_CREDENTIALS_PATH, GOOGLE_INDUCTEE_DATA_SHEET_NAME, GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID, sheetsRowToInducteeData, type InducteeData } from "../../listeners/inductee-join.listener";
+import { GOOGLE_CREDENTIALS_PATH, GOOGLE_INDUCTEE_DATA_SHEET_NAME, GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID, sheetsRowToInducteeData, type InducteeData } from "../../features/inductee-role/inductee-join.listener";
 import { GoogleSheetsService } from "../../services/sheets.service";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { cleanProvidedUsername } from "../../utils/input.utils";

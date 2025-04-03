@@ -1,56 +1,14 @@
-import {
-  Events,
-  type Awaitable,
-  type Client,
-  type ClientEvents,
-  type GuildMember,
-} from "discord.js";
+import { Events, type GuildMember } from "discord.js";
 import { z } from "zod";
+
+import { DiscordEventListener } from "../../abc/listener.abc";
 import {
   GoogleSheetsService,
   initGoogleSheetsClient,
-  loadServiceAccountCredentials
-} from "../services/sheets.service";
-import { cleanProvidedUsername } from "../utils/input.utils";
-import { INDUCTEES_ROLE_ID } from "../utils/snowflakes.utils";
-
-export abstract class DiscordEventListener<Event extends keyof ClientEvents> {
-  public abstract readonly event: Event;
-  public readonly once = false;
-  public readonly id = this.constructor.name;
-
-  public abstract execute(...args: ClientEvents[Event]): Awaitable<void>;
-
-  public handleError(error: Error): void {
-    console.error(
-      `${error.name} in event listener ${this.id}: ${error.message}`,
-    );
-  }
-
-  public register(client: Client): void {
-    const executor = async (...args: ClientEvents[Event]) => {
-      try {
-        await this.execute(...args);
-      }
-      catch (error) {
-        if (error instanceof Error) {
-          this.handleError(error);
-        }
-        else {
-          throw error;
-        }
-      }
-    }
-
-    if (this.once) {
-      client.once(this.event, executor);
-    }
-    else {
-      client.on(this.event, executor);
-    }
-    console.log(`Registered ${this.event} listener ${this.id}`);
-  }
-}
+  loadServiceAccountCredentials,
+} from "../../services/sheets.service";
+import { cleanProvidedUsername } from "../../utils/input.utils";
+import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
 // TODO: Is there a less brittle way of modeling the response row?
 export const HoursSignupFormResponseRowSchema = z.tuple([
@@ -223,3 +181,5 @@ export class InducteeJoinListener
     return new GoogleSheetsService(client, GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID);
   }
 }
+
+export default new InducteeJoinListener();

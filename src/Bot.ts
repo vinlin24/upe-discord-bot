@@ -9,8 +9,8 @@ import {
 import * as fs from "fs";
 import * as path from "path";
 import { eventPages } from "./event-pages";
+import { InducteeJoinListener } from "./features/inductee-role/inductee-join.listener";
 import { getEventPoints } from "./functions/get-points";
-import { InducteeJoinListener } from "./listeners/inductee-join.listener";
 import type { IByte, IEvent } from "./schemas/byte";
 const { token, connectionString } = require("../config.json");
 const { connect, mongoose } = require("mongoose");

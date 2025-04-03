@@ -16,11 +16,18 @@ abstract class HandlerLoader<Handler> {
   ) { }
 
   public async load(modulePath: Path): Promise<Handler> {
-    const { default: handler } = await this.dynamicRequire(modulePath);
+    let handler: unknown;
+    try {
+      handler = (await this.dynamicRequire(modulePath)).default;
+    }
+    catch (error) {
+      console.error(`[LOAD] ${modulePath}: ${error}`);
+      throw error;
+    }
     if (!(handler instanceof this.handlerClass)) {
       throw new Error(
-        `${modulePath} does not default-export a valid handler object ` +
-        `(expected instance of ${this.handlerClass})`,
+        `[LOAD] ${modulePath} does not default-export a valid handler object ` +
+        `(expected instance of ${this.handlerClass.name})`,
       );
     }
     this.handlers.set(this.getHandlerName(handler), [handler, modulePath]);
