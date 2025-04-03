@@ -1,8 +1,4 @@
-import {
-  Events,
-  type ChatInputCommandInteraction,
-  type Interaction,
-} from "discord.js";
+import { Events, type Interaction } from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import { EMOJI_THUMBS_UP } from "../../utils/emojis.utils";
@@ -23,31 +19,28 @@ class InteractionDispatchListener extends
       return;
     }
 
+    console.log(`[DISPATCH] ${command.id} by @${interaction.user.username}.`);
     try {
       await command.dispatch(interaction);
     }
     catch (error) {
-      console.error("Uncaught error from command execution pipeline:");
+      console.error("[DISPATCH] Uncaught error in command execution pipeline:");
       console.error(error);
-      return await this.safeReply(
-        interaction,
-        "There was an error while executing this command!",
-      );
+      if (!interaction.replied) {
+        await interaction.reply({
+          content: "There was an error while executing this command!",
+          ephemeral: true,
+        });
+        return;
+      }
     }
 
-    console.warn(
-      `${command.logName} did not reply to interaction, ` +
-      "falling back to a generic response.",
-    );
-    await this.safeReply(interaction, EMOJI_THUMBS_UP);
-  }
-
-  private async safeReply(
-    interaction: ChatInputCommandInteraction,
-    content: string,
-  ): Promise<void> {
     if (!interaction.replied) {
-      await interaction.reply({ content, ephemeral: true });
+      console.warn(
+        `${command.logName} did not reply to interaction, ` +
+        "falling back to a generic response.",
+      );
+      await interaction.reply({ content: EMOJI_THUMBS_UP, ephemeral: true });
     }
   }
 }
