@@ -17,7 +17,10 @@ export abstract class SlashCommandHandler {
   /** Pipeline execution engine to manage handler lifecycle. */
   private readonly pipeline = new CommandExecutionPipeline(this);
 
-  /** ID to identify a handler class. Should be unique. */
+  /**
+   * ID to identify a handler class. Should be unique. Defaults to the slash
+   * command name, including leading slash e.g. `/command-name`.
+   */
   public get id(): string {
     return `/${this.definition.name}`;
   }
