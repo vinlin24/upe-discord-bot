@@ -35,8 +35,12 @@ npm run build
 ssh "${DROPLET_USER}@${DROPLET_IP}" 'rm -rf ~/upe-discord-bot/dist'
 scp -r dist "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot"
 
-# Sync any important files outside of the build process.
-scp .env "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot"
+# Upload environment file and modify as needed.
+scp .env "${DROPLET_USER}@${DROPLET_IP}:~/upe-discord-bot/"
+ssh "${DROPLET_USER}@${DROPLET_IP}" << EOF
+    cd ~/upe-discord-bot &&
+    sed -i 's/^NODE_ENV=[^[:space:]]*/NODE_ENV=production/' .env
+EOF
 
 # Sync application commands.
 npm run sync
