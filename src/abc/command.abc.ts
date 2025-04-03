@@ -4,6 +4,7 @@ import {
   RESTPostAPIChatInputApplicationCommandsJSONBody,
 } from "discord.js";
 
+import { makeErrorEmbed } from "../utils/errors.utils";
 import type { SlashCommandCheck, SlashCommandCheckDetails } from "./check.abc";
 
 export abstract class SlashCommandHandler {
@@ -49,6 +50,17 @@ export abstract class SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     await this.pipeline.run(interaction);
+  }
+
+  /** Shorthand for replying ephemerally with an embed-wrapped message. */
+  protected async replyError(
+    interaction: ChatInputCommandInteraction,
+    message: string,
+  ): Promise<void> {
+    await interaction.reply({
+      embeds: [makeErrorEmbed(message)],
+      ephemeral: true,
+    });
   }
 }
 

@@ -36,6 +36,7 @@ export const OFFICERS_ROLE_ID = "778435056661823490" as RoleId;
 export const INTERNS_ROLE_ID = "931950245313646662" as RoleId;
 export const MEMBERS_ROLE_ID = "778438099176259674" as RoleId;
 export const INDUCTEES_ROLE_ID = "778438274695036957" as RoleId;
+export const BYTE_ROLE_ID = "899729573179162644" as RoleId;
 
 // User IDs.
 

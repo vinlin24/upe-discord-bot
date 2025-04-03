@@ -18,6 +18,11 @@ export type Path = Branded<string, "Path">;
 /** Represents a URL. */
 export type UrlString = Branded<string, "UrlString">;
 
+/** Represents a Unix timestamp, in seconds. */
+export type UnixSeconds = Branded<number, "UnixSeconds">;
+
+// Discord Snowflakes.
+
 export type GuildId = Branded<Snowflake, "GuildId">;
 export type ChannelId = Branded<Snowflake, "ChannelId">;
 export type RoleId = Branded<Snowflake, "RoleId">;

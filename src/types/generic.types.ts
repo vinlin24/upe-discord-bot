@@ -16,3 +16,11 @@ export function getEnumFromName<StringEnum extends Record<string, string>>(
   const reverseMappedKey = allKeys.find(key => enumObj[key] === value);
   return reverseMappedKey === undefined ? undefined : enumObj[reverseMappedKey];
 }
+
+/**
+ * Generalization of the pattern of defining a `type` from a `const` array.
+ *
+ * Thanks ChatGPT.
+ */
+export type ArrayToUnion<T extends readonly any[]>
+  = T extends readonly (infer U)[] ? U : never;
