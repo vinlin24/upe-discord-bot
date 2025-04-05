@@ -8,6 +8,11 @@ export const EMOJI_RAISED_EYEBROW
   = ":face_with_raised_eyebrow:" as BuiltinEmoji;
 export const EMOJI_FEARFUL
   = ":fearful:" as BuiltinEmoji;
+export const EMOJI_THINKING
+  = ":thinking:" as BuiltinEmoji;
+
+export const EMOJI_WARNING = ":warning:" as BuiltinEmoji;
+export const EMOJI_ALERT = ":rotating_light:" as BuiltinEmoji;
 
 export const EMOJI_ONE = ":one:" as BuiltinEmoji;
 export const EMOJI_TWO = ":two:" as BuiltinEmoji;

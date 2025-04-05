@@ -1,6 +1,3 @@
-import fs from "node:fs";
-
-import * as CSV from "csv-string";
 import {
   ChatInputCommandInteraction,
   DiscordAPIError,
@@ -12,39 +9,27 @@ import {
   SlashCommandBuilder,
   bold,
   inlineCode,
+  roleMention,
+  type Collection,
 } from "discord.js";
-import { z } from "zod";
 
+import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
-import { makeErrorEmbed } from "../../utils/errors.utils";
-import { cleanProvidedUsername } from "../../utils/input.utils";
-import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 import {
-  GOOGLE_CREDENTIALS_PATH,
-  GOOGLE_INDUCTEE_DATA_SHEET_NAME,
-  GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID,
-  sheetsRowToInducteeData,
-  type InducteeData,
-} from "./inductee-join.listener";
-import { GoogleSheetsService } from "./sheets.service";
-
-/** @deprecated Now using Google Sheets. */
-const INDUCTEE_INFO_CSV_PATH = "inductees.csv"; // Placed at CWD for now.
-const FIRST_NAME_COL_NAME = "Preferred First Name";
-const LAST_NAME_COL_NAME = "Preferred Last Name";
-const DISCORD_USERNAME_COL_NAME = "Discord Username";
-const PREFERRED_EMAIL_COL_NAME = "Preferred Email for Communications";
-
-/**
- * DTO for the relevant inductee information used to update their corresponding
- * Discord users.
- */
-type InducteeInfo = {
-  firstName: string;
-  lastName: string;
-  discordUsername: string;
-  email: string;
-};
+  Privilege,
+  PrivilegeCheck,
+} from "../../middleware/privilege.middleware";
+import {
+  EMOJI_ALERT,
+  EMOJI_THINKING,
+  EMOJI_WARNING,
+} from "../../utils/emojis.utils";
+import { makeErrorEmbed } from "../../utils/errors.utils";
+import {
+  ADMINS_ROLE_ID,
+  INDUCTEES_ROLE_ID,
+} from "../../utils/snowflakes.utils";
+import inducteeSheetsService, { type InducteeData } from "./sheets.service";
 
 /**
  * Trivalent return value type for the functions that make API requests. We want
@@ -53,11 +38,11 @@ type InducteeInfo = {
  */
 const enum APIResult {
   /** A request was made and it succeeded. */
-  SUCCESS,
+  Success,
   /** A request was made and it failed. */
-  FAILURE,
+  Failure,
   /** A request was not made because there was no need to. */
-  SKIPPED,
+  Skipped,
 }
 
 // To prevent exceeding message/embed character limit.
@@ -71,26 +56,24 @@ class AssignInducteesCommand extends SlashCommandHandler {
     .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .toJSON();
 
+  public override readonly checks: SlashCommandCheck[] = [
+    new PrivilegeCheck(this).atLeast(Privilege.Administrator),
+  ];
+
   // ======================================================================== //
   // #region APPLICATION LAYER
 
   public override async execute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
-    const { guild } = interaction;
-    if (!guild) {
-      await interaction.reply({
-        embeds: [makeErrorEmbed(
-          "This command can only be used within the UPE server.",
-        )],
-      });
-      return;
-    }
+    await interaction.deferReply();
 
+    const guild = interaction.guild!;
     const role = guild.roles.cache.get(INDUCTEES_ROLE_ID);
-    if (!role) {
+
+    if (role === undefined) {
       await interaction.reply({
-        ephemeral: true,
+        content: roleMention(ADMINS_ROLE_ID),
         embeds: [makeErrorEmbed(
           "Could not find the inductee role " +
           `(expected role with ID ${inlineCode(INDUCTEES_ROLE_ID)}).`,
@@ -99,43 +82,7 @@ class AssignInducteesCommand extends SlashCommandHandler {
       return;
     }
 
-    // Legacy approach (downloading CSV file from responses):
-
-    // const inducteesInfo = parseInducteeInfoFromCSV();
-    // if (inducteesInfo === "File Not Found") {
-    //   await interaction.reply({
-    //     ephemeral: true,
-    //     embeds: [makeErrorEmbed(
-    //       "Could not find the file with inductee information!",
-    //     )],
-    //   });
-    //   return;
-    // }
-    // if (inducteesInfo === "File Malformed") {
-    //   await interaction.reply({
-    //     ephemeral: true,
-    //     embeds: [makeErrorEmbed(
-    //       "Inductee info file has an unexpected format!",
-    //     )],
-    //   })
-    //   return;
-    // }
-
-    // New approach (dynamically using Sheets):
-
-    const inducteesInfo = await this.getInducteeInfoFromSheets();
-    if (inducteesInfo === "Failed") {
-      await interaction.reply({
-        ephemeral: true,
-        embeds: [makeErrorEmbed(
-          "Failed to retrieve inductee data from Google Sheets.",
-        )],
-      });
-      return;
-    }
-
-    // Not sure how long updating takes with many inductees, so just in case.
-    await interaction.deferReply();
+    const inducteesInfo = await this.getInducteeInfo();
 
     const [
       affected,
@@ -162,99 +109,8 @@ class AssignInducteesCommand extends SlashCommandHandler {
   // ======================================================================== //
   // #region DATA ACCESS LAYER
 
-  /**
-   * Top-level function for loading inductee information from our source of
-   * truth.
-   */
-  private parseInducteeInfoFromCSV():
-    InducteeInfo[] | "File Not Found" | "File Malformed" {
-    if (!fs.existsSync(INDUCTEE_INFO_CSV_PATH)) {
-      console.error(`ERROR: file at path ${INDUCTEE_INFO_CSV_PATH} not found.`);
-      return "File Not Found";
-    }
-
-    const content = fs.readFileSync(INDUCTEE_INFO_CSV_PATH).toString();
-    const [header, ...rows] = CSV.parse(content);
-
-    if (header === undefined || rows.length === 0) {
-      console.warn(`WARNING: ${INDUCTEE_INFO_CSV_PATH} is empty!`);
-      return [];
-    }
-
-    const firstNameColumnIndex = header.indexOf(FIRST_NAME_COL_NAME);
-    if (firstNameColumnIndex === -1) {
-      console.error(`ERROR: no '${FIRST_NAME_COL_NAME}' column.`);
-      return "File Malformed";
-    }
-
-    const lastNameColumnIndex = header.indexOf(LAST_NAME_COL_NAME);
-    if (lastNameColumnIndex === -1) {
-      console.error(`ERROR: no '${LAST_NAME_COL_NAME}' column.`);
-      return "File Malformed";
-    }
-
-    const usernameColumnIndex = header.indexOf(DISCORD_USERNAME_COL_NAME);
-    if (usernameColumnIndex === -1) {
-      console.error(`ERROR: no '${DISCORD_USERNAME_COL_NAME}' column`);
-      return "File Malformed";
-    }
-
-    const emailColumnIndex = header.indexOf(PREFERRED_EMAIL_COL_NAME);
-    if (emailColumnIndex === -1) {
-      console.error(`ERROR: no '${PREFERRED_EMAIL_COL_NAME}' column`);
-      return "File Malformed";
-    }
-
-    const inducteesInfo: InducteeInfo[] = rows.map(row => ({
-      firstName: row[firstNameColumnIndex].trim(),
-      lastName: row[lastNameColumnIndex].trim(),
-      discordUsername: cleanProvidedUsername(row[usernameColumnIndex]),
-      email: row[emailColumnIndex].trim(),
-    }));
-
-    return inducteesInfo;
-  }
-
-  private async getInducteeInfoFromSheets()
-    : Promise<InducteeData[] | "Failed"> {
-
-    const sheetsService = GoogleSheetsService.fromCredentialsFile(
-      GOOGLE_CREDENTIALS_PATH,
-      GOOGLE_INDUCTEE_DATA_SPREADSHEET_ID,
-    );
-
-    const sheetsData = await sheetsService.getValues(
-      GOOGLE_INDUCTEE_DATA_SHEET_NAME,
-    );
-    if (sheetsData === null) {
-      console.error("Failed to read inductee data from Google Sheets.");
-      return "Failed";
-    }
-
-    const inducteesData: InducteeData[] = [];
-    // TODO: This loop is duplicated from inductee-join.listener.ts.
-    for (let rowIndex = 1; rowIndex < sheetsData.length; rowIndex++) {
-      const row = sheetsData[rowIndex];
-      try {
-        const inducteeData = sheetsRowToInducteeData(row);
-        if (inducteeData === null) {
-          continue;
-        }
-        inducteesData.push(inducteeData);
-      }
-      catch (error) {
-        if (error instanceof z.ZodError) {
-          console.error(
-            `Error validating inductee response data (row ${rowIndex + 1}): ` +
-            error.message,
-          );
-          continue;
-        }
-        throw error;
-      }
-    }
-
-    return inducteesData;
+  private async getInducteeInfo(): Promise<Collection<string, InducteeData>> {
+    return await inducteeSheetsService.getAllData();
   }
 
   // #endregion
@@ -270,29 +126,29 @@ class AssignInducteesCommand extends SlashCommandHandler {
    * inductees representing their different success/failure states.
    */
   private async findAndUpdateMembersWithInfo(
-    inducteesInfo: InducteeInfo[],
+    inducteesInfo: Collection<string, InducteeData>,
     guild: Guild,
   ): Promise<[
     newInductees: GuildMember[],
     skippedInductees: GuildMember[],
-    missingMembers: InducteeInfo[],
+    missingMembers: InducteeData[],
     failedMembers: GuildMember[],
   ]> {
     const newInductees: GuildMember[] = [];
     const skippedInductees: GuildMember[] = [];
-    const missingMembers: InducteeInfo[] = [];
+    const missingMembers: InducteeData[] = [];
     const failedMembers: GuildMember[] = [];
 
-    for (const [index, inducteeInfo] of inducteesInfo.entries()) {
-      const {
-        firstName,
-        lastName,
-        discordUsername: providedUsername,
-      } = inducteeInfo;
+    let count = 0;
+
+    for (const [providedUsername, inducteeData] of inducteesInfo) {
+      count++;
+
+      const { legalName } = inducteeData;
 
       // e.g. [5/79]
-      const progressString = `[${index + 1}/${inducteesInfo.length}]`;
-      const nameForLogs = `${firstName} ${lastName} (${providedUsername})`;
+      const progressString = `[${count}/${inducteesInfo.size}]`;
+      const nameForLogs = `${legalName} (${providedUsername})`;
 
       // Search for the member by username.
       const members = await guild.members.fetch({
@@ -304,8 +160,8 @@ class AssignInducteesCommand extends SlashCommandHandler {
       const [member] = members.values();
 
       // Query returned no results.
-      if (!member) {
-        missingMembers.push(inducteeInfo);
+      if (member === undefined) {
+        missingMembers.push(inducteeData);
         console.error(`${progressString} MISSING: ${nameForLogs}`);
         continue;
       }
@@ -320,22 +176,19 @@ class AssignInducteesCommand extends SlashCommandHandler {
       }
 
       // Do the actual updating.
-      const result = await this.makeUpdateCallsToDiscordAPI(
-        member,
-        inducteeInfo,
-      );
+      const result = await this.assignInducteeRole(member);
 
       // Process and log result.
       switch (result) {
-        case APIResult.SUCCESS:
+        case APIResult.Success:
           newInductees.push(member);
           console.log(`${progressString} SUCCESS: ${nameForLogs}`);
           break;
-        case APIResult.FAILURE:
+        case APIResult.Failure:
           failedMembers.push(member);
           console.error(`${progressString} FAILURE: ${nameForLogs}`);
           break;
-        case APIResult.SKIPPED:
+        case APIResult.Skipped:
           skippedInductees.push(member);
           console.log(`${progressString} SKIPPED: ${nameForLogs}`);
           break;
@@ -345,52 +198,34 @@ class AssignInducteesCommand extends SlashCommandHandler {
     return [newInductees, skippedInductees, missingMembers, failedMembers];
   }
 
-  private async makeUpdateCallsToDiscordAPI(
-    member: GuildMember,
-    inducteeInfo: InducteeInfo,
-  ): Promise<APIResult> {
-    const { firstName, lastName } = inducteeInfo;
-
-    const nickname = `${firstName} ${lastName}`;
-    const roleResult = await this.assignInducteeRole(member);
-    const nickResult = await this.updateMemberNickname(member, nickname);
-
-    // Determine overall result state. Note that the above operations do NOT
-    // form a transaction. It's possible that a role is assigned but the
-    // nickname-changing failed or vice versa.
-    if (roleResult === APIResult.SKIPPED && nickResult === APIResult.SKIPPED) {
-      return APIResult.SKIPPED;
-    }
-    if (roleResult === APIResult.FAILURE || nickResult === APIResult.FAILURE) {
-      return APIResult.FAILURE;
-    }
-    return APIResult.SUCCESS;
-  }
-
   private async assignInducteeRole(member: GuildMember): Promise<APIResult> {
     if (member.roles.cache.has(INDUCTEES_ROLE_ID)) {
-      return APIResult.SKIPPED;
+      return APIResult.Skipped;
     }
 
     try {
       await member.roles.add(INDUCTEES_ROLE_ID);
-      return APIResult.SUCCESS;
+      return APIResult.Success;
     } catch (error) {
       const { code, message } = error as DiscordAPIError;
       console.error(
         `FAILED to assign Inductees role to @${member.user.username}: ` +
         `DiscordAPIError[${code}] ${message}`,
       );
-      return APIResult.FAILURE;
+      return APIResult.Failure;
     }
   }
 
+  /**
+   * @deprecated
+   * We shouldn't update members' nicknames without their consent tbh.
+   * */
   private async updateMemberNickname(
     member: GuildMember,
     nickname: string,
   ): Promise<APIResult> {
     if (member.nickname === nickname) {
-      return APIResult.SKIPPED;
+      return APIResult.Skipped;
     }
 
     try {
@@ -398,14 +233,14 @@ class AssignInducteesCommand extends SlashCommandHandler {
         nickname,
         `${this.id}: used inductee's provided preferred name`,
       );
-      return APIResult.SUCCESS;
+      return APIResult.Success;
     } catch (error) {
       const { code, message } = error as DiscordAPIError;
       console.error(
         `FAILED to update @${member.user.username} nickname to ` +
         `'${nickname}': DiscordAPIError[${code}] ${message}`,
       );
-      return APIResult.FAILURE;
+      return APIResult.Failure;
     }
   }
 
@@ -419,7 +254,7 @@ class AssignInducteesCommand extends SlashCommandHandler {
   private prepareResponseEmbed(
     affected: GuildMember[],
     skipped: GuildMember[],
-    missing: InducteeInfo[],
+    missing: InducteeData[],
     failed: GuildMember[],
     role: Role,
   ): EmbedBuilder {
@@ -429,10 +264,11 @@ class AssignInducteesCommand extends SlashCommandHandler {
 
     const allGood = missing.length === 0 && failed.length === 0;
     if (allGood) {
-      const embed = new EmbedBuilder()
-        .setDescription(successString || "🤔 No inductees to assign!")
-        .setColor(role.color);
-      return embed;
+      return new EmbedBuilder()
+        .setColor(role.color)
+        .setDescription(
+          successString || `${EMOJI_THINKING} No inductees to assign!`,
+        );
     }
 
     const descriptionWithErrors = [
@@ -451,24 +287,27 @@ class AssignInducteesCommand extends SlashCommandHandler {
     role: Role,
   ): string {
     const numSucceeded = affected.length + skipped.length;
-    if (numSucceeded === 0) return "";
+    if (numSucceeded === 0) {
+      return "";
+    }
 
     const updatedString = (
-      `✅ Assigned ${role} and updated nickname for ` +
-      `${bold(numSucceeded.toString())} members!`
+      `✅ Assigned ${role} for ${bold(numSucceeded.toString())} members!`
     );
     const affectedString = `${bold(affected.length.toString())} affected.`;
 
     return `${updatedString} ${affectedString}`;
   }
 
-  private formatMissingString(missing: InducteeInfo[]): string {
-    if (missing.length === 0) return "";
+  private formatMissingString(missing: InducteeData[]): string {
+    if (missing.length === 0) {
+      return "";
+    }
 
-    function infoToBulletPoint(info: InducteeInfo): string {
-      const { firstName, lastName, discordUsername: username } = info;
+    function infoToBulletPoint(info: InducteeData): string {
+      const { legalName, discordUsername: username } = info;
       return (
-        "* " + inlineCode(`@${username}`) + " " + `(${firstName} ${lastName})`
+        "* " + inlineCode(`@${username}`) + " " + `(${legalName})`
       );
     }
 
@@ -483,13 +322,16 @@ class AssignInducteesCommand extends SlashCommandHandler {
     }
 
     return (
-      `⚠️ It doesn't seem like these ${bold(missing.length.toString())} ` +
-      `users are in the server:\n${formattedUserList}`
+      `${EMOJI_WARNING} It doesn't seem like these ` +
+      `${bold(missing.length.toString())} users are in the server:\n` +
+      formattedUserList
     );
   }
 
   private formatFailedString(failed: GuildMember[]): string {
-    if (failed.length === 0) return "";
+    if (failed.length === 0) {
+      return "";
+    }
 
     let mentionsString = failed.slice(0, MAX_FAILED_MENTIONS).join(", ");
     if (failed.length > MAX_FAILED_MENTIONS) {
@@ -498,24 +340,27 @@ class AssignInducteesCommand extends SlashCommandHandler {
     }
 
     return (
-      `🚨 I wasn't allowed to update these ${bold(failed.length.toString())}` +
-      `members:\n${mentionsString}`
+      `${EMOJI_ALERT} I wasn't allowed to update these ` +
+      `${bold(failed.length.toString())} members:\n` +
+      mentionsString
     );
   }
 
-  private logAllMissingInductees(missing: InducteeInfo[]): void {
-    if (missing.length === 0) return;
+  private logAllMissingInductees(missing: InducteeData[]): void {
+    if (missing.length === 0) {
+      return;
+    }
 
     console.warn("WARNING: The following users were not found in the server:");
-    for (const { firstName, lastName, discordUsername } of missing) {
-      console.error(`${firstName} ${lastName} (@${discordUsername})`);
+    for (const { legalName, discordUsername } of missing) {
+      console.error(`${legalName} (@${discordUsername})`);
     }
     console.warn(
       "ENDWARNING. The following are the email addresses you can use to " +
       "contact these users to let them know their Discord username is " +
       "invalid and/or they are not in the server:",
     );
-    console.warn(missing.map(info => info.email).join(","))
+    console.warn(missing.map(info => info.preferredEmail).join(","))
   }
 
   // #endregion
