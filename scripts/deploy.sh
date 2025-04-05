@@ -47,3 +47,13 @@ npm run sync
         --no-autorestart \
         --name terabyte
 EOF
+
+# Sanity check that the process didn't immediately die right after `pm2 start`.
+sleep 1
+# shellcheck disable=SC2016
+if "$SSH" 'test "$(pm2 pid terabyte)"'; then
+    echo 'PM2 process seems to stay online!'
+else
+    echo >&2 'PM2 process does not seem to stay online!'
+    exit 1
+fi
