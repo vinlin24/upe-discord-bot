@@ -2,7 +2,8 @@ import { Client, GatewayIntentBits, REST, Routes } from "discord.js";
 import mongoose from "mongoose";
 
 import type { DiscordEventListener } from "../abc/listener.abc";
-import type { GuildId, Path } from "../types/branded.types";
+import type { Path } from "../types/branded.types";
+import { UPE_GUILD_ID } from "../utils/snowflakes.utils";
 import interactionDispatchListener from "./listeners/interaction-dispatch.listener";
 import readyListener from "./listeners/ready.listener";
 import { commandLoader, listenerLoader } from "./loaders";
@@ -14,7 +15,6 @@ export type ClientManagerOptions = {
   databaseName: string;
   botToken: string;
   applicationId: string;
-  guildId: GuildId;
 };
 
 /**
@@ -46,7 +46,7 @@ export class ClientManager {
     const handlers = Array.from(commandLoader.getAll().values());
     const commandsJson = handlers.map(handler => handler.definition);
 
-    const { botToken, applicationId, guildId } = this.options;
+    const { botToken, applicationId } = this.options;
     const rest = new REST().setToken(botToken);
 
     console.log(
@@ -55,7 +55,7 @@ export class ClientManager {
     );
 
     const data = await rest.put(
-      Routes.applicationGuildCommands(applicationId, guildId),
+      Routes.applicationGuildCommands(applicationId, UPE_GUILD_ID),
       { body: commandsJson },
     ) as unknown[];
 

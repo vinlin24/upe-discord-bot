@@ -1,7 +1,7 @@
 import { Events, type Client } from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
-import dmService from "../../services/dm.service";
+import channelsService from "../../services/channels.service";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { timestampPair } from "../../utils/formatting.utils";
 
@@ -18,10 +18,10 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
       `[READY] Client is ready! Logged in as ${client.user.username}.`,
     );
 
-    await dmService.initialize(client);
+    await channelsService.initialize(client);
 
     const [timeMention, relativeMention] = timestampPair(now);
-    await dmService.getDev().send(
+    await channelsService.getDev().send(
       `Bot has logged in at ${timeMention} (${relativeMention}).`,
     );
   }

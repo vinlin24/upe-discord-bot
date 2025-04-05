@@ -2,9 +2,11 @@
 
 import { configDotenv } from "dotenv";
 
-import type { RoleId } from "../types/branded.types";
+import type { ChannelId, GuildId, RoleId } from "../types/branded.types";
 
 configDotenv();
+
+export const UPE_GUILD_ID = "778420751995895819" as GuildId;
 
 // Committee role IDs.
 
@@ -42,3 +44,7 @@ export const BYTE_ROLE_ID = "899729573179162644" as RoleId;
 // User IDs.
 
 export const { DEVELOPER_USER_ID } = process.env;
+
+// Channel IDs.
+
+export const BOT_LOGS_CHANNEL_ID = "1358085368855134419" as ChannelId;

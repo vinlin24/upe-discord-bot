@@ -10,7 +10,7 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
-import dmService from "../../services/dm.service";
+import ChannelsService from "../../services/channels.service";
 import { formatContext } from "../../utils/formatting.utils";
 
 class ShutdownCommand extends SlashCommandHandler {
@@ -29,7 +29,7 @@ class ShutdownCommand extends SlashCommandHandler {
     try {
       console.warn(`${formatContext(interaction)}: shutting down the bot.`);
       await interaction.reply("Shutting down!");
-      await dmService.getDev().send(
+      await ChannelsService.getDev().send(
         `${userMention(interaction.user.id)} has shut down the bot!`,
       );
     }

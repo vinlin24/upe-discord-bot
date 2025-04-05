@@ -6,8 +6,11 @@ import {
   type MessageComponentInteraction,
 } from "discord.js";
 
-import { highestPrivilege, Privilege } from "../middleware/privilege.middleware";
-import dmService from "../services/dm.service";
+import {
+  highestPrivilege,
+  Privilege,
+} from "../middleware/privilege.middleware";
+import channelsService from "../services/channels.service";
 import { makeErrorEmbed } from "../utils/errors.utils";
 import type { SlashCommandCheck, SlashCommandCheckDetails } from "./check.abc";
 
@@ -55,7 +58,7 @@ export abstract class SlashCommandHandler {
   ): Promise<any> {
     console.error(`${error.name} in ${this.logName}:`);
     console.error(error);
-    await dmService.sendDevError(error, interaction);
+    await channelsService.sendDevError(error, interaction);
   }
 
   /** Fallback callback for if the component handler throws an `Error`. */
@@ -67,7 +70,7 @@ export abstract class SlashCommandHandler {
       `${error.name} in ${this.logName} component ${interaction.customId}:`,
     );
     console.error(error);
-    await dmService.sendDevError(error, interaction);
+    await channelsService.sendDevError(error, interaction);
   }
 
   /** Run full execution pipeline for a slash command invocation. */

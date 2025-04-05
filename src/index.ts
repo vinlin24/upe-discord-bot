@@ -13,7 +13,6 @@ async function main(): Promise<void> {
     databaseName: process.env.DB_NAME,
     botToken: process.env.BOT_TOKEN,
     applicationId: process.env.APPLICATION_ID,
-    guildId: process.env.UPE_GUILD_ID,
   });
 
   if (process.argv.includes("--sync")) {

@@ -5,7 +5,7 @@ import type {
   InteractionReplyOptions,
 } from "discord.js";
 
-import dmService from "../services/dm.service";
+import channelsService from "../services/channels.service";
 import { makeErrorEmbed } from "../utils/errors.utils";
 import type { SlashCommandHandler } from "./command.abc";
 
@@ -58,7 +58,7 @@ export abstract class SlashCommandCheck<
   ): Promise<any> {
     console.error(`${error.name} in ${this.logName}:`);
     console.error(error);
-    await dmService.sendDevError(error, interaction);
+    await channelsService.sendDevError(error, interaction);
   }
 
   /**

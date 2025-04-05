@@ -11,7 +11,7 @@ import {
 import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { RoleCheck } from "../../middleware/role.middleware";
-import dmService from "../../services/dm.service";
+import channelsService from "../../services/channels.service";
 import type { RoleId, UrlString } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { EMOJI_FEARFUL, EMOJI_RAISED_EYEBROW } from "../../utils/emojis.utils";
@@ -157,7 +157,7 @@ class SubmitEventCommand extends SlashCommandHandler {
         )],
         files: [options.picture],
       });
-      await dmService.sendDevError(error as Error, interaction);
+      await channelsService.sendDevError(error as Error, interaction);
     }
   }
 

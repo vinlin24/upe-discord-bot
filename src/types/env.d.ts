@@ -1,4 +1,4 @@
-import type { GuildId, UserId } from "./types/branded.types";
+import type { UserId } from "./types/branded.types";
 
 declare global {
   type EnvironmentVariables = {
@@ -30,10 +30,6 @@ declare global {
     //      Snowflakes     //
     // /////////////////// //
 
-    /**
-     * ID of the UPE server, the sole server this bot serves.
-     */
-    UPE_GUILD_ID: GuildId;
     /**
      * ID of the user developing/maintaining this bot.
      */
