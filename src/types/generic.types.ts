@@ -1,5 +1,7 @@
 // Typescript-related utilities.
 
+import assert from "node:assert";
+
 /**
  * String enums do not have reverse mappings generated for them, so we need to
  * manually iterate over the keys to retrieve an enum member from string value.
@@ -28,4 +30,11 @@ export type ArrayToUnion<T extends readonly any[]>
 /** Narrow the type of an array if it has at least one element. */
 export function isNonEmptyArray<T>(array: T[]): array is [T, ...T[]] {
   return array.length > 0;
+}
+
+/** Assert that an array has at least one element. */
+export function assertNonEmptyArray<T>(
+  array: T[],
+): asserts array is [T, ...T[]] {
+  assert(array.length > 0);
 }

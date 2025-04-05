@@ -1,5 +1,6 @@
 import {
   ChatInputCommandInteraction,
+  Colors,
   DiscordAPIError,
   EmbedBuilder,
   Guild,
@@ -8,10 +9,14 @@ import {
   Role,
   SlashCommandBuilder,
   bold,
+  codeBlock,
   inlineCode,
   roleMention,
+  spoiler,
   type Collection,
+  type Message,
 } from "discord.js";
+import _ from "lodash";
 
 import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
@@ -19,12 +24,16 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
+import channelsService from "../../services/channels.service";
+import type { UrlString } from "../../types/branded.types";
 import {
   EMOJI_ALERT,
+  EMOJI_CHECK,
   EMOJI_THINKING,
   EMOJI_WARNING,
 } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
+import { toBulletedList } from "../../utils/formatting.utils";
 import {
   ADMINS_ROLE_ID,
   INDUCTEES_ROLE_ID,
@@ -72,13 +81,15 @@ class AssignInducteesCommand extends SlashCommandHandler {
     const role = guild.roles.cache.get(INDUCTEES_ROLE_ID);
 
     if (role === undefined) {
+      const errorMessage = (
+        "Could not find the inductee role " +
+        `(expected role with ID ${inlineCode(INDUCTEES_ROLE_ID)}).`
+      );
       await interaction.reply({
         content: roleMention(ADMINS_ROLE_ID),
-        embeds: [makeErrorEmbed(
-          "Could not find the inductee role " +
-          `(expected role with ID ${inlineCode(INDUCTEES_ROLE_ID)}).`,
-        )],
+        embeds: [makeErrorEmbed(errorMessage)],
       });
+      await channelsService.sendDevError(errorMessage, interaction);
       return;
     }
 
@@ -100,9 +111,21 @@ class AssignInducteesCommand extends SlashCommandHandler {
     );
     await interaction.editReply({ embeds: [embed] });
 
+    const messageReply = await interaction.fetchReply();
+
     // Dump the full list of people to reach out to for being missing from the
     // server/malformed username, in case the list was truncated in the embed.
-    this.logAllMissingInductees(missing);
+    const loggedMessage = await this.logAllMissingInductees(
+      missing,
+      messageReply.url as UrlString,
+    );
+    if (loggedMessage !== null) {
+      await interaction.editReply({
+        // Have our two main response & log dump link to each other.
+        content: `See: ${loggedMessage.url}`,
+        embeds: [embed],
+      });
+    }
   }
 
   // #endregion
@@ -292,7 +315,8 @@ class AssignInducteesCommand extends SlashCommandHandler {
     }
 
     const updatedString = (
-      `✅ Assigned ${role} for ${bold(numSucceeded.toString())} members!`
+      `${EMOJI_CHECK} Assigned ${role} for ` +
+      `${bold(numSucceeded.toString())} members!`
     );
     const affectedString = `${bold(affected.length.toString())} affected.`;
 
@@ -346,21 +370,56 @@ class AssignInducteesCommand extends SlashCommandHandler {
     );
   }
 
-  private logAllMissingInductees(missing: InducteeData[]): void {
+  private async logAllMissingInductees(
+    missing: InducteeData[],
+    interactionLink: UrlString,
+  ): Promise<Message | null> {
     if (missing.length === 0) {
-      return;
+      return null;
     }
 
     console.warn("WARNING: The following users were not found in the server:");
+    const embedEntries: string[] = [];
+
     for (const { legalName, discordUsername } of missing) {
       console.error(`${legalName} (@${discordUsername})`);
+      embedEntries.push(`${legalName} (${inlineCode("@" + discordUsername)})`);
     }
+
+    const commaSepEmails = missing.map(info => info.preferredEmail).join(",");
     console.warn(
-      "ENDWARNING. The following are the email addresses you can use to " +
+      "ENDWARNING.The following are the email addresses you can use to " +
       "contact these users to let them know their Discord username is " +
       "invalid and/or they are not in the server:",
     );
-    console.warn(missing.map(info => info.preferredEmail).join(","))
+    console.warn(commaSepEmails);
+
+    const logsChannel = channelsService.getLogSink();
+    if (logsChannel === null) {
+      return null;
+    }
+
+    const MAX_ENTRIES_PER_EMBED = 30;
+    const pages: EmbedBuilder[] = _
+      .chunk(embedEntries, MAX_ENTRIES_PER_EMBED)
+      .map(toBulletedList)
+      .map((description, index, array) => new EmbedBuilder()
+        .setColor(Colors.Yellow)
+        .setTitle(`${this.id}: Inductees Still Missing from Server`)
+        .setDescription(description)
+        .setFooter({ text: `Page ${index + 1} / ${array.length}` }),
+      );
+    pages.push(new EmbedBuilder()
+      .setColor(Colors.Yellow)
+      .setTitle(`${this.id}: Inductees Still Missing from Server`)
+      .setDescription(spoiler(codeBlock(commaSepEmails)))
+      .setFooter({ text: "Emails to copy-paste" }),
+    );
+
+    return await logsChannel.send({
+      content: `From: ${interactionLink}`,
+      embeds: pages,
+    });
   }
 
   // #endregion

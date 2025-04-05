@@ -11,6 +11,7 @@ export const EMOJI_FEARFUL
 export const EMOJI_THINKING
   = ":thinking:" as BuiltinEmoji;
 
+export const EMOJI_CHECK = ":white_check_mark:" as BuiltinEmoji;
 export const EMOJI_WARNING = ":warning:" as BuiltinEmoji;
 export const EMOJI_ALERT = ":rotating_light:" as BuiltinEmoji;
 
