@@ -1,0 +1,159 @@
+import {
+  bold,
+  Collection,
+  EmbedBuilder,
+  inlineCode,
+  roleMention,
+  SlashCommandBuilder,
+  userMention,
+  type ApplicationCommandOptionChoiceData,
+  type AutocompleteInteraction,
+  type ChatInputCommandInteraction,
+  type GuildMember,
+  type GuildMemberManager,
+  type Role,
+} from "discord.js";
+
+import type { SlashCommandCheck } from "../../abc/check.abc";
+import { SlashCommandHandler } from "../../abc/command.abc";
+import {
+  Privilege,
+  PrivilegeCheck,
+} from "../../middleware/privilege.middleware";
+import { EMOJI_WARNING } from "../../utils/emojis.utils";
+import { toBulletedList } from "../../utils/formatting.utils";
+import sheetsService, {
+  type InducteeData,
+} from "../inductee-role/sheets.service";
+import { BitByteGroupModel } from "./bit-byte.model";
+
+class InducteeLookupCommand extends SlashCommandHandler {
+  public override readonly definition = new SlashCommandBuilder()
+    .setName("inductee")
+    .setDescription("Look up information about an inductee.")
+    .addStringOption(input => input
+      .setName("inductee")
+      .setDescription("Inductee user to request data for.")
+      .setRequired(true)
+      .setAutocomplete(true),
+    )
+    .toJSON();
+
+  public override readonly checks: SlashCommandCheck[] = [
+    new PrivilegeCheck(this).atLeast(Privilege.Officer),
+  ];
+
+  private readonly groupRoleCache = new Collection<string, Role>();
+
+  public override async execute(
+    interaction: ChatInputCommandInteraction,
+  ): Promise<void> {
+    const inducteeUsername = interaction.options.getString("inductee", true);
+
+    const inductees = await sheetsService.getAllData();
+    const inducteeData = inductees.get(inducteeUsername);
+    if (inducteeData === undefined) {
+      await this.replyError(
+        interaction,
+        "No registered inductee found with username " +
+        `${inlineCode(inducteeUsername)}!`,
+      );
+      return;
+    }
+
+    const inducteeMember = await this.getMember(
+      interaction.guild!.members,
+      inducteeUsername,
+    );
+
+    const embed = await this.prepareEmbed(inducteeMember, inducteeData);
+    await interaction.reply({ embeds: [embed], ephemeral: true });
+  }
+
+  public override async autocomplete(
+    interaction: AutocompleteInteraction,
+  ): Promise<void> {
+    const inductees = await sheetsService.getAllData(false);
+
+    const focusedValue = interaction.options.getFocused();
+    const choices: ApplicationCommandOptionChoiceData[] = inductees
+      .filter((_, username) => username.startsWith(focusedValue))
+      .map((_, username) => ({ name: `@${username}`, value: username }));
+
+    await interaction.respond(choices);
+  }
+
+  private async getMember(
+    members: GuildMemberManager,
+    username: string,
+  ): Promise<GuildMember | null> {
+    const result = await members.fetch({ query: username, limit: 1 });
+    const [member] = result.values();
+    return member ?? null;
+  }
+
+  private sharesRole(
+    role: Role | null,
+    member1: GuildMember,
+    member2: GuildMember,
+  ): boolean {
+    if (role === null) {
+      return false;
+    }
+    return member1.roles.cache.has(role.id) && member2.roles.cache.has(role.id);
+  }
+
+  private async determineGroup(member: GuildMember): Promise<Role | null> {
+    let groupRole = this.groupRoleCache.get(member.user.username);
+    if (groupRole !== undefined) {
+      return groupRole;
+    }
+
+    const groups = await BitByteGroupModel.find({});
+    for (const group of groups) {
+      groupRole = member.roles.cache.get(group.roleId);
+      if (groupRole !== undefined) {
+        this.groupRoleCache.set(member.user.username, groupRole);
+        return groupRole;
+      }
+    }
+    return null;
+  }
+
+  private async prepareEmbed(
+    inducteeMember: GuildMember | null,
+    inducteeData: InducteeData,
+  ): Promise<EmbedBuilder> {
+    const { legalName, preferredName, preferredEmail, major } = inducteeData;
+
+    const lines = [
+      `${bold("Name:")} ${legalName}`,
+      preferredName ? `${bold("Preferred:")} ${preferredName}` : "",
+      `${bold("Major:")} ${major}`,
+      `${bold("Contact:")} ${inlineCode(preferredEmail)}`,
+    ];
+
+    const groupRole = inducteeMember !== null
+      ? await this.determineGroup(inducteeMember)
+      : null;
+    if (groupRole === null) {
+      lines.push(`${bold("Group:")} <pending assignment> ${EMOJI_WARNING}`);
+    }
+    else {
+      lines.push(`${bold("Group:")} ${roleMention(groupRole.id)}`);
+    }
+
+    const mention = inducteeMember === null
+      ? (inlineCode(`@${inducteeData.discordUsername}`) + " (not in server)")
+      : userMention(inducteeMember.id);
+
+    const description = mention + "\n" + toBulletedList(lines.filter(Boolean));
+
+    return new EmbedBuilder()
+      .setColor(groupRole?.color ?? null)
+      .setTitle("Inductee Information")
+      .setDescription(description);
+  }
+}
+
+export default new InducteeLookupCommand();

@@ -171,8 +171,12 @@ export class InducteeSheetsService {
     return dataRetry;
   }
 
-  public async getAllData(): Promise<Collection<string, InducteeData>> {
-    await this.updateCache();
+  public async getAllData(
+    force: boolean = true,
+  ): Promise<Collection<string, InducteeData>> {
+    if (force) {
+      await this.updateCache();
+    }
     return this.inducteesCache.clone();
   }
 

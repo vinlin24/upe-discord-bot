@@ -2,6 +2,7 @@ import {
   Awaitable,
   ChatInputCommandInteraction,
   RESTPostAPIChatInputApplicationCommandsJSONBody,
+  type AutocompleteInteraction,
   type GuildMember,
   type MessageComponentInteraction,
 } from "discord.js";
@@ -51,6 +52,11 @@ export abstract class SlashCommandHandler {
     interaction: MessageComponentInteraction,
   ): Awaitable<any> { }
 
+  /** Callback to execute when autocomplete on this command is triggered. */
+  public autocomplete(
+    interaction: AutocompleteInteraction,
+  ): Awaitable<any> { }
+
   /** Fallback callback for if the main callback throws an `Error`. */
   public async handleError(
     error: Error,
@@ -73,6 +79,15 @@ export abstract class SlashCommandHandler {
     await channelsService.sendDevError(error, interaction);
   }
 
+  /** Fallback callback for if the autocomplete handler throws an `Error`. */
+  public async handleAutocompleteError(
+    error: Error,
+    interaction: AutocompleteInteraction,
+  ): Promise<any> {
+    console.error(`${error.name} in ${this.logName} autocomplete handler:`);
+    console.error(error);
+  }
+
   /** Run full execution pipeline for a slash command invocation. */
   public async dispatch(
     interaction: ChatInputCommandInteraction,
@@ -85,6 +100,13 @@ export abstract class SlashCommandHandler {
     interaction: MessageComponentInteraction,
   ): Promise<void> {
     await this.pipeline.runComponent(interaction);
+  }
+
+  /** Run full execution pipeline for an autocomplete event. */
+  public async dispatchAutocomplete(
+    interaction: AutocompleteInteraction,
+  ): Promise<void> {
+    await this.pipeline.runAutocomplete(interaction);
   }
 
   /** Allow callers of developer privilege to bypass checks. */
@@ -124,6 +146,12 @@ class CommandExecutionPipeline {
     interaction: MessageComponentInteraction,
   ): Promise<void> {
     await this.executeComponent(interaction);
+  }
+
+  public async runAutocomplete(
+    interaction: AutocompleteInteraction,
+  ): Promise<void> {
+    await this.executeAutocomplete(interaction);
   }
 
   private async executeChecks(
@@ -221,6 +249,27 @@ class CommandExecutionPipeline {
         console.error(
           `Error handler of ${this.handler.logName} component ` +
           `${interaction.customId} threw: ${error}`,
+        )
+        throw error;
+      }
+    }
+  }
+
+  private async executeAutocomplete(
+    interaction: AutocompleteInteraction,
+  ): Promise<void> {
+    try {
+      await this.handler.autocomplete(interaction);
+    }
+    catch (error) {
+      this.assertErrorThrown(error);
+      try {
+        await this.handler.handleAutocompleteError(error, interaction);
+      }
+      catch (error) {
+        console.error(
+          `Error handler of ${this.handler.logName} ` +
+          `autocomplete threw: ${error}`,
         )
         throw error;
       }

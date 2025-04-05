@@ -1,6 +1,7 @@
 import {
   ChannelType,
   Events,
+  type AutocompleteInteraction,
   type ChatInputCommandInteraction,
   type Interaction,
   type MessageComponentInteraction,
@@ -18,6 +19,9 @@ class InteractionDispatchListener extends
   public override async execute(interaction: Interaction): Promise<void> {
     if (interaction.isChatInputCommand()) {
       return await this.handleChatInputCommandInteraction(interaction);
+    }
+    if (interaction.isAutocomplete()) {
+      return await this.handleAutocompleteInteraction(interaction);
     }
     if (interaction.isMessageComponent()) {
       return await this.handleMessageComponentInteraction(interaction);
@@ -67,6 +71,24 @@ class InteractionDispatchListener extends
         "falling back to a generic response.",
       );
       await interaction.reply({ content: EMOJI_THUMBS_UP, ephemeral: true });
+    }
+  }
+
+  private async handleAutocompleteInteraction(
+    interaction: AutocompleteInteraction,
+  ): Promise<void> {
+    const handler = commandLoader.get(interaction.commandName);
+    if (handler === null) {
+      return;
+    }
+    try {
+      await handler.dispatchAutocomplete(interaction);
+    }
+    catch (error) {
+      console.error(
+        "[DISPATCH Uncaught error in autocomplete execution pipeline:",
+      )
+      console.error(error);
     }
   }
 
