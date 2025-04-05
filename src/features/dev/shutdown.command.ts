@@ -10,8 +10,8 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
+import dmService from "../../services/dm.service";
 import { formatContext } from "../../utils/formatting.utils";
-import { DEVELOPER_USER_ID } from "../../utils/snowflakes.utils";
 
 class ShutdownCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
@@ -28,8 +28,10 @@ class ShutdownCommand extends SlashCommandHandler {
   ): Promise<never> {
     try {
       console.warn(`${formatContext(interaction)}: shutting down the bot.`);
-      const content = `Shutting down! ${userMention(DEVELOPER_USER_ID)}`;
-      await interaction.reply(content);
+      await interaction.reply("Shutting down!");
+      await dmService.getDev().send(
+        `${userMention(interaction.user.id)} has shut down the bot!`,
+      );
     }
     catch { } // Just don't prevent shutdown.
     process.exit(0);

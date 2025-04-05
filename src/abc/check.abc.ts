@@ -1,9 +1,11 @@
+
 import type {
   Awaitable,
   ChatInputCommandInteraction,
   InteractionReplyOptions,
 } from "discord.js";
 
+import dmService from "../services/dm.service";
 import { makeErrorEmbed } from "../utils/errors.utils";
 import type { SlashCommandHandler } from "./command.abc";
 
@@ -50,12 +52,13 @@ export abstract class SlashCommandCheck<
   ): Awaitable<any> { }
 
   /** Fallback callback for if any of the callbacks throw an `Error`. */
-  public handleError(
+  public async handleError(
     error: Error,
     interaction: ChatInputCommandInteraction,
-  ): Awaitable<any> {
+  ): Promise<any> {
     console.error(`${error.name} in ${this.logName}:`);
     console.error(error);
+    await dmService.sendDevError(error, interaction);
   }
 
   /**
