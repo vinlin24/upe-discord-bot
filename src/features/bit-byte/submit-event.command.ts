@@ -11,9 +11,11 @@ import {
 import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { RoleCheck } from "../../middleware/role.middleware";
+import dmService from "../../services/dm.service";
 import type { RoleId, UrlString } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
-import { EMOJI_RAISED_EYEBROW } from "../../utils/emojis.utils";
+import { EMOJI_FEARFUL, EMOJI_RAISED_EYEBROW } from "../../utils/emojis.utils";
+import { makeErrorEmbed } from "../../utils/errors.utils";
 import { BYTE_ROLE_ID, INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 import {
   BitByteGroupModel,
@@ -78,6 +80,15 @@ class SubmitEventCommand extends SlashCommandHandler {
   ): Promise<void> {
     const options = this.resolveOptions(interaction);
 
+    const groupExists = await this.groupExists(options.groupRole.id as RoleId);
+    if (!groupExists) {
+      await this.replyError(interaction, (
+        `${roleMention(options.groupRole.id)} ` +
+        "is not registered as a bit-byte group!"
+      ));
+      return;
+    }
+
     const numBitsInGroup = this.getNumBitsInGroup(options.groupRole);
 
     // Check that caller isn't BS'ing.
@@ -90,38 +101,64 @@ class SubmitEventCommand extends SlashCommandHandler {
       return;
     }
 
+    // So the thing is: the URL of the uploaded attachment is EPHEMERAL, meaning
+    // it will expire after some time, so we can't just cheese it by saving that
+    // link as our event picture URL. I'll use a hack though: when we echo back
+    // the uploaded attachment in our reply, that image is actually assigned a
+    // permanent CDN attachment link. We can use that instead! Our flow will be:
+    //
+    //    1. Prepare the event with the ephemeral URL, which we'll reply with.
+    //    2. Fetch our own reply to retrieve its image URL.
+    //    3. Update the event with the now permanent image URL.
+    //    4. THEN save the event to the database.
+    //
+    // It's a bit awkward telling the user the submission went through before
+    // database state is secured, so worst case error handling: if the saving
+    // fails, edit the reply again to display the error.
+
     const event: BitByteEvent = {
       location: options.location,
       caption: options.caption,
       numAttended: options.numInductees,
       numTotal: numBitsInGroup,
-      picture: options.picture.url as UrlString,
+      picture: options.picture.url as UrlString, // To be replaced.
       timestamp: this.dateClient.getNow(),
     };
-
-    const updated = await this.addEvent(options.groupRole.id as RoleId, event);
-    if (!updated) {
-      await this.replyError(interaction, (
-        `${roleMention(options.groupRole.id)} ` +
-        "is not registered as a bit-byte group!"
-      ));
-      return;
-    }
 
     const pointsEarned = calculateBitByteEventPoints(event);
 
     const description = (
       `${bold("Group:")} ${roleMention(options.groupRole.id)}\n` +
+      `${bold("Caption:")} ${event.caption}\n` +
       `${bold("Location:")} ${event.location}\n` +
+      `${bold("Attendance:")} ${event.numAttended} / ${event.numTotal} bits\n` +
       `${bold("Points Earned:")} ${pointsEarned}`
     );
-    const embed = new EmbedBuilder()
-      .setTitle("Bit-Byte Event Submitted")
-      .setDescription(description);
     await interaction.reply({
-      embeds: [embed],
+      embeds: [new EmbedBuilder()
+        .setTitle("Bit-Byte Event Submitted")
+        .setDescription(description)
+      ],
       files: [options.picture],
     });
+
+    const messageReply = await interaction.fetchReply();
+    const permaLink = messageReply.attachments.first()!.proxyURL as UrlString;
+    event.picture = permaLink;
+
+    try {
+      await this.addEvent(options.groupRole.id as RoleId, event);
+    }
+    catch (error) {
+      await interaction.editReply({
+        embeds: [makeErrorEmbed(
+          `${EMOJI_FEARFUL} Couldn't save your submission! ` +
+          "Developers have been notified."
+        )],
+        files: [options.picture],
+      });
+      await dmService.sendDevError(error as Error, interaction);
+    }
   }
 
   private resolveOptions(
@@ -142,15 +179,19 @@ class SubmitEventCommand extends SlashCommandHandler {
       .size;
   }
 
+  private async groupExists(roleId: RoleId): Promise<boolean> {
+    const result = await BitByteGroupModel.exists({ roleId });
+    return result !== null;
+  }
+
   private async addEvent(
     roleId: RoleId,
     event: BitByteEvent,
-  ): Promise<boolean> {
-    const result = await BitByteGroupModel.updateOne(
+  ): Promise<void> {
+    await BitByteGroupModel.updateOne(
       { roleId },
       { $push: { events: event } },
     );
-    return result.matchedCount > 0;
   }
 }
 
