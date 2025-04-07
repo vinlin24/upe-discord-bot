@@ -47,7 +47,7 @@ export class InducteeJoinListener
         .setColor(Colors.Yellow)
         .setTitle("Inductee Joined the Server")
         .setDescription(description)
-        .setThumbnail(member.avatarURL())
+        .setImage(member.avatarURL()),
       ],
     });
   }
