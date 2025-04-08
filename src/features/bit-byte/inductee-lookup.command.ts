@@ -74,14 +74,20 @@ class InducteeLookupCommand extends SlashCommandHandler {
   public override async autocomplete(
     interaction: AutocompleteInteraction,
   ): Promise<void> {
+    let focusedValue = interaction.options.getFocused();
+    // Normalize to username alone, which is what we store usernames as.
+    if (focusedValue.startsWith("@")) {
+      focusedValue = focusedValue.slice(1);
+    }
+
+    // Don't force cache update every time, for performance.
     const inductees = await sheetsService.getAllData(false);
 
-    const focusedValue = interaction.options.getFocused();
-    const choices: ApplicationCommandOptionChoiceData[]
-      = Array.from(inductees.keys())
-        .filter(username => username.startsWith(focusedValue))
-        .slice(0, AUTOCOMPLETE_MAX_CHOICES)
-        .map(username => ({ name: `@${username}`, value: username }));
+    const allUsernames = Array.from(inductees.keys());
+    const choices: ApplicationCommandOptionChoiceData[] = allUsernames
+      .filter(username => username.startsWith(focusedValue))
+      .slice(0, AUTOCOMPLETE_MAX_CHOICES)
+      .map(username => ({ name: `@${username}`, value: username }));
 
     await interaction.respond(choices);
   }
