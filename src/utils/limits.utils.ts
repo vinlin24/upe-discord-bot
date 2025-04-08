@@ -2,6 +2,8 @@
 
 export const MESSAGE_CHARACTER_LIMIT = 2000;
 
+export const AUTOCOMPLETE_MAX_CHOICES = 25;
+
 // Ref: https://discordjs.guide/popular-topics/embeds.html#embed-limits.
 
 export const EMBED_TITLE_LIMIT = 256;

@@ -22,6 +22,7 @@ import {
 } from "../../middleware/privilege.middleware";
 import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
+import { AUTOCOMPLETE_MAX_CHOICES } from "../../utils/limits.utils";
 import sheetsService, {
   type InducteeData,
 } from "../inductee-role/sheets.service";
@@ -76,9 +77,11 @@ class InducteeLookupCommand extends SlashCommandHandler {
     const inductees = await sheetsService.getAllData(false);
 
     const focusedValue = interaction.options.getFocused();
-    const choices: ApplicationCommandOptionChoiceData[] = inductees
-      .filter((_, username) => username.startsWith(focusedValue))
-      .map((_, username) => ({ name: `@${username}`, value: username }));
+    const choices: ApplicationCommandOptionChoiceData[]
+      = Array.from(inductees.keys())
+        .filter(username => username.startsWith(focusedValue))
+        .slice(0, AUTOCOMPLETE_MAX_CHOICES)
+        .map(username => ({ name: `@${username}`, value: username }));
 
     await interaction.respond(choices);
   }
