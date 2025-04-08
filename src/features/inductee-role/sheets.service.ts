@@ -143,6 +143,7 @@ export type InducteeData = {
 export class InducteeSheetsService {
   private readonly client: GoogleSheetsClient;
   private readonly inducteesCache = new Collection<string, InducteeData>();
+  private updatedOnceYet = false;
 
   public constructor(spreadsheetId: string) {
     this.client = GoogleSheetsClient.fromCredentialsFile(spreadsheetId);
@@ -174,7 +175,7 @@ export class InducteeSheetsService {
   public async getAllData(
     force: boolean = true,
   ): Promise<Collection<string, InducteeData>> {
-    if (force) {
+    if (force || !this.updatedOnceYet) {
       await this.updateCache();
     }
     return this.inducteesCache.clone();
@@ -210,6 +211,8 @@ export class InducteeSheetsService {
         throw error;
       }
     }
+
+    this.updatedOnceYet = true;
   }
 
   private parseRow(row: string[]): InducteeData {
