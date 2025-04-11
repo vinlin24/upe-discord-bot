@@ -1,4 +1,4 @@
-import type { UserId } from "./types/branded.types";
+import type { ChannelId, UserId } from "./branded.types";
 
 declare global {
   type EnvironmentVariables = {
@@ -42,6 +42,18 @@ declare global {
     INDUCTION_EMAIL: string;
 
     // //////////////////////////// //
+    //      Seasonal Constants      //
+    // //////////////////////////// //
+
+    INDUCTION_ANNOUNCEMENTS_CHANNEL_ID: ChannelId;
+    INDUCTEES_CHAT_CHANNEL_ID: ChannelId;
+    INDUCTEE_DATA_SPREADSHEET_ID: string;
+    /**
+     * Name of MongoDB database to use.
+     */
+    DB_NAME: string;
+
+    // //////////////////////////// //
     //      3rd Party Services      //
     // //////////////////////////// //
 
@@ -49,10 +61,6 @@ declare global {
      * Connection string for MongoDB service.
      */
     DB_CONNECTION_STRING: string;
-    /**
-     * Name of MongoDB database to use.
-     */
-    DB_NAME: string;
   };
 
   namespace NodeJS {

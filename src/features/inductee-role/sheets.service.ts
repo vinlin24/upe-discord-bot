@@ -5,11 +5,16 @@ import type { sheets_v4 } from "googleapis/build/src/apis/sheets/v4";
 import { z } from "zod";
 
 import { Collection } from "discord.js";
+import { configDotenv } from "dotenv";
 import { PROJECT_ASSETS_ROOT, resolvePath } from "../../utils/paths.utils";
 import { cleanProvidedUsername } from "./input.utils";
 
+configDotenv();
+
 export const GOOGLE_CREDENTIALS_PATH
   = resolvePath(PROJECT_ASSETS_ROOT, "google-credentials.json");
+
+export const { INDUCTEE_DATA_SPREADSHEET_ID } = process.env;
 
 // You know what, assert this at import time. No "find out we forgot this" BS
 // late into the runtime.
@@ -234,7 +239,4 @@ export class InducteeSheetsService {
   }
 }
 
-export const S25_INDUCTEE_DATA_SPREADSHEET_ID // Update every season lol.
-  = "1Q3-kzFwhKiwh2zh4Zf_ufzWUaRCDqSwkSEJt2FqFNKM";
-
-export default new InducteeSheetsService(S25_INDUCTEE_DATA_SPREADSHEET_ID);
+export default new InducteeSheetsService(INDUCTEE_DATA_SPREADSHEET_ID);
