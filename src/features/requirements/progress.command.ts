@@ -186,7 +186,7 @@ class TrackerCommand extends SlashCommandHandler {
         data.interview,
       ),
       this.formatUnhandledProgress(
-        `Upload ${NUM_TESTS_REQUIRED}`,
+        `Upload ${NUM_TESTS_REQUIRED} Tests`,
         quietHyperlink("your web portal", UPE_WEBSITE),
       ),
       this.formatBooleanProgress("One-Time Initiation Fee", data.fee),
