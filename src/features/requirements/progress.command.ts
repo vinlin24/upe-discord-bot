@@ -3,6 +3,7 @@ import {
   EmbedBuilder,
   inlineCode,
   roleMention,
+  userMention,
   type ChatInputCommandInteraction,
   type GuildMember,
 } from "discord.js";
@@ -20,6 +21,7 @@ import requirementSheetsService, {
 } from "../../services/requirement-sheets.service";
 import {
   EMOJI_CHECK,
+  EMOJI_CLOCK,
   EMOJI_CROSS,
   EMOJI_IN_PROGRESS,
   EMOJI_INFORMATION,
@@ -65,16 +67,18 @@ class TrackerCommand extends SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const broadcast = interaction.options.getBoolean("broadcast");
+    await interaction.deferReply({ ephemeral: !broadcast });
+
+    const caller = interaction.member as GuildMember;
     let targetInductee = interaction.options.getMember(
       "inductee",
     ) as GuildMember | null;
-    const caller = interaction.member as GuildMember;
 
     if (targetInductee && highestPrivilege(caller) < Privilege.Officer) {
       const errorEmbed = makeErrorEmbed(
         "You can only specify another inductee user if you're an officer.",
       );
-      await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+      await interaction.editReply({ embeds: [errorEmbed] });
       return;
     }
     targetInductee ??= caller;
@@ -87,7 +91,7 @@ class TrackerCommand extends SlashCommandHandler {
         `${inlineCode(username)}. If you believe this is a mistake, ` +
         `reach out to ${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}!`,
       );
-      await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+      await interaction.editReply({ embeds: [errorEmbed] });
       return;
     }
 
@@ -101,12 +105,12 @@ class TrackerCommand extends SlashCommandHandler {
         `name ${inlineCode(trackerName)}. If you believe this is a mistake, ` +
         `reach out to ${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}!`,
       );
-      await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+      await interaction.editReply({ embeds: [errorEmbed] });
       return;
     }
 
     const embed = this.formatProgressEmbed(requirementsData, targetInductee);
-    await interaction.reply({ embeds: [embed], ephemeral: !broadcast });
+    await interaction.editReply({ embeds: [embed] });
   }
 
   private formatProgressEmbed(
@@ -116,11 +120,11 @@ class TrackerCommand extends SlashCommandHandler {
     // NOTE: Due to how requirements are trickily spread across different
     // sources of truth, the details returned may not be exhaustive.
 
-    const mention = `${bold("Inductee member:")} ${roleMention(inductee.id)}`;
+    const mention = `${bold("Inductee member:")} ${userMention(inductee.id)}`;
     const progressLines = toBulletedList(this.formatProgressLines(data));
 
     const information = (
-      `${EMOJI_INFORMATION} View the full list of requirements in our ` +
+      `${EMOJI_INFORMATION} View the requirements in more detail in our ` +
       `${quietHyperlink("requirements document", REQUIREMENTS_DOCUMENT_LINK)}.`
     );
 
@@ -139,8 +143,8 @@ class TrackerCommand extends SlashCommandHandler {
       lastUpdatedRelative,
     ] = timestampPair(requirementSheetsService.lastUpdateTime);
     const lastUpdated = littleText(
-      `Data parsed from our private tracker, last synced ` +
-      `${lastUpdatedMention} (${lastUpdatedRelative}).`,
+      `${EMOJI_CLOCK} Data parsed from our private tracker spreadsheet, ` +
+      `last synced ${lastUpdatedMention} (${lastUpdatedRelative}).`,
     );
 
     const description = [
@@ -196,7 +200,7 @@ class TrackerCommand extends SlashCommandHandler {
 
   private formatBooleanProgress(title: string, satisfied: boolean): string {
     if (satisfied) {
-      return `${EMOJI_CHECK} ${bold(title + ":")} Satisfied`;
+      return `${EMOJI_CHECK} ${bold(title + ":")} Completed`;
     }
     return `${EMOJI_CROSS} ${bold(title + ":")} Missing`;
   }
