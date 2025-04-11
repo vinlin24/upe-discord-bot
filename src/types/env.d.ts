@@ -48,6 +48,8 @@ declare global {
     INDUCTION_ANNOUNCEMENTS_CHANNEL_ID: ChannelId;
     INDUCTEES_CHAT_CHANNEL_ID: ChannelId;
     INDUCTEE_DATA_SPREADSHEET_ID: string;
+    /** NOTE: This should be the PRIVATE requirement tracker spreadsheet. */
+    REQUIREMENT_TRACKER_SPREADSHEET_ID: string;
     /**
      * Name of MongoDB database to use.
      */
