@@ -65,7 +65,7 @@ const POINTS_OF_CONTACT =
   "Your points of contact:\n" +
   toBulletedList([
     "General question: feel free to ping " +
-    `${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}.` +
+    `${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}.`,
 
     `Private question: email ${bold(INDUCTION_EMAIL_LINK)}.`,
 
