@@ -83,7 +83,7 @@ export class RequirementSheetsService {
   }
 
   public get lastUpdateTime(): UnixSeconds {
-    return this.lastUpdateTime;
+    return this.lastUpdated;
   }
 
   public async getData(name: string): Promise<RequirementsData | null> {
