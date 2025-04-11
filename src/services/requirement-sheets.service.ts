@@ -4,6 +4,7 @@ import { configDotenv } from "dotenv";
 import { z } from "zod";
 import { GoogleSheetsClient } from "../clients/sheets.client";
 import type { UnixSeconds } from "../types/branded.types";
+import { assertNonEmptyArray } from "../types/generic.types";
 import { SystemDateClient, type IDateClient } from "../utils/date.utils";
 
 configDotenv();
@@ -31,7 +32,7 @@ enum TrackerColumn {
   Ceremony,
 }
 
-const TrackerSchema = z.tuple([
+const trackerFields = [
   z.string().trim(),                    // Name
   z.string(),                           // Fraction
   z.string(),                           // Tutoring
@@ -46,7 +47,9 @@ const TrackerSchema = z.tuple([
   z.string(),                           // Tests
   z.string().refine(isBlankOrNumeric),  // Fee
   z.string(),                           // Ceremony
-]).rest(z.any());
+];
+assertNonEmptyArray(trackerFields);
+const TrackerSchema = z.tuple(trackerFields).rest(z.any());
 
 export type RequirementsData = {
   name: string;
@@ -132,7 +135,14 @@ export class RequirementSheetsService {
   }
 
   private parseRow(row: string[]): RequirementsData {
-    const validatedRow = TrackerSchema.parse(row);
+    // Latter columns are omitted if they're omitted, causing `row` to be
+    // shorter than what's expected by the full schema, so we need to pad.
+    const paddedRow = row.slice();
+    while (paddedRow.length < trackerFields.length) {
+      paddedRow.push("");
+    }
+
+    const validatedRow = TrackerSchema.parse(paddedRow);
 
     return {
       name: validatedRow[TrackerColumn.Name],
