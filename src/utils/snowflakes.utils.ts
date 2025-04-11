@@ -48,3 +48,9 @@ export const { DEVELOPER_USER_ID } = process.env;
 // Channel IDs.
 
 export const BOT_LOGS_CHANNEL_ID = "1358085368855134419" as ChannelId;
+/** NOTE: Update every season! */
+export const INDUCTION_ANNOUNCEMENTS_CHANNEL_ID
+  = "1358078439776719061" as ChannelId;
+/** NOTE: Update every season! */
+export const INDUCTEES_CHAT_CHANNEL_ID
+  = "1358078372525379747" as ChannelId;

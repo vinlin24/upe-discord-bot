@@ -1,10 +1,12 @@
 import {
+  hyperlink,
   time,
   TimestampStyles,
   type ChatInputCommandInteraction,
-  type GuildTextBasedChannel
+  type GuildTextBasedChannel,
 } from "discord.js";
-import type { UnixSeconds } from "../types/branded.types";
+
+import type { UnixSeconds, UrlString } from "../types/branded.types";
 
 export function toBulletedList(lines: unknown[]): string {
   return lines.map(line => `* ${line}`).join("\n");
@@ -23,4 +25,12 @@ export function timestampPair(
   timestamp: UnixSeconds,
 ): [`<t:${UnixSeconds}>`, `<t:${UnixSeconds}:R>`] {
   return [time(timestamp), time(timestamp, TimestampStyles.RelativeTime)];
+}
+
+/** Same as `hyperlink()` but suppress embeds. */
+export function quietHyperlink<C extends string, U extends UrlString>(
+  content: C,
+  url: U,
+): `[${C}](<${U}>)` {
+  return hyperlink(content, `<${url}>`);
 }

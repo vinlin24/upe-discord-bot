@@ -35,6 +35,12 @@ declare global {
      */
     DEVELOPER_USER_ID: UserId;
 
+    // ////////////////// //
+    //      Sensitive     //
+    // ////////////////// //
+
+    INDUCTION_EMAIL: string;
+
     // //////////////////////////// //
     //      3rd Party Services      //
     // //////////////////////////// //

@@ -1,6 +1,7 @@
 import { type ColorResolvable, type RoleResolvable } from "discord.js";
+import { configDotenv } from "dotenv";
 
-import type { RoleId } from "../types/branded.types";
+import type { RoleId, UrlString } from "../types/branded.types";
 import { getEnumFromName } from "../types/generic.types";
 import {
   ADVOCACY_ROLE_ID,
@@ -18,6 +19,8 @@ import {
   TUTORING_ROLE_ID,
   WEB_ROLE_ID,
 } from "./snowflakes.utils";
+
+configDotenv();
 
 export const UPE_BLUE: ColorResolvable = "#3067d3";
 
@@ -103,3 +106,14 @@ export enum TeamType {
 export type TeamTypeName = `${TeamType}`;
 
 export const TEAM_TYPE_NAMES: TeamTypeName[] = Object.values(TeamType);
+
+export const INDUCTION_LINKTREE
+  = "https://linktr.ee/upe_induction" as UrlString;
+export const UPE_LINKTREE
+  = "https://linktr.ee/upeucla" as UrlString;
+export const UPE_WEBSITE
+  = "https://upe.seas.ucla.edu" as UrlString;
+export const TUTORING_SCHEDULE_WEBPAGE
+  = "https://upe.seas.ucla.edu/tutoring/" as UrlString;
+
+export const { INDUCTION_EMAIL } = process.env;

@@ -12,12 +12,16 @@ import {
 } from "../abc/check.abc";
 import {
   DEVELOPER_USER_ID,
+  INDUCTEES_ROLE_ID,
   INDUCTION_AND_MEMBERSHIP_ROLE_ID,
+  MEMBERS_ROLE_ID,
   OFFICERS_ROLE_ID,
 } from "../utils/snowflakes.utils";
 
 export enum Privilege {
   None = 0,
+  Inductee,
+  Member,
   Officer,
   Induction,
   Administrator,
@@ -36,6 +40,12 @@ export function highestPrivilege(member: GuildMember): Privilege {
   }
   if (member.roles.cache.has(OFFICERS_ROLE_ID)) {
     return Privilege.Officer;
+  }
+  if (member.roles.cache.has(MEMBERS_ROLE_ID)) {
+    return Privilege.Member;
+  }
+  if (member.roles.cache.has(INDUCTEES_ROLE_ID)) {
+    return Privilege.Inductee;
   }
   return Privilege.None;
 }

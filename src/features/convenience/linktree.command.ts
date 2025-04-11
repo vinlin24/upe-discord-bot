@@ -3,7 +3,8 @@ import {
   bold,
   ChatInputCommandInteraction,
   EmbedBuilder,
-  hyperlink
+  hyperlink,
+  type Snowflake
 } from "discord.js";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
@@ -23,9 +24,17 @@ type CategoryLinks = {
   entries: LinkEntry[];
 }
 
-class LinktreeCommand extends SlashCommandHandler {
+export class LinktreeCommand extends SlashCommandHandler {
+  /**
+   * NOTE: Hard-coded post-deployment for convenience. As long as the command
+   * name doesn't change, this ID should still remain valid.
+   */
+  public static readonly COMMAND_ID
+    = "1357250776505913458" as const satisfies Snowflake;
+  public static readonly COMMAND_NAME = "linktree";
+
   public override readonly definition = new ExtendedSlashCommandBuilder()
-    .setName("linktree")
+    .setName(LinktreeCommand.COMMAND_NAME)
     .setDescription("Get the UPE Linktree links.")
     .addBooleanOption(input => input
       .setName("simple")
