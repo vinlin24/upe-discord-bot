@@ -38,7 +38,11 @@ import {
 } from "../../utils/formatting.utils";
 import { ExtendedSlashCommandBuilder } from "../../utils/options.utils";
 import { INDUCTION_AND_MEMBERSHIP_ROLE_ID } from "../../utils/snowflakes.utils";
-import { REQUIREMENTS_DOCUMENT_LINK, UPE_WEBSITE } from "../../utils/upe.utils";
+import {
+  PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
+  REQUIREMENTS_DOCUMENT_LINK,
+  UPE_WEBSITE,
+} from "../../utils/upe.utils";
 
 // TODO: Could centralize such details in some "requirements spec".
 const NUM_PROFESSIONAL_EVENTS_REQUIRED = 1;
@@ -133,7 +137,7 @@ class TrackerCommand extends SlashCommandHandler {
       "there is a discrepancy, refer to the " +
       bold(quietHyperlink(
         "public requirement tracker spreadsheet",
-        REQUIREMENTS_DOCUMENT_LINK,
+        PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
       )) +
       " as the source of truth."
     );
@@ -164,7 +168,10 @@ class TrackerCommand extends SlashCommandHandler {
     return [
       this.formatUnhandledProgress(
         "Weekly Drop-In Tutoring",
-        "main tracker spreadsheet",
+        quietHyperlink(
+          "main tracker spreadsheet",
+          PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
+        ),
       ),
       this.formatBooleanProgress("Demographics Survey", data.demographics),
       this.formatCountProgress(

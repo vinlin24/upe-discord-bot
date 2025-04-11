@@ -9,7 +9,7 @@ import { SystemDateClient, type IDateClient } from "../utils/date.utils";
 
 configDotenv();
 
-export const { PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID: REQUIREMENT_TRACKER_SPREADSHEET_ID } = process.env;
+export const { PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID } = process.env;
 
 function isBlankOrNumeric(s: string): boolean {
   return s === "" || /^([0-9]|[1-9][0-9]*)$/.test(s);
@@ -171,6 +171,6 @@ export class RequirementSheetsService {
 }
 
 export default new RequirementSheetsService(
-  REQUIREMENT_TRACKER_SPREADSHEET_ID,
+  PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID,
   new SystemDateClient(),
 );
