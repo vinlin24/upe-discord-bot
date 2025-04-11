@@ -116,4 +116,8 @@ export const UPE_WEBSITE
 export const TUTORING_SCHEDULE_WEBPAGE
   = "https://upe.seas.ucla.edu/tutoring/" as UrlString;
 
-export const { INDUCTION_EMAIL } = process.env;
+export const {
+  INDUCTION_EMAIL,
+  PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_ID,
+  REQUIREMENTS_DOCUMENT_LINK,
+} = process.env;

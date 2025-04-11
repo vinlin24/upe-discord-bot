@@ -1,4 +1,4 @@
-import type { ChannelId, UserId } from "./branded.types";
+import type { ChannelId, UrlString, UserId } from "./branded.types";
 
 declare global {
   type EnvironmentVariables = {
@@ -48,8 +48,9 @@ declare global {
     INDUCTION_ANNOUNCEMENTS_CHANNEL_ID: ChannelId;
     INDUCTEES_CHAT_CHANNEL_ID: ChannelId;
     INDUCTEE_DATA_SPREADSHEET_ID: string;
-    /** NOTE: This should be the PRIVATE requirement tracker spreadsheet. */
-    REQUIREMENT_TRACKER_SPREADSHEET_ID: string;
+    REQUIREMENTS_DOCUMENT_LINK: UrlString;
+    PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID: string;
+    PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_ID: string;
     /**
      * Name of MongoDB database to use.
      */
