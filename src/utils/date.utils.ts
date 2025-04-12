@@ -1,8 +1,10 @@
+import { DateTime, type DateObjectUnits } from "luxon";
 import type { UnixSeconds } from "../types/branded.types";
 
 export interface IDateClient {
   getNow(): UnixSeconds;
   getDate(seconds: UnixSeconds): Date;
+  getDateTime(units: DateObjectUnits, zone?: string): DateTime;
 }
 
 export class SystemDateClient implements IDateClient {
@@ -13,4 +15,28 @@ export class SystemDateClient implements IDateClient {
   public getDate(seconds: UnixSeconds): Date {
     return new Date(seconds * 1000);
   }
+
+  public getDateTime(units: DateObjectUnits, zone?: string): DateTime {
+    return DateTime.fromObject(units, { zone });
+  }
 }
+
+export enum Month {
+  January = 1,
+  February,
+  March,
+  April,
+  May,
+  June,
+  July,
+  August,
+  September,
+  October,
+  November,
+  December,
+}
+
+export type MonthName = keyof typeof Month;
+
+export const MONTH_NAMES = Object.values(Month)
+  .filter(value => typeof value === "string") as MonthName[];
