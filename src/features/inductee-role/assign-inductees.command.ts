@@ -25,6 +25,7 @@ import {
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
 import channelsService from "../../services/channels.service";
+import inducteeSheetsService, { type InducteeData } from "../../services/inductee-sheets.service";
 import type { UrlString } from "../../types/branded.types";
 import {
   EMOJI_ALERT,
@@ -38,7 +39,6 @@ import {
   ADMINS_ROLE_ID,
   INDUCTEES_ROLE_ID,
 } from "../../utils/snowflakes.utils";
-import inducteeSheetsService, { type InducteeData } from "./sheets.service";
 
 /**
  * Trivalent return value type for the functions that make API requests. We want

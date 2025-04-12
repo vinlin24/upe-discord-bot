@@ -34,3 +34,19 @@ export function quietHyperlink<C extends string, U extends UrlString>(
 ): `[${C}](<${U}>)` {
   return hyperlink(content, `<${url}>`);
 }
+
+/**
+ * Shorthand for formatting the possessive form of a noun based on if it ends
+ * with the letter 's'.
+ */
+export function possessive(noun: string): string {
+  return /s$/i.test(noun) ? `${noun}'` : `${noun}'s`;
+}
+
+/**
+ * Format with "inverse header" style. There doesn't seem to be a helper already
+ * for this in the discord.js package.
+ */
+export function littleText<T extends string>(text: T): `-# ${T}` {
+  return `-# ${text}`;
+}

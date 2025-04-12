@@ -10,9 +10,9 @@ import {
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import channelsService from "../../services/channels.service";
+import inducteeSheetsService, { type InducteeData } from "../../services/inductee-sheets.service";
 import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
-import inducteeSheetsService, { type InducteeData } from "./sheets.service";
 
 export class InducteeJoinListener
   extends DiscordEventListener<Events.GuildMemberAdd> {

@@ -20,12 +20,12 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
+import sheetsService, {
+  type InducteeData,
+} from "../../services/inductee-sheets.service";
 import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
 import { AUTOCOMPLETE_MAX_CHOICES } from "../../utils/limits.utils";
-import sheetsService, {
-  type InducteeData,
-} from "../inductee-role/sheets.service";
 import { BitByteGroupModel } from "./bit-byte.model";
 
 class InducteeLookupCommand extends SlashCommandHandler {
