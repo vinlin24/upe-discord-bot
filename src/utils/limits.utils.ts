@@ -15,3 +15,7 @@ export const EMBED_FOOTER_TEXT_LIMIT = 2048;
 export const EMBED_AUTHOR_NAME_LIMIT = 256;
 export const EMBED_TOTAL_LIMIT = 6000;
 export const EMBEDS_PER_MESSAGE_LIMIT = 10;
+
+// Discovered empirically lol.
+
+export const ROLE_NAME_MAX_LENGTH = 100;

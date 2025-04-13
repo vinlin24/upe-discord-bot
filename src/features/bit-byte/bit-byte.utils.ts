@@ -1,4 +1,7 @@
+import { SEASON_ID } from "../../utils/upe.utils";
 import { BitByteLocation, type BitByteEvent } from "./bit-byte.model";
+
+export const BIT_BYTE_CATEGORY_NAME = `Bit-Byte ${SEASON_ID}`;
 
 export function calculateBitByteEventPoints(event: BitByteEvent): number {
   let distanceMultiplier: number;

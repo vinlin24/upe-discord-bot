@@ -18,10 +18,13 @@ import { BitByteGroupModel } from "./bit-byte.model";
 class DeleteByteGroupCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
     .setName("deletebytegroup")
-    .setDescription("Delete bit-byte group associated with a Discord role.")
+    .setDescription(
+      "Delete bit-byte group associated with a Discord role " +
+      "(role itself stays).",
+    )
     .addRoleOption(input => input
       .setName("group_role")
-      .setDescription("Custom role for this bit-byte group.")
+      .setDescription("Role associated with this bit-byte group.")
       .setRequired(true)
     )
     .toJSON();
@@ -54,8 +57,11 @@ class DeleteByteGroupCommand extends SlashCommandHandler {
   }
 
   private async deleteDocument(roleId: RoleId): Promise<boolean> {
-    const result = await BitByteGroupModel.deleteOne({ roleId });
-    return result.deletedCount > 0;
+    const result = await BitByteGroupModel.updateOne(
+      { roleId },
+      { $set: { deleted: true } },
+    )
+    return result.modifiedCount > 0;
   }
 }
 

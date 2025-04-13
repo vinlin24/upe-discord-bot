@@ -1,9 +1,10 @@
 import mongoose from "mongoose";
 
 import type {
+  ChannelId,
   RoleId,
   UnixSeconds,
-  UrlString
+  UrlString,
 } from "../../types/branded.types";
 
 export enum BitByteLocation {
@@ -23,8 +24,10 @@ export type BitByteEvent = {
 
 export type BitByteGroup = {
   roleId: RoleId;
+  channelId: ChannelId;
   events: BitByteEvent[];
   jeopardyPoints: number;
+  deleted: boolean;
 };
 
 const bitByteEventSchema = new mongoose.Schema<BitByteEvent>({
@@ -42,8 +45,10 @@ const bitByteEventSchema = new mongoose.Schema<BitByteEvent>({
 
 const bitByteGroupSchema = new mongoose.Schema<BitByteGroup>({
   roleId: { type: String, required: true, unique: true },
-  events: { type: [bitByteEventSchema], required: true },
-  jeopardyPoints: { type: Number, required: true },
+  channelId: { type: String, required: true },
+  events: { type: [bitByteEventSchema], default: [] },
+  jeopardyPoints: { type: Number, default: 0 },
+  deleted: { type: Boolean, default: false },
 });
 
 export const BitByteGroupModel = mongoose.model(
