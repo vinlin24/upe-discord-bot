@@ -3,6 +3,8 @@ import {
   EmbedBuilder,
   inlineCode,
   roleMention,
+  time,
+  TimestampStyles,
   userMention,
   type ChatInputCommandInteraction,
   type GuildMember,
@@ -19,6 +21,7 @@ import inducteeSheetsService from "../../services/inductee-sheets.service";
 import requirementSheetsService, {
   type RequirementsData,
 } from "../../services/requirement-sheets.service";
+import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import {
   EMOJI_CHECK,
   EMOJI_CLOCK,
@@ -67,6 +70,8 @@ class TrackerCommand extends SlashCommandHandler {
     new PrivilegeCheck(this).atLeast(Privilege.Inductee),
   ];
 
+  public constructor(private readonly dateClient: IDateClient) { super(); }
+
   public override async execute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
@@ -87,6 +92,9 @@ class TrackerCommand extends SlashCommandHandler {
     }
     targetInductee ??= caller;
 
+    await interaction.editReply(
+      `Fetching inductee information (${this.getAgoMention()})...`,
+    );
     const { username } = targetInductee.user;
     const inducteeData = await inducteeSheetsService.getData(username);
     if (inducteeData === null) {
@@ -99,6 +107,9 @@ class TrackerCommand extends SlashCommandHandler {
       return;
     }
 
+    await interaction.editReply(
+      `Fetching requirements progress (${this.getAgoMention()})...`,
+    )
     const trackerName = inducteeData.preferredName ?? inducteeData.legalName;
     const requirementsData = await requirementSheetsService.getData(
       trackerName,
@@ -114,7 +125,7 @@ class TrackerCommand extends SlashCommandHandler {
     }
 
     const embed = this.formatProgressEmbed(requirementsData, targetInductee);
-    await interaction.editReply({ embeds: [embed] });
+    await interaction.editReply({ content: "", embeds: [embed] });
   }
 
   private formatProgressEmbed(
@@ -240,6 +251,10 @@ class TrackerCommand extends SlashCommandHandler {
   private formatUnhandledProgress(title: string, referTo: string): string {
     return `${EMOJI_INFORMATION} ${bold(title + ":")} Refer to ${referTo}.`;
   }
+
+  private getAgoMention(): string {
+    return time(this.dateClient.getNow(), TimestampStyles.RelativeTime);
+  }
 }
 
-export default new TrackerCommand();
+export default new TrackerCommand(new SystemDateClient());
