@@ -69,7 +69,7 @@ export abstract class SlashCommandHandler {
 
     const embed = makeErrorEmbed(
       "There was an error while executing this command! " +
-      "Developers have been notified",
+      "Developers have been notified.",
     );
     if (interaction.replied) {
       const response = await interaction.fetchReply();

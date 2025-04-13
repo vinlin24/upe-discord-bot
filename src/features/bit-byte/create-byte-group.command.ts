@@ -129,19 +129,17 @@ class CreateByteGroupCommand extends SlashCommandHandler {
     await this.finalAcknowledge(interaction, group);
   }
 
-  /** Return whether a new document was created (upserted). */
   private async insertDocument(
     roleId: RoleId,
     channelId: ChannelId,
   ): Promise<BitByteGroup> {
-    // Use upsert instead of raw create to handle the case where a group was
-    // marked as deleted (now it is no longer orphaned).
-    const document = await BitByteGroupModel.findOneAndUpdate(
-      { roleId },
-      { $set: { channelId, deleted: false } },
-      { upsert: true, returnNewDocument: true },
-    )
-    return document!;
+    // Use findOne() first to handle the case where a group was marked as
+    // deleted (now it is no longer orphaned). I'm not using findOneAndUpdate()
+    // because that isn't FREAKING returning what I wanted for some reason.
+    const document = await BitByteGroupModel.findOne({ roleId })
+      ?? new BitByteGroupModel({ roleId, channelId });
+    document.channelId = channelId;
+    return await document.save();
   }
 
   private async restoreDocument(roleId: RoleId): Promise<BitByteGroup | null> {
@@ -239,7 +237,7 @@ class CreateByteGroupCommand extends SlashCommandHandler {
     restored: boolean = false,
   ): Promise<void> {
     const embed = new EmbedBuilder()
-      .setTitle("Bit-Byte Group " + restored ? "Restored" : "Created")
+      .setTitle("Bit-Byte Group " + (restored ? "Restored" : "Created"))
       .setDescription(
         `Group is tied to the role ${roleMention(group.roleId)} ` +
         `(ID: ${inlineCode(group.roleId)}) and its associated channel ` +
