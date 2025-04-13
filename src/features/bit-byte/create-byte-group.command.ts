@@ -182,7 +182,7 @@ class CreateByteGroupCommand extends SlashCommandHandler {
       name: initialRoleName,
       hoist: true,
       mentionable: true,
-      position: inducteesRole.position, // Just above it.
+      position: inducteesRole.position + 1, // Just above it.
       permissions: [], // Vanity.
     });
   }
