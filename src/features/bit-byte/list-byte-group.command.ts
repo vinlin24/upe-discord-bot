@@ -13,8 +13,7 @@ import type { RoleId } from "../../types/branded.types";
 import { toBulletedList } from "../../utils/formatting.utils";
 import { ExtendedSlashCommandBuilder } from "../../utils/options.utils";
 import { BYTE_ROLE_ID, INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
-import { BitByteGroupModel, type BitByteGroup } from "./bit-byte.model";
-import { calculateBitByteGroupPoints } from "./bit-byte.utils";
+import { calculateBitByteGroupPoints, getActiveGroup, getAllActiveGroups } from "./bit-byte.utils";
 
 class ListByteGroupCommand extends SlashCommandHandler {
   public override readonly definition = new ExtendedSlashCommandBuilder()
@@ -39,7 +38,7 @@ class ListByteGroupCommand extends SlashCommandHandler {
       return;
     }
 
-    const group = await this.readDocument(groupRole.id as RoleId);
+    const group = await getActiveGroup(groupRole.id as RoleId);
     if (group === null) {
       await this.replyError(
         interaction,
@@ -76,11 +75,11 @@ class ListByteGroupCommand extends SlashCommandHandler {
   private async processListAllOption(
     interaction: ChatInputCommandInteraction,
   ): Promise<EmbedBuilder> {
-    const allGroups = await this.readAllDocuments();
+    const allGroups = await getAllActiveGroups();
 
     const lines: string[] = [];
 
-    for (const { roleId, channelId } of allGroups) {
+    for (const { roleId, channelId } of allGroups.values()) {
       const role = interaction.guild!.roles.cache.get(roleId);
       if (role === undefined) {
         console.warn(
@@ -101,14 +100,6 @@ class ListByteGroupCommand extends SlashCommandHandler {
     return new EmbedBuilder()
       .setTitle("All Bit-Byte Groups")
       .setDescription(description);
-  }
-
-  private async readAllDocuments(): Promise<BitByteGroup[]> {
-    return await BitByteGroupModel.find();
-  }
-
-  private async readDocument(roleId: RoleId): Promise<BitByteGroup | null> {
-    return await BitByteGroupModel.findOne({ roleId });
   }
 
   private getMembersAlsoHaving(role: Role, otherRoleId: RoleId): GuildMember[] {

@@ -26,7 +26,7 @@ import sheetsService, {
 import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
 import { AUTOCOMPLETE_MAX_CHOICES } from "../../utils/limits.utils";
-import { BitByteGroupModel } from "./bit-byte.model";
+import { getAllActiveGroups } from "./bit-byte.utils";
 
 class InducteeLookupCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
@@ -118,9 +118,8 @@ class InducteeLookupCommand extends SlashCommandHandler {
       return groupRole;
     }
 
-    const groups = await BitByteGroupModel.find({});
-    for (const group of groups) {
-      groupRole = member.roles.cache.get(group.roleId);
+    for (const [roleId,] of await getAllActiveGroups()) {
+      groupRole = member.roles.cache.get(roleId);
       if (groupRole !== undefined) {
         this.groupRoleCache.set(member.user.username, groupRole);
         return groupRole;

@@ -21,8 +21,10 @@ import {
   EMOJI_TEN,
   EMOJI_THIRD_PLACE,
 } from "../../utils/emojis.utils";
-import { BitByteGroupModel, type BitByteGroup } from "./bit-byte.model";
-import { calculateBitByteEventPoints } from "./bit-byte.utils";
+import {
+  calculateBitByteGroupPoints,
+  getAllActiveGroups,
+} from "./bit-byte.utils";
 
 type LeaderboardEntry = {
   roleId: RoleId;
@@ -45,15 +47,12 @@ class LeaderboardCommand extends SlashCommandHandler {
   private async calculateLeaderboard(): Promise<LeaderboardEntry[]> {
     const leaderboard: LeaderboardEntry[] = [];
 
-    const groups = await this.getAllGroups();
+    const groups = await getAllActiveGroups();
 
-    for (const group of groups) {
-      const eventPoints = _.sum(group.events.map(calculateBitByteEventPoints));
+    for (const [roleId, group] of groups) {
+      const eventPoints = calculateBitByteGroupPoints(group);
       const totalPoints = eventPoints + group.jeopardyPoints;
-      leaderboard.push({
-        roleId: group.roleId,
-        points: totalPoints,
-      });
+      leaderboard.push({ roleId, points: totalPoints });
     }
 
     // Sort DESCENDING by points.
@@ -81,10 +80,6 @@ class LeaderboardCommand extends SlashCommandHandler {
         { name: "Group", value: mentionColumn, inline: true },
         { name: "Points", value: pointsColumn, inline: true },
       );
-  }
-
-  private async getAllGroups(): Promise<BitByteGroup[]> {
-    return await BitByteGroupModel.find({});
   }
 
   private getEmojiForPlace(place: number): string {
