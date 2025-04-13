@@ -10,7 +10,7 @@ async function main(): Promise<void> {
     commandsRoot: PROJECT_FEATURES_ROOT,
     listenersRoot: PROJECT_FEATURES_ROOT,
     databaseConnectionString: process.env.DB_CONNECTION_STRING,
-    databaseName: process.env.DB_NAME,
+    databaseName: process.env.SEASON_ID,
     botToken: process.env.BOT_TOKEN,
     applicationId: process.env.APPLICATION_ID,
   });
