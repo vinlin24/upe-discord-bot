@@ -1,4 +1,4 @@
-import { Collection } from "discord.js";
+import { Collection, type GuildMember } from "discord.js";
 import _ from "lodash";
 
 import type { RoleId } from "../../types/branded.types";
@@ -9,6 +9,8 @@ import {
   type BitByteEvent,
   type BitByteGroup,
 } from "./bit-byte.model";
+
+// TODO: Maybe bundle these functions under a service class.
 
 export const BIT_BYTE_CATEGORY_NAME = `Bit-Byte ${SEASON_ID}`;
 
@@ -55,4 +57,17 @@ export async function getAllActiveGroups()
     result.set(group.roleId, group);
   }
   return result;
+}
+
+// TODO: Could use caching, when we move it into a class.
+export async function determineGroup(
+  member: GuildMember,
+): Promise<BitByteGroup | null> {
+  for (const [roleId, group] of await getAllActiveGroups()) {
+    const groupRole = member.roles.cache.get(roleId);
+    if (groupRole !== undefined) {
+      return group;
+    }
+  }
+  return null;
 }

@@ -27,6 +27,7 @@ import channelsService from "../../services/channels.service";
 import type { ChannelId, RoleId } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
+import { normalizeChannelName } from "../../utils/formatting.utils";
 import { ROLE_NAME_MAX_LENGTH } from "../../utils/limits.utils";
 import {
   INDUCTEES_ROLE_ID,
@@ -191,7 +192,7 @@ class CreateByteGroupCommand extends SlashCommandHandler {
   ): Promise<GuildTextBasedChannel> {
     const channel = await category.children.create({
       type: ChannelType.GuildText,
-      name: this.normalizeChannelName(groupRole.name),
+      name: normalizeChannelName(groupRole.name),
       reason: `Created as part of ${this.id}`,
       // Ref: https://discordjs.guide/popular-topics/permissions.html
       permissionOverwrites: [
@@ -272,17 +273,6 @@ class CreateByteGroupCommand extends SlashCommandHandler {
       ephemeral: true,
     });
     return;
-  }
-
-  // NOTE: Not sure if the API automatically does this for us, but I'm too lazy
-  // to find out manually.
-  private normalizeChannelName(name: string): string {
-    return (name
-      .toLowerCase()
-      .replaceAll(" ", "-") // Spaces become '-'s.
-      .replaceAll(/[^0-9a-z_-]/g, "") // Only alphanumeric & '-' & '_' allowed.
-      .replaceAll("--", "-") // No consecutive '-'s.
-    );
   }
 
   private ago() {
