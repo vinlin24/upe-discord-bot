@@ -282,7 +282,7 @@ class CreateByteGroupCommand extends SlashCommandHandler {
     return (name
       .toLowerCase()
       .replaceAll(" ", "-") // Spaces become '-'s.
-      .replaceAll(/[^0-9a-z_-]/, "") // Only alphanumeric & '-' & '_' allowed.
+      .replaceAll(/[^0-9a-z_-]/g, "") // Only alphanumeric & '-' & '_' allowed.
       .replaceAll("--", "-") // No consecutive '-'s.
     );
   }
