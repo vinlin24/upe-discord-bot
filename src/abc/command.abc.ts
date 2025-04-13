@@ -64,7 +64,20 @@ export abstract class SlashCommandHandler {
   ): Promise<any> {
     console.error(`${error.name} in ${this.logName}:`);
     console.error(error);
+
     await channelsService.sendDevError(error, interaction);
+
+    const embed = makeErrorEmbed(
+      "There was an error while executing this command! " +
+      "Developers have been notified",
+    );
+    if (interaction.replied) {
+      const response = await interaction.fetchReply();
+      await interaction.editReply({ embeds: [...response.embeds, embed] });
+    }
+    else {
+      await interaction.reply({ embeds: [embed], ephemeral: true });
+    }
   }
 
   /** Fallback callback for if the component handler throws an `Error`. */
