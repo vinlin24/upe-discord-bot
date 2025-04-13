@@ -51,11 +51,10 @@ declare global {
     REQUIREMENTS_DOCUMENT_LINK: UrlString;
     PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID: string;
     PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL: UrlString;
-    /**
-     * Induction season e.g. `S25`. This will also be the name of the MongoDB
-     * database to use.
-     */
+    /** Abbreviated induction season e.g. `S25`. */
     SEASON_ID: SeasonId;
+    /** MongoDB database to use. */
+    DB_NAME: string;
 
     // //////////////////////////// //
     //      3rd Party Services      //
