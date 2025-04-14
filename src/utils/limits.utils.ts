@@ -16,6 +16,7 @@ export const EMBED_AUTHOR_NAME_LIMIT = 256;
 export const EMBED_TOTAL_LIMIT = 6000;
 export const EMBEDS_PER_MESSAGE_LIMIT = 10;
 
-// Discovered empirically lol.
+// Discovered empirically (by FAFO) lol.
 
 export const ROLE_NAME_MAX_LENGTH = 100;
+export const AUTOCOMPLETE_CHOICE_NAME_MAX_LENGTH = 100;
