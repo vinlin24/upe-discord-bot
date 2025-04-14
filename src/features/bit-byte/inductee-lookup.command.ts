@@ -6,11 +6,8 @@ import {
   roleMention,
   SlashCommandBuilder,
   userMention,
-  type ApplicationCommandOptionChoiceData,
-  type AutocompleteInteraction,
   type ChatInputCommandInteraction,
   type GuildMember,
-  type GuildMemberManager,
   type Role,
 } from "discord.js";
 
@@ -25,18 +22,16 @@ import sheetsService, {
 } from "../../services/inductee-sheets.service";
 import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
-import { AUTOCOMPLETE_MAX_CHOICES } from "../../utils/limits.utils";
 import { determineGroup } from "./bit-byte.utils";
 
 class InducteeLookupCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
     .setName("inductee")
     .setDescription("Look up information about an inductee.")
-    .addStringOption(input => input
+    .addUserOption(input => input
       .setName("inductee")
       .setDescription("Inductee user to request data for.")
-      .setRequired(true)
-      .setAutocomplete(true),
+      .setRequired(true),
     )
     .toJSON();
 
@@ -49,59 +44,38 @@ class InducteeLookupCommand extends SlashCommandHandler {
   public override async execute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
-    const inducteeUsername = interaction.options.getString("inductee", true);
+    const inducteeMember = interaction.options.getMember(
+      "inductee",
+    ) as GuildMember | null;
 
-    const inductees = await sheetsService.getAllData();
-    const inducteeData = inductees.get(inducteeUsername);
-    if (inducteeData === undefined) {
+    if (inducteeMember === null) {
       await this.replyError(
         interaction,
-        "No registered inductee found with username " +
-        `${inlineCode(inducteeUsername)}!`,
+        "That doesn't seem to be a server member.",
       );
       return;
     }
 
-    const inducteeMember = await this.getMember(
-      interaction.guild!.members,
-      inducteeUsername,
-    );
+    const inductees = await sheetsService.getAllData();
+
+    const { username } = inducteeMember.user;
+    const inducteeData = inductees.get(username);
+    if (inducteeData === undefined) {
+      await this.replyError(
+        interaction,
+        `${userMention(inducteeMember.id)} doesn't seem to be a registered ` +
+        `inductee (searched with username ${inlineCode(username)}).`,
+      );
+      return;
+    }
 
     const embed = await this.prepareEmbed(inducteeMember, inducteeData);
     await interaction.reply({ embeds: [embed], ephemeral: true });
   }
 
-  public override async autocomplete(
-    interaction: AutocompleteInteraction,
-  ): Promise<void> {
-    let focusedValue = interaction.options.getFocused();
-    // Normalize to username alone, which is what we store usernames as.
-    if (focusedValue.startsWith("@")) {
-      focusedValue = focusedValue.slice(1);
-    }
-
-    // Don't force cache update every time, for performance.
-    const inductees = await sheetsService.getAllData(false);
-
-    const allUsernames = Array.from(inductees.keys());
-    const choices: ApplicationCommandOptionChoiceData[] = allUsernames
-      .filter(username => username.startsWith(focusedValue))
-      .slice(0, AUTOCOMPLETE_MAX_CHOICES)
-      .map(username => ({ name: `@${username}`, value: username }));
-
-    await interaction.respond(choices);
-  }
-
-  private async getMember(
-    members: GuildMemberManager,
-    username: string,
-  ): Promise<GuildMember | null> {
-    const result = await members.fetch({ query: username, limit: 1 });
-    const [member] = result.values();
-    return member ?? null;
-  }
-
-  private async determineGroup(member: GuildMember): Promise<Role | null> {
+  private async determineGroupCached(
+    member: GuildMember,
+  ): Promise<Role | null> {
     let groupRole = this.groupRoleCache.get(member.user.username);
     if (groupRole !== undefined) {
       return groupRole;
@@ -133,7 +107,7 @@ class InducteeLookupCommand extends SlashCommandHandler {
     ];
 
     const groupRole = inducteeMember !== null
-      ? await this.determineGroup(inducteeMember)
+      ? await this.determineGroupCached(inducteeMember)
       : null;
     if (groupRole === null) {
       lines.push(`${bold("Group:")} <pending assignment> ${EMOJI_WARNING}`);
