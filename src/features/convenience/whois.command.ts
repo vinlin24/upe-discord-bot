@@ -95,7 +95,7 @@ class WhoisCommand extends SlashCommandHandler {
   public override async autocomplete(
     interaction: AutocompleteInteraction,
   ): Promise<void> {
-    const focusedValue = interaction.options.getFocused();
+    const focusedValue = interaction.options.getFocused().toLowerCase();
 
     // Don't force cache update every time, for performance.
     const inducteeData = await inducteeSheetsService.getAllData(false);
@@ -106,8 +106,8 @@ class WhoisCommand extends SlashCommandHandler {
     );
 
     const filteredNames = names.filter(([legalName, preferredName]) =>
-      legalName.startsWith(focusedValue) ||
-      preferredName?.startsWith(focusedValue),
+      legalName.toLowerCase().startsWith(focusedValue) ||
+      preferredName?.toLowerCase().startsWith(focusedValue),
     );
 
     const choices: ApplicationCommandOptionChoiceData[] = filteredNames
