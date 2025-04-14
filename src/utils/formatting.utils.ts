@@ -50,3 +50,18 @@ export function possessive(noun: string): string {
 export function littleText<T extends string>(text: T): `-# ${T}` {
   return `-# ${text}`;
 }
+
+/**
+ * Convert a string to one that can be used as a channel name.
+ *
+ * NOTE: Not sure if the API automatically does this for us, but I'm too lazy
+ * to find out manually.
+ */
+export function normalizeChannelName(name: string): string {
+  return (name
+    .toLowerCase()
+    .replaceAll(" ", "-") // Spaces become '-'s.
+    .replaceAll(/[^0-9a-z_-]/g, "") // Only alphanumeric & '-' & '_' allowed.
+    .replaceAll("--", "-") // No consecutive '-'s.
+  );
+}

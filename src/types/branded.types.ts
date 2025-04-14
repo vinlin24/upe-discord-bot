@@ -33,3 +33,5 @@ export type GuildId = Branded<Snowflake, "GuildId">;
 export type ChannelId = Branded<Snowflake, "ChannelId">;
 export type RoleId = Branded<Snowflake, "RoleId">;
 export type UserId = Branded<Snowflake, "UserId">;
+
+export type SeasonId = Branded<`${"F" | "S"}${number}`, "SeasonId">;

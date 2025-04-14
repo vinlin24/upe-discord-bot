@@ -61,8 +61,14 @@ class InteractionDispatchListener extends
           content: "There was an error while executing this command!",
           ephemeral: true,
         });
-        return;
       }
+      else {
+        await interaction.followUp({
+          content: "There was an error while executing this command!",
+          ephemeral: true,
+        });
+      }
+      return;
     }
 
     if (!interaction.replied) {

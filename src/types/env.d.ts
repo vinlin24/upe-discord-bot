@@ -1,4 +1,4 @@
-import type { ChannelId, UrlString, UserId } from "./branded.types";
+import type { ChannelId, SeasonId, UrlString, UserId } from "./branded.types";
 
 declare global {
   type EnvironmentVariables = {
@@ -51,9 +51,9 @@ declare global {
     REQUIREMENTS_DOCUMENT_LINK: UrlString;
     PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID: string;
     PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL: UrlString;
-    /**
-     * Name of MongoDB database to use.
-     */
+    /** Abbreviated induction season e.g. `S25`. */
+    SEASON_ID: SeasonId;
+    /** MongoDB database to use. */
     DB_NAME: string;
 
     // //////////////////////////// //

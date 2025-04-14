@@ -15,8 +15,12 @@ import type { RoleId } from "../../types/branded.types";
 import { isNonEmptyArray } from "../../types/generic.types";
 import { EmbedPagesManager } from "../../utils/components.utils";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
-import { BitByteGroupModel, type BitByteGroup } from "./bit-byte.model";
-import { calculateBitByteEventPoints } from "./bit-byte.utils";
+import { type BitByteGroup } from "./bit-byte.model";
+import {
+  calculateBitByteEventPoints,
+  getActiveGroup,
+  getAllActiveGroups,
+} from "./bit-byte.utils";
 
 class ViewEventsCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
@@ -31,15 +35,15 @@ class ViewEventsCommand extends SlashCommandHandler {
   public override async execute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
-    const groups = await this.getAllGroups();
+    const groups = await getAllActiveGroups();
 
     const selectMenuOptions: APISelectMenuOption[] = [];
-    for (const group of groups) {
-      const role = interaction.guild!.roles.cache.get(group.roleId);
+    for (const [roleId,] of groups) {
+      const role = interaction.guild!.roles.cache.get(roleId);
       if (role === undefined) {
         await this.replyError(
           interaction,
-          `It seems like a bit-byte group's role (ID: ${group.roleId}) ` +
+          `It seems like a bit-byte group's role (ID: ${roleId}) ` +
           `does not exist anymore! Notify an admin.`,
         );
         return;
@@ -66,7 +70,7 @@ class ViewEventsCommand extends SlashCommandHandler {
     }
 
     const selectedRoleId = interaction.values[0] as RoleId;
-    const group = await this.getGroup(selectedRoleId);
+    const group = await getActiveGroup(selectedRoleId);
     if (group === null) {
       await interaction.editReply({
         content: (
@@ -79,14 +83,6 @@ class ViewEventsCommand extends SlashCommandHandler {
 
     const pages = this.preparePages(group);
     await this.handlePages(interaction, pages);
-  }
-
-  private async getAllGroups(): Promise<BitByteGroup[]> {
-    return await BitByteGroupModel.find({});
-  }
-
-  private async getGroup(roleId: RoleId): Promise<BitByteGroup | null> {
-    return await BitByteGroupModel.findOne({ roleId });
   }
 
   private preparePages(group: BitByteGroup): EmbedBuilder[] {

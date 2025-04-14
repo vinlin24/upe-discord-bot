@@ -1,4 +1,5 @@
 import {
+  channelMention,
   EmbedBuilder,
   roleMention,
   userMention,
@@ -12,7 +13,7 @@ import type { RoleId } from "../../types/branded.types";
 import { toBulletedList } from "../../utils/formatting.utils";
 import { ExtendedSlashCommandBuilder } from "../../utils/options.utils";
 import { BYTE_ROLE_ID, INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
-import { BitByteGroupModel, type BitByteGroup } from "./bit-byte.model";
+import { calculateBitByteGroupPoints, getActiveGroup, getAllActiveGroups } from "./bit-byte.utils";
 
 class ListByteGroupCommand extends SlashCommandHandler {
   public override readonly definition = new ExtendedSlashCommandBuilder()
@@ -37,7 +38,7 @@ class ListByteGroupCommand extends SlashCommandHandler {
       return;
     }
 
-    const group = await this.readDocument(groupRole.id as RoleId);
+    const group = await getActiveGroup(groupRole.id as RoleId);
     if (group === null) {
       await this.replyError(
         interaction,
@@ -49,6 +50,8 @@ class ListByteGroupCommand extends SlashCommandHandler {
     const bytes = this.getMembersAlsoHaving(groupRole, BYTE_ROLE_ID);
     const inductees = this.getMembersAlsoHaving(groupRole, INDUCTEES_ROLE_ID);
 
+    const roleLine = `Role: ${roleMention(group.roleId)}`;
+    const channelLine = `Channel: ${channelMention(group.channelId)}`;
     const bytesLine = (
       `${bytes.length} ${roleMention(BYTE_ROLE_ID)}: ` +
       `${this.formatMentionList(bytes)}`
@@ -58,10 +61,10 @@ class ListByteGroupCommand extends SlashCommandHandler {
       `${this.formatMentionList(inductees)}`
     );
     const eventsLine = `${group.events.length} events completed`;
-    const pointsLine = "TODO."; // TODO.
+    const pointsLine = `Points: ${calculateBitByteGroupPoints(group)}`;
 
     const description = toBulletedList(
-      [bytesLine, inducteesLine, eventsLine, pointsLine],
+      [roleLine, channelLine, bytesLine, inducteesLine, eventsLine, pointsLine],
     );
     const embed = new EmbedBuilder()
       .setTitle("Bit-Byte Group")
@@ -72,11 +75,11 @@ class ListByteGroupCommand extends SlashCommandHandler {
   private async processListAllOption(
     interaction: ChatInputCommandInteraction,
   ): Promise<EmbedBuilder> {
-    const allGroups = await this.readAllDocuments();
+    const allGroups = await getAllActiveGroups();
 
     const lines: string[] = [];
 
-    for (const { roleId } of allGroups) {
+    for (const { roleId, channelId } of allGroups.values()) {
       const role = interaction.guild!.roles.cache.get(roleId);
       if (role === undefined) {
         console.warn(
@@ -88,7 +91,7 @@ class ListByteGroupCommand extends SlashCommandHandler {
       const inductees = this.getMembersAlsoHaving(role, INDUCTEES_ROLE_ID);
       // TODO: Also include point information.
       lines.push(
-        `${roleMention(roleId)} ` +
+        `${roleMention(roleId)} ${channelMention(channelId)} ` +
         `(${bytes.length} bytes, ${inductees.length} bits)`,
       );
     }
@@ -97,14 +100,6 @@ class ListByteGroupCommand extends SlashCommandHandler {
     return new EmbedBuilder()
       .setTitle("All Bit-Byte Groups")
       .setDescription(description);
-  }
-
-  private async readAllDocuments(): Promise<BitByteGroup[]> {
-    return await BitByteGroupModel.find();
-  }
-
-  private async readDocument(roleId: RoleId): Promise<BitByteGroup | null> {
-    return await BitByteGroupModel.findOne({ roleId });
   }
 
   private getMembersAlsoHaving(role: Role, otherRoleId: RoleId): GuildMember[] {
