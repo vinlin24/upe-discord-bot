@@ -65,3 +65,7 @@ export function normalizeChannelName(name: string): string {
     .replaceAll("--", "-") // No consecutive '-'s.
   );
 }
+
+export function emailHyperlink(email: string): string {
+  return quietHyperlink(email, `mailto:${email}` as UrlString);
+}
