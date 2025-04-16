@@ -1,6 +1,7 @@
-import { Events, type Client } from "discord.js";
+import { ActivityType, Events, type Client } from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
+import helpCommand from "../../features/convenience/help.command";
 import channelsService from "../../services/channels.service";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { timestampPair } from "../../utils/formatting.utils";
@@ -24,6 +25,11 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
     await channelsService.getDev().send(
       `Bot has logged in at ${timeMention} (${relativeMention}).`,
     );
+
+    await client.user.setActivity({
+      type: ActivityType.Listening,
+      name: helpCommand.id,
+    });
   }
 }
 
