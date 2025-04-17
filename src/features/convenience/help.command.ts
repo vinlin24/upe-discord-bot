@@ -32,6 +32,7 @@ import {
 import {
   INDUCTION_EMAIL,
   INDUCTION_LINKTREE,
+  TUTORING_SCHEDULE_WEBPAGE,
   UPE_WEBSITE,
 } from "../../utils/upe.utils";
 import { LinktreeCommand } from "./linktree.command";
@@ -50,6 +51,16 @@ const LINKTREE_DESCRIPTION = bold(
   "All important links are in one place in " +
   `${quietHyperlink("the Linktree", INDUCTION_LINKTREE)}.`,
 ) + ` You can also load it by running ${LINKTREE_COMMAND_MENTION}.`;
+
+const BOELTER_HYPERLINK = quietHyperlink(
+  "Boelter Hall",
+  "https://maps.app.goo.gl/c42GSZa35owdpq2i6" as UrlString,
+);
+const TUTORING_INFO = (
+  `Drop-in tutoring is at ${bold(BOELTER_HYPERLINK + " 4685")}. ` +
+  "You can find the tutoring schedule " +
+  `${quietHyperlink("on our website", TUTORING_SCHEDULE_WEBPAGE)}.`
+);
 
 const CHANNEL_NAVIGATION =
   `Your ${roleMention(INDUCTEES_ROLE_ID)} role grants you access to:\n` +
@@ -72,21 +83,22 @@ const POINTS_OF_CONTACT =
     `Issue with ${bold(quietHyperlink("the web portal", UPE_WEBSITE))}: ` +
     `reach out to ${roleMention(WEB_ROLE_ID)}.`,
 
-    `Question about a specific ${bold("social event")}: reach out to ` +
+    `Specific ${bold("social events")}: reach out to ` +
     `${roleMention(SOCIAL_ROLE_ID)}.`,
 
-    `Question about a specific ${bold("professional event")}: reach out to ` +
+    `Specific ${bold("professional events")}: reach out to ` +
     `${roleMention(CORPORATE_ROLE_ID)}.`,
 
-    `Question about a specific ${bold("DEI workshop")}: reach out to ` +
+    `Specific ${bold("DEI workshops")}: reach out to ` +
     `${roleMention(ADVOCACY_ROLE_ID)}.`,
 
-    "Discord-related question or if I ever go down due to developer " +
-    `incompetence: reach out to ${userMention(DEVELOPER_USER_ID)}.`,
+    "Discord-related question or if I ever go down because bro was testing " +
+    `in prod: reach out to ${userMention(DEVELOPER_USER_ID)}.`,
   ]);
 
 const COMBINED_DESCRIPTION = [
   LINKTREE_DESCRIPTION,
+  TUTORING_INFO,
   CHANNEL_NAVIGATION,
   POINTS_OF_CONTACT,
 ].join("\n\n");
