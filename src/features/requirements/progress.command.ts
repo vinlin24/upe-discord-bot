@@ -143,11 +143,6 @@ class TrackerCommand extends SlashCommandHandler {
       `${quietHyperlink("requirements document", REQUIREMENTS_DOCUMENT_LINK)}.`
     );
 
-    const feeNote = (
-      `${EMOJI_INFORMATION} Note that the fee requirement may not be ` +
-      "checked off until later in the quarter due to our internal process."
-    );
-
     const disclaimer = (
       `${EMOJI_WARNING} This is an experimental feature. If you believe ` +
       "there is a discrepancy, refer to the " +
@@ -171,7 +166,6 @@ class TrackerCommand extends SlashCommandHandler {
       mention,
       progressLines,
       information,
-      feeNote,
       disclaimer,
       lastUpdated,
     ].join("\n\n");
