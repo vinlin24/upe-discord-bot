@@ -17,7 +17,11 @@ import {
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
 import type { UrlString } from "../../types/branded.types";
-import { quietHyperlink, toBulletedList } from "../../utils/formatting.utils";
+import {
+  emailHyperlink,
+  quietHyperlink,
+  toBulletedList,
+} from "../../utils/formatting.utils";
 import {
   ADVOCACY_ROLE_ID,
   CORPORATE_ROLE_ID,
@@ -40,11 +44,6 @@ import { LinktreeCommand } from "./linktree.command";
 const LINKTREE_COMMAND_MENTION = chatInputApplicationCommandMention(
   LinktreeCommand.COMMAND_NAME,
   LinktreeCommand.COMMAND_ID,
-);
-
-const INDUCTION_EMAIL_LINK = quietHyperlink(
-  INDUCTION_EMAIL,
-  `mailto:${INDUCTION_EMAIL}` as UrlString,
 );
 
 const LINKTREE_DESCRIPTION = bold(
@@ -79,7 +78,7 @@ const POINTS_OF_CONTACT =
     "General question: feel free to ping " +
     `${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}.`,
 
-    `Private question: email ${bold(INDUCTION_EMAIL_LINK)}.`,
+    `Private question: email ${bold(emailHyperlink(INDUCTION_EMAIL))}.`,
 
     `Issue with ${bold(quietHyperlink("the web portal", UPE_WEBSITE))}: ` +
     `reach out to ${roleMention(WEB_ROLE_ID)}.`,
