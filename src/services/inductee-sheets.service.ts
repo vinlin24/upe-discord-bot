@@ -32,8 +32,8 @@ enum QuestionnaireColumn {
 
 const QuestionnaireSchema = z.tuple([
   z.string().trim(),                            // Timestamp
-  z.string().email(),                           // Email
-  z.string().email(),                           // PreferredEmail
+  z.string().trim().email(),                    // Email
+  z.string().trim().email(),                    // PreferredEmail
   z.string().refine(s => /[0-9]{9}/.test(s)),   // UclaId
   z.string().trim(),                            // LegalFirst
   z.string().trim(),                            // LegalLast
