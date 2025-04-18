@@ -59,7 +59,8 @@ const BOELTER_HYPERLINK = quietHyperlink(
 const TUTORING_INFO = (
   `Drop-in tutoring is at ${bold(BOELTER_HYPERLINK + " 4685")}. ` +
   "You can find the tutoring schedule " +
-  `${quietHyperlink("on our website", TUTORING_SCHEDULE_WEBPAGE)}.`
+  `${quietHyperlink("on our website", TUTORING_SCHEDULE_WEBPAGE)}. ` +
+  "Scan the QR code by the door to check in. You don't need to check out."
 );
 
 const CHANNEL_NAVIGATION =
