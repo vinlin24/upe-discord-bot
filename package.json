@@ -10,7 +10,8 @@
     "build": "tsc",
     "postbuild": "copyfiles -u 1 src/assets/**/* dist",
     "dev": "ts-node src/index.ts",
-    "sync": "ts-node src/index.ts --sync"
+    "sync": "ts-node src/index.ts --sync",
+    "env-example": "ts-node scripts/update-env-example.ts"
   },
   "repository": {
     "type": "git",
