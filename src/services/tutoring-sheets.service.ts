@@ -6,7 +6,7 @@ import { GoogleSheetsClient } from "../clients/sheets.client";
 import type { UnixSeconds } from "../types/branded.types";
 import { assertNonEmptyArray } from "../types/generic.types";
 import { SystemDateClient, type IDateClient } from "../utils/date.utils";
-import { isBlankOrNumeric } from "../utils/formatting.utils";
+import { isBlankOrNumeric, toCount } from "../utils/formatting.utils";
 
 configDotenv();
 
@@ -129,15 +129,15 @@ export class TutoringSheetsService {
 
     return {
       name: validatedRow[TrackerColumn.Name],
-      requiredCount: validatedRow[TrackerColumn.RequiredCount],
-      cappedTotal: validatedRow[TrackerColumn.CappedTotal],
-      week3: validatedRow[TrackerColumn.Week3],
-      week4: validatedRow[TrackerColumn.Week4],
-      week5: validatedRow[TrackerColumn.Week5],
-      week6: validatedRow[TrackerColumn.Week6],
-      week7: validatedRow[TrackerColumn.Week7],
-      week8: validatedRow[TrackerColumn.Week8],
-      week9: validatedRow[TrackerColumn.Week9],
+      requiredCount: toCount(validatedRow[TrackerColumn.RequiredCount]),
+      cappedTotal: toCount(validatedRow[TrackerColumn.CappedTotal]),
+      week3: validatedRow[TrackerColumn.Week3] !== "0",
+      week4: validatedRow[TrackerColumn.Week4] !== "0",
+      week5: validatedRow[TrackerColumn.Week5] !== "0",
+      week6: validatedRow[TrackerColumn.Week6] !== "0",
+      week7: validatedRow[TrackerColumn.Week7] !== "0",
+      week8: validatedRow[TrackerColumn.Week8] !== "0",
+      week9: validatedRow[TrackerColumn.Week9] !== "0",
     };
   }
 }

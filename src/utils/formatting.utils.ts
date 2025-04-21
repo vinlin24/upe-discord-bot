@@ -73,3 +73,11 @@ export function emailHyperlink(email: string): string {
 export function isBlankOrNumeric(s: string): boolean {
   return s === "" || /^([0-9]|[1-9][0-9]*)$/.test(s);
 }
+
+export function toCount(raw: string): number {
+  const value = Number.parseInt(raw);
+  if (Number.isNaN(value)) {
+    return 0;
+  }
+  return value;
+}

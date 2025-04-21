@@ -21,6 +21,7 @@ import inducteeSheetsService from "../../services/inductee-sheets.service";
 import requirementSheetsService, {
   type RequirementsData,
 } from "../../services/requirement-sheets.service";
+import type { TutoringData } from "../../services/tutoring-sheets.service";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import {
   EMOJI_CHECK,
@@ -177,13 +178,7 @@ class TrackerCommand extends SlashCommandHandler {
 
   private formatProgressLines(data: RequirementsData): string[] {
     return [
-      this.formatUnhandledProgress(
-        "Weekly Drop-In Tutoring",
-        quietHyperlink(
-          "main tracker spreadsheet",
-          PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
-        ),
-      ),
+      this.formatTutoringProgress(data.tutoring),
       this.formatBooleanProgress("Demographics Survey", data.demographics),
       this.formatCountProgress(
         "Professional Events",
@@ -245,6 +240,26 @@ class TrackerCommand extends SlashCommandHandler {
     return (
       `${emoji} ${bold(title + ":")} ` +
       `${statusPhrase} (${currentCount} / ${requiredCount})`
+    );
+  }
+
+  private formatTutoringProgress(tutoringData: TutoringData | null): string {
+    const title = "Weekly Drop-In Tutoring";
+
+    if (tutoringData === null) {
+      const referTo = quietHyperlink(
+        "main tracker spreadsheet",
+        PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
+      );
+      return (
+        `${EMOJI_WARNING} ${bold(title)}: Failed to load, refer to ${referTo}`
+      );
+    }
+
+    return this.formatCountProgress(
+      title,
+      tutoringData.cappedTotal,
+      tutoringData.requiredCount,
     );
   }
 

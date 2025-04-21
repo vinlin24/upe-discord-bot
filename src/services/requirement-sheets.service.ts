@@ -6,7 +6,9 @@ import { GoogleSheetsClient } from "../clients/sheets.client";
 import type { UnixSeconds } from "../types/branded.types";
 import { assertNonEmptyArray } from "../types/generic.types";
 import { SystemDateClient, type IDateClient } from "../utils/date.utils";
-import { isBlankOrNumeric } from "../utils/formatting.utils";
+import { isBlankOrNumeric, toCount } from "../utils/formatting.utils";
+import type { TutoringData } from "./tutoring-sheets.service";
+import tutoringSheetsService from "./tutoring-sheets.service";
 
 configDotenv();
 
@@ -50,7 +52,8 @@ const TrackerSchema = z.tuple(trackerFields).rest(z.any());
 
 export type RequirementsData = {
   name: string;
-  tutoring: boolean;
+  /** `null` means parsing from the separate tutoring sheet failed. */
+  tutoring: TutoringData | null;
   demographics: boolean;
   professional: number;
   social: number;
@@ -106,10 +109,17 @@ export class RequirementSheetsService {
     }
 
     for (const requirementsData of this.parseData(sheetData)) {
+      // Separately fetch tutoring data.
+      const tutoringData = await this.getTutoringData(requirementsData.name);
+      requirementsData.tutoring = tutoringData;
       this.cache.set(requirementsData.name, requirementsData);
     }
 
     this.lastUpdated = now;
+  }
+
+  private async getTutoringData(name: string): Promise<TutoringData | null> {
+    return await tutoringSheetsService.getData(name);
   }
 
   private *parseData(rows: string[][]): Generator<RequirementsData> {
@@ -143,27 +153,19 @@ export class RequirementSheetsService {
 
     return {
       name: validatedRow[TrackerColumn.Name],
-      tutoring: !!validatedRow[TrackerColumn.Tutoring],
+      tutoring: null, // To be populated via separate service.
       demographics: !!validatedRow[TrackerColumn.Demographics],
-      professional: this.toCount(validatedRow[TrackerColumn.Professional]),
-      social: this.toCount(validatedRow[TrackerColumn.Social]),
+      professional: toCount(validatedRow[TrackerColumn.Professional]),
+      social: toCount(validatedRow[TrackerColumn.Social]),
       dei: !!validatedRow[TrackerColumn.Dei],
-      oneOnOnes: this.toCount(validatedRow[TrackerColumn.OneOnOnes]),
+      oneOnOnes: toCount(validatedRow[TrackerColumn.OneOnOnes]),
       bitByteChallenge: !!validatedRow[TrackerColumn.BitByteChallenge],
       townHall: !!validatedRow[TrackerColumn.TownHall],
       interview: !!validatedRow[TrackerColumn.Interview],
-      tests: this.toCount(validatedRow[TrackerColumn.Tests]),
+      tests: toCount(validatedRow[TrackerColumn.Tests]),
       fee: !!validatedRow[TrackerColumn.Fee],
       ceremony: !!validatedRow[TrackerColumn.Ceremony],
     };
-  }
-
-  private toCount(cell: string): number {
-    const value = Number.parseInt(cell);
-    if (Number.isNaN(value)) {
-      return 0;
-    }
-    return value;
   }
 }
 
