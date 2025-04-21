@@ -1,0 +1,3 @@
+#!/bin/sh
+npm run env-example
+git add .env.example
