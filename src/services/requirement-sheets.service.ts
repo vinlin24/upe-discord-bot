@@ -1,19 +1,16 @@
 import { Collection } from "discord.js";
 import { configDotenv } from "dotenv";
-
 import { z } from "zod";
+
 import { GoogleSheetsClient } from "../clients/sheets.client";
 import type { UnixSeconds } from "../types/branded.types";
 import { assertNonEmptyArray } from "../types/generic.types";
 import { SystemDateClient, type IDateClient } from "../utils/date.utils";
+import { isBlankOrNumeric } from "../utils/formatting.utils";
 
 configDotenv();
 
 const { PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID } = process.env;
-
-function isBlankOrNumeric(s: string): boolean {
-  return s === "" || /^([0-9]|[1-9][0-9]*)$/.test(s);
-}
 
 enum TrackerColumn {
   Name = 0,

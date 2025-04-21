@@ -69,3 +69,7 @@ export function normalizeChannelName(name: string): string {
 export function emailHyperlink(email: string): string {
   return quietHyperlink(email, `mailto:${email}` as UrlString);
 }
+
+export function isBlankOrNumeric(s: string): boolean {
+  return s === "" || /^([0-9]|[1-9][0-9]*)$/.test(s);
+}
