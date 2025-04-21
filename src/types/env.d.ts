@@ -50,6 +50,7 @@ declare global {
     INDUCTEE_DATA_SPREADSHEET_ID: string;
     REQUIREMENTS_DOCUMENT_LINK: UrlString;
     PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID: string;
+    TUTORING_TRACKER_SPREADSHEET_ID: string;
     PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL: UrlString;
     /** Abbreviated induction season e.g. `S25`. */
     SEASON_ID: SeasonId;
