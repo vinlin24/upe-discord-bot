@@ -1,8 +1,8 @@
 import { Collection } from "discord.js";
-import { configDotenv } from "dotenv";
 import { z } from "zod";
 
 import { GoogleSheetsClient } from "../clients/sheets.client";
+import env from "../env";
 import type { UnixSeconds } from "../types/branded.types";
 import { assertNonEmptyArray } from "../types/generic.types";
 import { SystemDateClient, type IDateClient } from "../utils/date.utils";
@@ -10,9 +10,7 @@ import { isBlankOrNumeric, toCount } from "../utils/formatting.utils";
 import type { TutoringData } from "./tutoring-sheets.service";
 import tutoringSheetsService from "./tutoring-sheets.service";
 
-configDotenv();
-
-const { PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID } = process.env;
+const { PRIVATE_REQUIREMENT_TRACKER_SPREADSHEET_ID } = env;
 
 enum TrackerColumn {
   Name = 0,

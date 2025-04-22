@@ -1,6 +1,6 @@
 import { type ColorResolvable, type RoleResolvable } from "discord.js";
-import { configDotenv } from "dotenv";
 
+import env from "../env";
 import type { RoleId, UrlString } from "../types/branded.types";
 import { getEnumFromName } from "../types/generic.types";
 import {
@@ -19,8 +19,6 @@ import {
   TUTORING_ROLE_ID,
   WEB_ROLE_ID,
 } from "./snowflakes.utils";
-
-configDotenv();
 
 export const UPE_BLUE: ColorResolvable = "#3067d3";
 
@@ -121,4 +119,4 @@ export const {
   PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
   REQUIREMENTS_DOCUMENT_LINK,
   SEASON_ID,
-} = process.env;
+} = env;
