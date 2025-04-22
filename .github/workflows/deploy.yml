@@ -1,0 +1,79 @@
+name: Deploy to Remote Host
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out code on job environment
+        uses: actions/checkout@v3
+
+      - name: Set up SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          echo "StrictHostKeyChecking no" >> ~/.ssh/config
+          echo "LogLevel error" >> ~/.ssh/config
+
+      - name: Use Node.js
+        uses: actions/setup-node@v3
+
+      - name: Install npm dependencies
+        run: npm ci
+
+      - name: Run linter
+        run: npm run lint
+
+      - name: Create credentials file
+        run: >
+          echo "${{ secrets.GOOGLE_CREDENTIALS_B64 }}" | base64 --decode
+          > src/assets/google-credentials.json
+
+      # Compile locally since the server can't handle it apparently lol.
+      - name: Compile source
+        run: npm run build
+
+      - name: Sync repository on remote server
+        run: |
+          ssh "${{ secrets.SERVER_SSH }}" << 'EOF'
+            cd ~/upe-discord-bot &&
+            git fetch --all &&
+            git reset --hard origin/main &&
+            git clean -df &&
+            npm install
+          EOF
+
+      - name: Upload build
+        run: |
+          ssh "${{ secrets.SERVER_SSH }}" 'rm -rf ~/upe-discord-bot/dist'
+          scp -r dist "${{ secrets.SERVER_SSH }}:~/upe-discord-bot"
+
+      - name: Upload environment file
+        run: |
+          echo "${{ secrets.ENV_FILE_B64 }}" | base64 --decode > .env
+          scp .env "${{ secrets.SERVER_SSH }}:~/upe-discord-bot"
+
+      # This can be done anywhere, so just do it on the runner.
+      - name: Sync application commands
+        run: npm run sync
+
+      - name: Restart hosted process
+        run: |
+          ssh "${{ secrets.SERVER_SSH }}" << 'EOF'
+            cd ~/upe-discord-bot &&
+            pm2 delete terabyte 2>/dev/null
+            pm2 start ~/upe-discord-bot/scripts/start-bot.sh \
+                --no-autorestart \
+                --name terabyte
+          EOF
+
+      - name: Sanity check PM2 status
+        run: |
+          sleep 1
+          ssh "${{ secrets.SERVER_SSH }}" 'test "$(pm2 pid terabyte)"'

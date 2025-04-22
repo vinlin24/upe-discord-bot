@@ -31,13 +31,6 @@ const urlStringValidator = envalid.url<UrlString>;
 const seasonIdValidator = makeBrandedValidator<SeasonId>(/^[FS][0-9]+$/);
 
 export const ENV_SPEC = {
-  NODE_ENV: envalid.str({
-    choices: ["development", "production"],
-    desc:
-      "Environment corresponding to the current software " +
-      "development lifecycle (SDLC) stage.",
-  }),
-
   BOT_TOKEN: envalid.str({
     desc: "Discord bot token generated on the Discord Developer Dashboard.",
   }),
