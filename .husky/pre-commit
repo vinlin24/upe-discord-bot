@@ -1,3 +1,8 @@
 #!/bin/sh
+
+set -x
+
+npm run lint
+
 npm run env-example
 git add .env.example

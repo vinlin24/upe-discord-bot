@@ -12,7 +12,9 @@
     "dev": "ts-node src/index.ts",
     "sync": "ts-node src/index.ts --sync",
     "env-example": "ts-node scripts/update-env-example.ts",
-    "prepare": "husky"
+    "prepare": "husky",
+    "lint": "eslint",
+    "lint:fix": "npm run lint -- --fix"
   },
   "repository": {
     "type": "git",
@@ -46,8 +48,11 @@
     "@types/mongodb": "^4.0.6",
     "@types/node": "^18.15.10",
     "copyfiles": "^2.4.1",
+    "eslint": "^9.25.1",
+    "eslint-plugin-node": "^11.1.0",
     "husky": "^9.1.7",
     "ts-node": "^10.9.1",
-    "typescript": "^5.0.2"
+    "typescript": "^5.0.2",
+    "typescript-eslint": "^8.31.0"
   }
 }
