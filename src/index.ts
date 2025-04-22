@@ -1,18 +1,15 @@
-import { configDotenv } from "dotenv";
-
 import { ClientManager } from "./bot/client";
+import env from "./env";
 import { PROJECT_FEATURES_ROOT } from "./utils/paths.utils";
-
-configDotenv();
 
 async function main(): Promise<void> {
   const clientManager = new ClientManager({
     commandsRoot: PROJECT_FEATURES_ROOT,
     listenersRoot: PROJECT_FEATURES_ROOT,
-    databaseConnectionString: process.env.DB_CONNECTION_STRING,
-    databaseName: process.env.DB_NAME,
-    botToken: process.env.BOT_TOKEN,
-    applicationId: process.env.APPLICATION_ID,
+    databaseConnectionString: env.DB_CONNECTION_STRING,
+    databaseName: env.DB_NAME,
+    botToken: env.BOT_TOKEN,
+    applicationId: env.APPLICATION_ID,
   });
 
   if (process.argv.includes("--sync")) {
@@ -30,7 +27,7 @@ async function main(): Promise<void> {
     process.exit(0);
   });
 
-  client.login(process.env.BOT_TOKEN);
+  client.login(env.BOT_TOKEN);
 }
 
 main();

@@ -1,10 +1,7 @@
 // Database of useful Discord IDs within the UPE server.
 
-import { configDotenv } from "dotenv";
-
+import env from "../env";
 import type { ChannelId, GuildId, RoleId } from "../types/branded.types";
-
-configDotenv();
 
 export const UPE_GUILD_ID = "778420751995895819" as GuildId;
 
@@ -44,7 +41,7 @@ export const UPE_BOT_ROLE_ID = "1090790818866016337" as RoleId;
 
 // User IDs.
 
-export const { DEVELOPER_USER_ID } = process.env;
+export const { DEVELOPER_USER_ID } = env;
 
 // Channel IDs.
 
@@ -52,4 +49,4 @@ export const BOT_LOGS_CHANNEL_ID = "1358085368855134419" as ChannelId;
 export const {
   INDUCTION_ANNOUNCEMENTS_CHANNEL_ID,
   INDUCTEES_CHAT_CHANNEL_ID,
-} = process.env;
+} = env;

@@ -1,13 +1,11 @@
 import { Collection } from "discord.js";
-import { configDotenv } from "dotenv";
 import { z } from "zod";
 
 import { GoogleSheetsClient } from "../clients/sheets.client";
+import env from "../env";
 import { cleanProvidedUsername } from "../features/inductee-role/input.utils";
 
-configDotenv();
-
-export const { INDUCTEE_DATA_SPREADSHEET_ID } = process.env;
+export const { INDUCTEE_DATA_SPREADSHEET_ID } = env;
 
 export enum UpeMajor {
   Cs = "Computer Science",
