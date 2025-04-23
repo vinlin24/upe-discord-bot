@@ -5,6 +5,7 @@ import {
   SlashCommandBuilder,
   type Attachment,
   type ChatInputCommandInteraction,
+  type GuildMember,
   type Role,
 } from "discord.js";
 
@@ -22,14 +23,13 @@ import {
   BitByteLocation,
   type BitByteEvent,
 } from "./bit-byte.model";
-import { calculateBitByteEventPoints } from "./bit-byte.utils";
+import { calculateBitByteEventPoints, determineGroup } from "./bit-byte.utils";
 
 type ResolvedCommandOptions = {
   location: BitByteLocation;
   caption: string;
   numInductees: number;
   picture: Attachment;
-  groupRole: Role;
 };
 
 class SubmitEventCommand extends SlashCommandHandler {
@@ -62,11 +62,6 @@ class SubmitEventCommand extends SlashCommandHandler {
       .setDescription("Please attach a picture of the event.")
       .setRequired(true)
     )
-    .addRoleOption(input => input
-      .setName("group_role")
-      .setDescription("Role associated with the bit-byte group to submit for.")
-      .setRequired(true)
-    )
     .toJSON();
 
   public override readonly checks: SlashCommandCheck[] = [
@@ -79,17 +74,20 @@ class SubmitEventCommand extends SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const options = this.resolveOptions(interaction);
+    const caller = interaction.member as GuildMember;
 
-    const groupExists = await this.groupExists(options.groupRole.id as RoleId);
-    if (!groupExists) {
+    const group = await determineGroup(caller);
+    if (group === null) {
       await this.replyError(interaction, (
-        `${roleMention(options.groupRole.id)} ` +
-        "is not registered as a bit-byte group!"
+        "You don't seem to be part of a registered bit-byte group!"
       ));
       return;
     }
 
-    const numBitsInGroup = this.getNumBitsInGroup(options.groupRole);
+    // ! assert because caller must have the group role for determineGroup() to
+    // have returned non-null. Doesn't feel very clean but ehh.
+    const groupRole = caller.roles.cache.get(group.roleId)!;
+    const numBitsInGroup = this.getNumBitsInGroup(groupRole);
 
     // Check that caller isn't BS'ing.
     if (options.numInductees > numBitsInGroup) {
@@ -128,7 +126,7 @@ class SubmitEventCommand extends SlashCommandHandler {
     const pointsEarned = calculateBitByteEventPoints(event);
 
     const description = (
-      `${bold("Group:")} ${roleMention(options.groupRole.id)}\n` +
+      `${bold("Group:")} ${roleMention(groupRole.id)}\n` +
       `${bold("Caption:")} ${event.caption}\n` +
       `${bold("Location:")} ${event.location}\n` +
       `${bold("Attendance:")} ${event.numAttended} / ${event.numTotal} bits\n` +
@@ -147,7 +145,7 @@ class SubmitEventCommand extends SlashCommandHandler {
     event.picture = permaLink;
 
     try {
-      await this.addEvent(options.groupRole.id as RoleId, event);
+      await this.addEvent(groupRole.id as RoleId, event);
     }
     catch (error) {
       await interaction.editReply({
@@ -169,19 +167,13 @@ class SubmitEventCommand extends SlashCommandHandler {
     const caption = interaction.options.getString("caption", true);
     const numInductees = interaction.options.getInteger("num_inductees", true);
     const picture = interaction.options.getAttachment("picture", true);
-    const groupRole = interaction.options.getRole("group_role", true) as Role;
-    return { location, caption, numInductees, picture, groupRole };
+    return { location, caption, numInductees, picture };
   }
 
   private getNumBitsInGroup(groupRole: Role): number {
     return groupRole.members
       .filter(member => member.roles.cache.has(INDUCTEES_ROLE_ID))
       .size;
-  }
-
-  private async groupExists(roleId: RoleId): Promise<boolean> {
-    const result = await BitByteGroupModel.exists({ roleId });
-    return result !== null;
   }
 
   private async addEvent(
