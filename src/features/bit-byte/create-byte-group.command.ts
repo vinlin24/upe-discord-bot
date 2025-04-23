@@ -30,6 +30,7 @@ import { makeErrorEmbed } from "../../utils/errors.utils";
 import { normalizeChannelName } from "../../utils/formatting.utils";
 import { ROLE_NAME_MAX_LENGTH } from "../../utils/limits.utils";
 import {
+  BYTE_ROLE_ID,
   INDUCTEES_ROLE_ID,
   INDUCTION_AND_MEMBERSHIP_ROLE_ID,
   UPE_BOT_ROLE_ID,
@@ -202,6 +203,10 @@ class CreateByteGroupCommand extends SlashCommandHandler {
         },
         {
           id: INDUCTION_AND_MEMBERSHIP_ROLE_ID,
+          allow: [PermissionsBitField.Flags.ViewChannel],
+        },
+        {
+          id: BYTE_ROLE_ID,
           allow: [PermissionsBitField.Flags.ViewChannel],
         },
         {
