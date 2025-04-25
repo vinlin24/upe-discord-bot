@@ -127,16 +127,22 @@ export class InducteeSheetsService {
   private parseRow(row: string[]): InducteeData {
     const validatedRow = QuestionnaireSchema.parse(row);
 
+    const legalFirst = validatedRow[QuestionnaireColumn.LegalFirst];
+    const legalLast = validatedRow[QuestionnaireColumn.LegalLast];
+
+    // Coalesce preferred name components to legal name components if any are
+    // absent. For example, some inductees only provide a preferred first name.
+    // This would cause a return of ONLY the first name, which would no longer
+    // correctly index into other services like the requirement tracker.
+    const preferredFirst
+      = validatedRow[QuestionnaireColumn.PreferredFirst] || legalFirst;
+    const preferredLast
+      = validatedRow[QuestionnaireColumn.PreferredLast] || legalLast;
+
     return {
       preferredEmail: validatedRow[QuestionnaireColumn.PreferredEmail],
-      legalName: (
-        validatedRow[QuestionnaireColumn.LegalFirst] + " " +
-        validatedRow[QuestionnaireColumn.LegalLast]
-      ),
-      preferredName: (
-        validatedRow[QuestionnaireColumn.PreferredFirst] + " " +
-        validatedRow[QuestionnaireColumn.PreferredLast]
-      ).trim() || undefined,
+      legalName: `${legalFirst} ${legalLast}`,
+      preferredName: `${preferredFirst} ${preferredLast}`.trim() || undefined,
       discordUsername: validatedRow[QuestionnaireColumn.DiscordUsername],
       major: validatedRow[QuestionnaireColumn.Major],
     };
