@@ -190,7 +190,7 @@ class TrackerCommand extends SlashCommandHandler {
         data.social,
         NUM_SOCIAL_EVENTS_REQUIRED,
       ),
-      this.formatBooleanProgress("DEI Group Discussion", data.dei),
+      this.formatBooleanProgress("Ethics Discussion", data.ethics),
       this.formatCountProgress(
         "Officer One-on-Ones",
         data.oneOnOnes,

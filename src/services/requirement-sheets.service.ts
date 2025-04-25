@@ -19,7 +19,7 @@ enum TrackerColumn {
   Demographics,
   Professional,
   Social,
-  Dei,
+  Ethics,
   OneOnOnes,
   BitByteChallenge,
   TownHall,
@@ -36,7 +36,7 @@ const trackerFields = [
   z.string().refine(isBlankOrNumeric),  // Demographics
   z.string().refine(isBlankOrNumeric),  // Professional
   z.string().refine(isBlankOrNumeric),  // Social
-  z.string().refine(isBlankOrNumeric),  // Dei
+  z.string().refine(isBlankOrNumeric),  // Ethics
   z.string().refine(isBlankOrNumeric),  // OneOnOnes
   z.string().refine(isBlankOrNumeric),  // BitByteChallenge
   z.string().refine(isBlankOrNumeric),  // TownHall
@@ -55,7 +55,7 @@ export type RequirementsData = {
   demographics: boolean;
   professional: number;
   social: number;
-  dei: boolean;
+  ethics: boolean;
   oneOnOnes: number;
   bitByteChallenge: boolean;
   townHall: boolean;
@@ -155,7 +155,7 @@ export class RequirementSheetsService {
       demographics: !!validatedRow[TrackerColumn.Demographics],
       professional: toCount(validatedRow[TrackerColumn.Professional]),
       social: toCount(validatedRow[TrackerColumn.Social]),
-      dei: !!validatedRow[TrackerColumn.Dei],
+      ethics: !!validatedRow[TrackerColumn.Ethics],
       oneOnOnes: toCount(validatedRow[TrackerColumn.OneOnOnes]),
       bitByteChallenge: !!validatedRow[TrackerColumn.BitByteChallenge],
       townHall: !!validatedRow[TrackerColumn.TownHall],

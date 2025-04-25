@@ -89,7 +89,7 @@ const POINTS_OF_CONTACT =
     `Specific ${bold("professional events")}: reach out to ` +
     `${roleMention(CORPORATE_ROLE_ID)}.`,
 
-    `Specific ${bold("DEI workshops")}: reach out to ` +
+    `Specific ${bold("ethics workshops")}: reach out to ` +
     `${roleMention(ADVOCACY_ROLE_ID)}.`,
 
     "Discord-related question or if I ever go down because bro was testing " +
