@@ -1,4 +1,5 @@
 import {
+  EmbedBuilder,
   hyperlink,
   time,
   TimestampStyles,
@@ -7,6 +8,7 @@ import {
 } from "discord.js";
 
 import type { UnixSeconds, UrlString } from "../types/branded.types";
+import { EMBED_DESCRIPTION_LIMIT } from "./limits.utils";
 
 export function toBulletedList(lines: unknown[]): string {
   return lines.map(line => `* ${line}`).join("\n");
@@ -80,4 +82,37 @@ export function toCount(raw: string): number {
     return 0;
   }
   return value;
+}
+
+export function splitIntoEmbedPages(
+  entries: string[],
+  separator: string = "\n",
+  maxCharsPerPage: number = EMBED_DESCRIPTION_LIMIT,
+): EmbedBuilder[] {
+  const embeds: EmbedBuilder[] = [];
+  let description = "";
+
+  for (const entry of entries) {
+    const { length } = entry;
+    if (length > maxCharsPerPage) {
+      console.warn(
+        `An entry has length ${length} > ${maxCharsPerPage}, ` +
+        "cannot fit it into an embed page, skipped.",
+      );
+      continue;
+    }
+    if (description.length + length > maxCharsPerPage) {
+      const embed = new EmbedBuilder().setDescription(description.trimEnd());
+      embeds.push(embed);
+      description = "";
+    }
+    description += entry + separator;
+  }
+
+  if (description) {
+    const embed = new EmbedBuilder().setDescription(description.trimEnd());
+    embeds.push(embed);
+  }
+
+  return embeds;
 }

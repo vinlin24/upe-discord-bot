@@ -29,6 +29,7 @@
   },
   "homepage": "https://github.com/vinlin24/upe-discord-bot",
   "dependencies": {
+    "@devraelfreeze/discordjs-pagination": "^2.7.6",
     "@discordjs/rest": "^1.1.0",
     "cheerio": "^1.0.0-rc.12",
     "csv-string": "^4.1.1",
