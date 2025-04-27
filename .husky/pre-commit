@@ -4,5 +4,9 @@ set -e -x
 
 npm run lint
 
-npm run env-example
+if git diff --staged --name-only | grep -q '^src/'; then
+    npm run build
+fi
+
+make .env.example
 git add .env.example
