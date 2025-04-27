@@ -22,6 +22,13 @@ enum TrackerColumn {
   Week8,
   Week9,
   ActualTotal,
+  Cap3,
+  Cap4,
+  Cap5,
+  Cap6,
+  Cap7,
+  Cap8,
+  Cap9,
   CappedTotal,
 }
 
