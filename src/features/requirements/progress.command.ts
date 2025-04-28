@@ -54,6 +54,11 @@ const NUM_SOCIAL_EVENTS_REQUIRED = 2;
 const NUM_ONE_ON_ONES_REQUIRED = 2;
 const NUM_TESTS_REQUIRED = 3;
 
+const TRACKER_HYPERLINK = quietHyperlink(
+  "official requirement tracker spreadsheet",
+  PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
+);
+
 class TrackerCommand extends SlashCommandHandler {
   public override readonly definition = new ExtendedSlashCommandBuilder()
     .setName("progress")
@@ -94,7 +99,8 @@ class TrackerCommand extends SlashCommandHandler {
     targetInductee ??= caller;
 
     await interaction.editReply(
-      `Fetching inductee information (${this.getAgoMention()})...`,
+      `Fetching inductee information (${this.getAgoMention()})...\n` +
+      `You can directly visit the ${TRACKER_HYPERLINK} if this takes too long.`,
     );
     const { username } = targetInductee.user;
     const inducteeData = await inducteeSheetsService.getData(username);
@@ -109,7 +115,8 @@ class TrackerCommand extends SlashCommandHandler {
     }
 
     await interaction.editReply(
-      `Fetching requirements progress (${this.getAgoMention()})...`,
+      `Fetching requirements progress (${this.getAgoMention()})...\n` +
+      `You can directly visit the ${TRACKER_HYPERLINK} if this takes too long.`,
     )
     const trackerName = inducteeData.preferredName ?? inducteeData.legalName;
     const requirementsData = await requirementSheetsService.getData(
@@ -146,12 +153,8 @@ class TrackerCommand extends SlashCommandHandler {
 
     const disclaimer = (
       `${EMOJI_WARNING} This is an experimental feature. If you believe ` +
-      "there is a discrepancy, refer to the " +
-      bold(quietHyperlink(
-        "official requirement tracker spreadsheet",
-        PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
-      )) +
-      " as the source of truth."
+      `there is a discrepancy, refer to the ${bold(TRACKER_HYPERLINK)} ` +
+      "as the source of truth."
     );
 
     const [
@@ -247,12 +250,9 @@ class TrackerCommand extends SlashCommandHandler {
     const title = "Weekly Drop-In Tutoring";
 
     if (tutoringData === null) {
-      const referTo = quietHyperlink(
-        "main tracker spreadsheet",
-        PUBLIC_REQUIREMENT_TRACKER_SPREADSHEET_URL,
-      );
       return (
-        `${EMOJI_WARNING} ${bold(title)}: Failed to load, refer to ${referTo}`
+        `${EMOJI_WARNING} ${bold(title)}: Failed to load, ` +
+        `refer to ${TRACKER_HYPERLINK}`
       );
     }
 
