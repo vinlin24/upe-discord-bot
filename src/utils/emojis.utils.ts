@@ -10,15 +10,20 @@ export const EMOJI_FEARFUL
   = ":fearful:" as BuiltinEmoji;
 export const EMOJI_THINKING
   = ":thinking:" as BuiltinEmoji;
+export const EMOJI_SALUTE
+  = ":saluting_face:" as BuiltinEmoji;
 
 export const EMOJI_CHECK = ":white_check_mark:" as BuiltinEmoji;
 export const EMOJI_CROSS = ":x:" as BuiltinEmoji;
 export const EMOJI_IN_PROGRESS = ":arrows_counterclockwise:" as BuiltinEmoji;
+
 export const EMOJI_WARNING = ":warning:" as BuiltinEmoji;
 export const EMOJI_ALERT = ":rotating_light:" as BuiltinEmoji;
 export const EMOJI_INFORMATION = ":information_source:" as BuiltinEmoji;
+export const EMOJI_ANNOUNCEMENT = ":mega:" as BuiltinEmoji;
 
 export const EMOJI_CLOCK = ":watch:" as BuiltinEmoji;
+export const EMOJI_GRADUATION = ":mortar_board:" as BuiltinEmoji;
 
 export const EMOJI_ONE = ":one:" as BuiltinEmoji;
 export const EMOJI_TWO = ":two:" as BuiltinEmoji;
@@ -34,3 +39,4 @@ export const EMOJI_TEN = ":keycap_ten:" as BuiltinEmoji;
 export const EMOJI_FIRST_PLACE = ":first_place:" as BuiltinEmoji;
 export const EMOJI_SECOND_PLACE = ":second_place:" as BuiltinEmoji;
 export const EMOJI_THIRD_PLACE = ":third_place:" as BuiltinEmoji;
+export const EMOJI_MEDAL = ":medal:" as BuiltinEmoji;
