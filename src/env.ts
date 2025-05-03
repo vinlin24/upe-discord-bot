@@ -6,6 +6,7 @@ import * as envalid from "envalid";
 
 import type {
   ChannelId,
+  QuarterName,
   SeasonId,
   UrlString,
   UserId,
@@ -29,6 +30,9 @@ const userIdValidator = makeBrandedValidator<UserId>(/^[0-9]+$/);
 const channelIdValidator = makeBrandedValidator<ChannelId>(/^[0-9]+$/);
 const urlStringValidator = envalid.url<UrlString>;
 const seasonIdValidator = makeBrandedValidator<SeasonId>(/^[FS][0-9]+$/);
+const quarterNameValidator = makeBrandedValidator<QuarterName>(
+  /^(Fall|Winter|Spring) [0-9]+$/,
+);
 
 export const ENV_SPEC = {
   BOT_TOKEN: envalid.str({
@@ -81,9 +85,20 @@ export const ENV_SPEC = {
       "Google Sheets spreadsheet.",
   }),
 
+  REVIEW_EVENTS_SPREADSHEET_ID: envalid.str({
+    desc:
+      "ID of the quarterly tutoring review events schedule " +
+      "Google Sheets spreadsheet.",
+  }),
+
   SEASON_ID: seasonIdValidator({
     desc: "Abbreviated induction season name.",
     example: "S25",
+  }),
+
+  QUARTER_NAME: quarterNameValidator({
+    desc: "Academic quarter name.",
+    example: "Spring 2025",
   }),
 
   DB_NAME: envalid.str({
