@@ -5,15 +5,6 @@ import type { ISheetsClient } from "../interfaces/sheets.interface";
 import type { Seconds, UnixSeconds } from "../types/branded.types";
 import type { IDateClient } from "../utils/date.utils";
 
-export type ParseRowWiseOptions<ValidatedRow, Data> = {
-  rows: string[][];
-  schema: z.Schema<ValidatedRow>;
-  transformer: (validatedRow: ValidatedRow) => Awaitable<Data>;
-  filter?: (index: number) => Awaitable<boolean>;
-  sanitizer?: (row: string[]) => Awaitable<unknown[]>;
-  handler?: (error: z.ZodError, index?: number) => Awaitable<void>;
-};
-
 export abstract class SheetsService<
   Data extends Record<string, any>,
   Key extends keyof Data,
@@ -57,44 +48,6 @@ export abstract class SheetsService<
     this.lastUpdated = this.dates.getNow();
   }
 
-  /**
-   * Extraction and generalization of the most common flow:
-   *
-   *    1. Skip certain rows, then for each row:
-   *    2. Possibly pre-process/sanitize before passing it off to Zod.
-   *    3. Parse with Zod schema.
-   *    4. Transform with some function.
-   */
-  protected async *parseRowWise<ValidatedRow extends [unknown, ...unknown[]]>(
-    options: ParseRowWiseOptions<ValidatedRow, Data>,
-  ): AsyncIterable<Data> {
-    const { rows, schema, transformer, handler } = options;
-    let { filter, sanitizer } = options;
-    filter ??= (_index) => true;
-    sanitizer ??= (row) => row;
-
-    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
-      if (!await filter(rowIndex)) {
-        continue;
-      }
-      const row = await sanitizer(rows[rowIndex]);
-      try {
-        const validatedRow = schema.parse(row);
-        yield await transformer(validatedRow);
-      }
-      catch (error) {
-        if (error instanceof z.ZodError) {
-          console.error(
-            `Error validating data (row ${rowIndex + 1})): ${error.message}`,
-          );
-          await handler?.(error);
-          continue;
-        }
-        throw error;
-      }
-    }
-  }
-
   protected padRow(
     row: string[],
     lengthNeeded: number,
@@ -116,5 +69,68 @@ export abstract class SheetsService<
     }
     const now = this.dates.getNow();
     return now >= this.lastUpdated + this.refreshInterval;
+  }
+}
+
+/**
+ * Extraction and generalization of the most common sheet parsing flow:
+ *
+ *    1. Skip certain rows, then for each row:
+ *    2. Possibly pre-process/sanitize before passing it off to Zod.
+ *    3. Parse with Zod schema.
+ *    4. Handle possible parse error.
+ *    5. Transform validated row into DTO with some function.
+ */
+export abstract class RowWiseSheetsService<
+  Data extends Record<string, any>,
+  Key extends keyof Data,
+  ValidatedRow extends [unknown, ...unknown[]],
+> extends SheetsService<Data, Key> {
+
+  protected abstract readonly schema: z.Schema<ValidatedRow>;
+
+  protected override async *parseData(
+    rows: string[][],
+  ): AsyncIterable<Data> {
+    for (let rowIndex = 0; rowIndex < rows.length; rowIndex++) {
+      const rawRow = rows[rowIndex];
+
+      if (!await this.acceptRow(rowIndex, rawRow)) {
+        continue;
+      }
+
+      const sanitizedRow = await this.sanitizeRow(rawRow);
+
+      try {
+        const validatedRow = this.schema.parse(sanitizedRow);
+        yield await this.transformRow(validatedRow);
+      }
+      catch (error) {
+        if (error instanceof z.ZodError) {
+          await this.handleParseError(error, rowIndex);
+          continue;
+        }
+        throw error;
+      }
+    }
+  }
+
+  protected abstract transformRow(validatedRow: ValidatedRow): Awaitable<Data>;
+
+  protected acceptRow(rowIndex: number, row: string[]): Awaitable<boolean> {
+    return true;
+  }
+
+  protected sanitizeRow(row: string[]): Awaitable<unknown[]> {
+    return row;
+  }
+
+  protected handleParseError(
+    error: z.ZodError,
+    rowIndex: number,
+  ): Awaitable<void> {
+    console.error(
+      `Error validating data (row ${rowIndex + 1}): ${error.message}`,
+    );
   }
 }

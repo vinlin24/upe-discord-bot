@@ -3,10 +3,13 @@ import { z } from "zod";
 import { GoogleSheetsClient } from "../clients/sheets.client";
 import env from "../env";
 import { asMutable } from "../types/generic.types";
-import { SystemDateClient } from "../utils/date.utils";
+import { SystemDateClient, type IDateClient } from "../utils/date.utils";
 import { isBlankOrNumeric, toCount } from "../utils/formatting.utils";
-import { SheetsService } from "./sheets.service";
-import type { TutoringData } from "./tutoring-sheets.service";
+import { RowWiseSheetsService } from "./sheets.service";
+import type {
+  TutoringData,
+  TutoringSheetsService,
+} from "./tutoring-sheets.service";
 import tutoringSheetsService from "./tutoring-sheets.service";
 
 enum TrackerColumn {
@@ -66,21 +69,25 @@ export type RequirementsData = {
 };
 
 export class RequirementSheetsService
-  extends SheetsService<RequirementsData, "name"> {
+  extends RowWiseSheetsService<RequirementsData, "name", TrackerRow> {
 
-  protected override async *parseData(
-    rows: string[][],
-  ): AsyncIterable<RequirementsData> {
-    yield* this.parseRowWise({
-      rows,
-      filter: (index) => index >= 2, // Skip header & fraction rows.
-      sanitizer: (row) => this.padRow(row, trackerFields.length),
-      schema: TrackerSchema,
-      transformer: (validatedRow) => this.transformRow(validatedRow),
-    });
+  public constructor(
+    sheets: GoogleSheetsClient,
+    dates: IDateClient,
+    private readonly tutoringService: TutoringSheetsService,
+  ) { super(sheets, dates); }
+
+  protected override readonly schema = TrackerSchema;
+
+  protected override acceptRow(rowIndex: number, _row: string[]): boolean {
+    return rowIndex >= 2; // Skip header & fraction rows.
   }
 
-  private async transformRow(
+  protected override sanitizeRow(row: string[]): string[] {
+    return this.padRow(row, trackerFields.length);
+  }
+
+  protected override async transformRow(
     validatedRow: TrackerRow,
   ): Promise<RequirementsData> {
     const data: RequirementsData = {
@@ -100,7 +107,7 @@ export class RequirementSheetsService
     };
 
     // Separately fetch tutoring data.
-    const tutoringData = await tutoringSheetsService.getData(data.name);
+    const tutoringData = await this.tutoringService.getData(data.name);
     data.tutoring = tutoringData;
 
     return data;
@@ -115,4 +122,5 @@ const sheetsClient = GoogleSheetsClient.fromCredentialsFile(
 export default new RequirementSheetsService(
   sheetsClient,
   new SystemDateClient(),
+  tutoringSheetsService,
 );

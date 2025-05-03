@@ -5,7 +5,7 @@ import env from "../env";
 import { cleanProvidedUsername } from "../features/inductee-role/input.utils";
 import type { Seconds } from "../types/branded.types";
 import { SystemDateClient } from "../utils/date.utils";
-import { SheetsService } from "./sheets.service";
+import { RowWiseSheetsService } from "./sheets.service";
 
 export enum UpeMajor {
   Cs = "Computer Science",
@@ -51,11 +51,15 @@ export type InducteeData = {
   major: UpeMajor;
 };
 
-export class InducteeSheetsService
-  extends SheetsService<InducteeData, "discordUsername"> {
-
+export class InducteeSheetsService extends RowWiseSheetsService<
+  InducteeData,
+  "discordUsername",
+  QuestionnaireRow
+> {
   // Don't refresh. Use retries/force instead.
   protected override refreshInterval = Infinity as Seconds;
+
+  protected override readonly schema = QuestionnaireSchema;
 
   public override async getData(
     username: string,
@@ -67,18 +71,13 @@ export class InducteeSheetsService
     return data;
   }
 
-  protected override async *parseData(
-    rows: string[][],
-  ): AsyncIterable<InducteeData> {
-    yield* this.parseRowWise({
-      rows,
-      schema: QuestionnaireSchema,
-      filter: (index) => index >= 1, // Skip header row.
-      transformer: (validatedRow) => this.transformRow(validatedRow),
-    });
+  protected override acceptRow(rowIndex: number, _row: string[]): boolean {
+    return rowIndex >= 1; // Skip header row.
   }
 
-  private transformRow(validatedRow: QuestionnaireRow): InducteeData {
+  protected override transformRow(
+    validatedRow: QuestionnaireRow,
+  ): InducteeData {
     const legalFirst = validatedRow[QuestionnaireColumn.LegalFirst];
     const legalLast = validatedRow[QuestionnaireColumn.LegalLast];
 

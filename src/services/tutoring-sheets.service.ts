@@ -5,7 +5,7 @@ import env from "../env";
 import { asMutable } from "../types/generic.types";
 import { SystemDateClient } from "../utils/date.utils";
 import { isBlankOrNumeric, toCount } from "../utils/formatting.utils";
-import { SheetsService } from "./sheets.service";
+import { RowWiseSheetsService } from "./sheets.service";
 
 enum TrackerColumn {
   Email = 0,
@@ -41,6 +41,13 @@ const trackerFields = [
   z.string().refine(isBlankOrNumeric),  // Week8
   z.string().refine(isBlankOrNumeric),  // Week9
   z.string().refine(isBlankOrNumeric),  // ActualTotal
+  z.string().refine(isBlankOrNumeric),  // Cap3
+  z.string().refine(isBlankOrNumeric),  // Cap4
+  z.string().refine(isBlankOrNumeric),  // Cap5
+  z.string().refine(isBlankOrNumeric),  // Cap6
+  z.string().refine(isBlankOrNumeric),  // Cap7
+  z.string().refine(isBlankOrNumeric),  // Cap8
+  z.string().refine(isBlankOrNumeric),  // Cap9
   z.string().refine(isBlankOrNumeric),  // CappedTotal
 ] as const;
 
@@ -61,19 +68,16 @@ export type TutoringData = {
   week9: boolean;
 };
 
-export class TutoringSheetsService extends SheetsService<TutoringData, "name"> {
-  protected override async *parseData(
-    rows: string[][],
-  ): AsyncIterable<TutoringData> {
-    yield* this.parseRowWise({
-      rows,
-      filter: (index) => index >= 1, // Skip header row.
-      schema: TrackerSchema,
-      transformer: (validatedRow) => this.parseRow(validatedRow),
-    });
+export class TutoringSheetsService
+  extends RowWiseSheetsService<TutoringData, "name", TrackerRow> {
+
+  protected override readonly schema = TrackerSchema;
+
+  protected override acceptRow(rowIndex: number, _row: string[]): boolean {
+    return rowIndex >= 1; // Skip header row.
   }
 
-  private parseRow(validatedRow: TrackerRow): TutoringData {
+  protected override transformRow(validatedRow: TrackerRow): TutoringData {
     return {
       name: validatedRow[TrackerColumn.Name],
       requiredCount: toCount(validatedRow[TrackerColumn.RequiredCount]),
