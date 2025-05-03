@@ -3,8 +3,6 @@ import {
   EmbedBuilder,
   inlineCode,
   roleMention,
-  time,
-  TimestampStyles,
   type ApplicationCommandOptionChoiceData,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
@@ -13,9 +11,9 @@ import {
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { GoogleSheetsClient } from "../../clients/sheets.client";
 import env from "../../env";
-import type { UnixSeconds } from "../../types/branded.types";
 import { EMOJI_INFORMATION, EMOJI_WARNING } from "../../utils/emojis.utils";
 import {
+  emailHyperlink,
   formatMailbox,
   littleText,
   quietHyperlink,
@@ -76,33 +74,32 @@ class ReviewEventCommand extends SlashCommandHandler {
   }
 
   private formatEmbed(eventData: ReviewEvent): EmbedBuilder {
-    const professorInfo
-      = formatMailbox(eventData.professor.name, eventData.professor.email);
+    const professorInfo = formatMailbox(
+      eventData.professor.name,
+      emailHyperlink(eventData.professor.email),
+      true,
+    );
 
     const hostNames = [...eventData.leadHosts, ...eventData.hosts];
 
-    const eventDateUnix
-      = eventData.eventDate?.toUnixInteger() as UnixSeconds | undefined;
-    const testDateUnix
-      = eventData.testDate?.toUnixInteger() as UnixSeconds | undefined;
-    const eventDateMention = (eventDateUnix === undefined)
-      ? ""
-      : time(eventDateUnix, TimestampStyles.ShortDate);
-    const testDateMention = (testDateUnix === undefined)
-      ? ""
-      : time(testDateUnix, TimestampStyles.ShortDate);
+    const eventDate = (eventData.eventDate === undefined)
+      ? `${EMOJI_WARNING} (failed to parse)`
+      : `${eventData.eventDate.monthLong} ${eventData.eventDate.day}`;
+    const testDate = (eventData.testDate === undefined)
+      ? `${EMOJI_WARNING} (failed to parse)`
+      : `${eventData.testDate.monthLong} ${eventData.testDate.day}`;
 
     const lines = [
-      `${bold("Professor:")} ${professorInfo}`,
+      `${bold("Test Date:")} ${testDate}`,
+      `${bold("Event Date:")} ${eventDate}`,
       `${bold("Location:")} ${eventData.location}`,
       `${bold("Hosts:")} ${hostNames.join(", ")}`,
-      eventDateMention ? `${bold("Event Date:")} ${eventDateMention}` : "",
-      testDateMention ? `${bold("Test Date:")} ${testDateMention}` : "",
+      `${bold("Professor:")} ${professorInfo}`,
     ].filter(Boolean);
     const body = toBulletedList(lines);
 
     const moreInformation = (
-      `${EMOJI_INFORMATION} Review sessions are hosted by our ` +
+      `${EMOJI_INFORMATION} Review sessions are organized by our ` +
       `${roleMention(TUTORING_ROLE_ID)} committee.`
     );
 
@@ -118,7 +115,7 @@ class ReviewEventCommand extends SlashCommandHandler {
     const description = [body, moreInformation, disclaimer].join("\n\n");
 
     return new EmbedBuilder()
-      .setTitle(eventData.name)
+      .setTitle(`UPE Review Session: ${eventData.name}`)
       .setDescription(description);
   }
 }

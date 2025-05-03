@@ -117,6 +117,15 @@ export function splitIntoEmbedPages(
   return embeds;
 }
 
+export function formatMailbox<Name extends string, Email extends string>(
+  name: Name,
+  email: Email,
+): `${Name} <${Email}>`;
+export function formatMailbox<Name extends string, Email extends string>(
+  name: Name,
+  email: Email,
+  escaped: true,
+): `${Name} \\<${Email}\\>`;
 /**
  * Format a name and email into the mailbox format as defined by RFC 5322.
  *
@@ -125,6 +134,7 @@ export function splitIntoEmbedPages(
 export function formatMailbox<Name extends string, Email extends string>(
   name: Name,
   email: Email,
-): `${Name} <${Email}>` {
-  return `${name} <${email}>`;
+  escaped?: boolean,
+): `${Name} <${Email}>` | `${Name} \\<${Email}\\>` {
+  return escaped ? `${name} \\<${email}\\>` : `${name} <${email}>`;
 }
