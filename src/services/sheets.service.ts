@@ -9,6 +9,8 @@ export abstract class SheetsService<
   Data extends Record<string, any>,
   Key extends keyof Data,
 > {
+  protected abstract readonly key: Key;
+
   protected readonly cache = new Collection<Data[Key], Data>();
   protected refreshInterval = 300 as Seconds;
   protected lastUpdated = 0 as UnixSeconds;
@@ -43,7 +45,7 @@ export abstract class SheetsService<
   protected async updateCache(): Promise<void> {
     const sheetData = await this.sheets.getRows();
     for await (const requirementsData of this.parseData(sheetData)) {
-      this.cache.set(requirementsData.name, requirementsData);
+      this.cache.set(requirementsData[this.key], requirementsData);
     }
     this.lastUpdated = this.dates.getNow();
   }

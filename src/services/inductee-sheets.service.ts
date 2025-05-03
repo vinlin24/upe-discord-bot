@@ -59,6 +59,7 @@ export class InducteeSheetsService extends RowWiseSheetsService<
   // Don't refresh. Use retries/force instead.
   protected override refreshInterval = Infinity as Seconds;
 
+  protected override readonly key = "discordUsername";
   protected override readonly schema = QuestionnaireSchema;
 
   public override async getData(

@@ -71,6 +71,7 @@ export type TutoringData = {
 export class TutoringSheetsService
   extends RowWiseSheetsService<TutoringData, "name", TrackerRow> {
 
+  protected override readonly key = "name";
   protected override readonly schema = TrackerSchema;
 
   protected override acceptRow(rowIndex: number, _row: string[]): boolean {

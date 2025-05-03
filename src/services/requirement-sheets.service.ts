@@ -71,6 +71,8 @@ export type RequirementsData = {
 export class RequirementSheetsService
   extends RowWiseSheetsService<RequirementsData, "name", TrackerRow> {
 
+  protected override readonly key = "name";
+
   public constructor(
     sheets: GoogleSheetsClient,
     dates: IDateClient,
