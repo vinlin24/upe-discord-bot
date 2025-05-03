@@ -4,6 +4,7 @@ import { google, type sheets_v4 } from "googleapis";
 import { z } from "zod";
 
 import type { ISheetsClient } from "../interfaces/sheets.interface";
+import type { UrlString } from "../types/branded.types";
 import { PROJECT_ASSETS_ROOT, resolvePath } from "../utils/paths.utils";
 
 export const GOOGLE_CREDENTIALS_PATH
@@ -81,6 +82,12 @@ export class GoogleSheetsClient implements ISheetsClient {
       credentials.private_key
     );
     return new GoogleSheetsClient(googleClient, spreadsheetId, sheetName);
+  }
+
+  public static idToUrl(spreadsheetId: string): UrlString {
+    return (
+      `https://docs.google.com/spreadsheets/d/${spreadsheetId}`
+    ) as UrlString;
   }
 
   public async getRows(cellRange?: string): Promise<string[][]> {

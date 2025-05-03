@@ -116,3 +116,15 @@ export function splitIntoEmbedPages(
 
   return embeds;
 }
+
+/**
+ * Format a name and email into the mailbox format as defined by RFC 5322.
+ *
+ * Ref: https://www.rfc-editor.org/rfc/rfc5322#section-3.4
+ */
+export function formatMailbox<Name extends string, Email extends string>(
+  name: Name,
+  email: Email,
+): `${Name} <${Email}>` {
+  return `${name} <${email}>`;
+}
