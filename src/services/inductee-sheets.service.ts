@@ -1,11 +1,11 @@
-import { Collection } from "discord.js";
 import { z } from "zod";
 
 import { GoogleSheetsClient } from "../clients/sheets.client";
 import env from "../env";
 import { cleanProvidedUsername } from "../features/inductee-role/input.utils";
-
-export const { INDUCTEE_DATA_SPREADSHEET_ID } = env;
+import type { Seconds } from "../types/branded.types";
+import { SystemDateClient } from "../utils/date.utils";
+import { SheetsService } from "./sheets.service";
 
 export enum UpeMajor {
   Cs = "Computer Science",
@@ -41,6 +41,8 @@ const QuestionnaireSchema = z.tuple([
   z.nativeEnum(UpeMajor),                       // Major
 ]).rest(z.any());
 
+type QuestionnaireRow = z.infer<typeof QuestionnaireSchema>;
+
 export type InducteeData = {
   preferredEmail: string;
   legalName: string;
@@ -49,84 +51,34 @@ export type InducteeData = {
   major: UpeMajor;
 };
 
-export class InducteeSheetsService {
-  private readonly client: GoogleSheetsClient;
-  private readonly inducteesCache = new Collection<string, InducteeData>();
-  private updatedOnceYet = false;
+export class InducteeSheetsService
+  extends SheetsService<InducteeData, "discordUsername"> {
 
-  public constructor(spreadsheetId: string) {
-    this.client = GoogleSheetsClient.fromCredentialsFile(spreadsheetId);
+  // Don't refresh. Use retries/force instead.
+  protected override refreshInterval = Infinity as Seconds;
+
+  public override async getData(
+    username: string,
+  ): Promise<InducteeData | null> {
+    let data = await super.getData(username);
+    if (data === null) {
+      data = await super.getData(username, true);
+    }
+    return data;
   }
 
-  public async getData(username: string): Promise<InducteeData | null> {
-    const data = this.inducteesCache.get(username);
-    if (data === undefined) {
-      console.log(`${username} not found in inductees cache, updating cache.`);
-      await this.updateCache();
-    }
-    else {
-      console.log(`${username} found in inductees cache.`);
-      return data;
-    }
-
-    const dataRetry = this.inducteesCache.get(username);
-    if (dataRetry === undefined) {
-      console.log(
-        `${username} still not found in inductees cache, ` +
-        "assuming not an inductee.",
-      );
-      return null;
-    }
-    console.log(`${username} found in updated inductees cache.`);
-    return dataRetry;
+  protected override async *parseData(
+    rows: string[][],
+  ): AsyncIterable<InducteeData> {
+    yield* this.parseRowWise({
+      rows,
+      schema: QuestionnaireSchema,
+      filter: (index) => index >= 1, // Skip header row.
+      transformer: (validatedRow) => this.transformRow(validatedRow),
+    });
   }
 
-  public async getAllData(
-    force: boolean = true,
-  ): Promise<Collection<string, InducteeData>> {
-    if (force || !this.updatedOnceYet) {
-      await this.updateCache();
-    }
-    return this.inducteesCache.clone();
-  }
-
-  private async updateCache(): Promise<void> {
-    // No one better rename the sheet lol.
-    const SHEET_NAME = "Form Responses 1";
-    const sheetData = await this.client.getValues(SHEET_NAME);
-    if (sheetData === null) {
-      console.error(
-        `Couldn't read data from sheet ${SHEET_NAME} ` +
-        `of spreadsheet ${this.client.spreadsheetId}`,
-      )
-      return;
-    }
-
-    // Start at 1 to skip the header row.
-    for (let rowIndex = 1; rowIndex < sheetData.length; rowIndex++) {
-      const row = sheetData[rowIndex];
-      try {
-        const inducteeData = this.parseRow(row);
-        this.inducteesCache.set(inducteeData.discordUsername, inducteeData);
-      }
-      catch (error) {
-        if (error instanceof z.ZodError) {
-          console.error(
-            `Error validating inductee response data (row ${rowIndex + 1}): ` +
-            error.message,
-          )
-          continue;
-        }
-        throw error;
-      }
-    }
-
-    this.updatedOnceYet = true;
-  }
-
-  private parseRow(row: string[]): InducteeData {
-    const validatedRow = QuestionnaireSchema.parse(row);
-
+  private transformRow(validatedRow: QuestionnaireRow): InducteeData {
     const legalFirst = validatedRow[QuestionnaireColumn.LegalFirst];
     const legalLast = validatedRow[QuestionnaireColumn.LegalLast];
 
@@ -149,4 +101,12 @@ export class InducteeSheetsService {
   }
 }
 
-export default new InducteeSheetsService(INDUCTEE_DATA_SPREADSHEET_ID);
+// Dependency-inject the production clients.
+const sheetsClient = GoogleSheetsClient.fromCredentialsFile(
+  env.INDUCTEE_DATA_SPREADSHEET_ID,
+  "Form Responses 1",
+)
+export default new InducteeSheetsService(
+  sheetsClient,
+  new SystemDateClient(),
+);
