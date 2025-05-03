@@ -4,6 +4,7 @@ import { z } from "zod";
 import { SheetsService } from "../../abc/sheets.abc";
 import { GoogleSheetsClient } from "../../clients/sheets.client";
 import env from "../../env";
+import type { Seconds } from "../../types/branded.types";
 import { asMutable } from "../../types/generic.types";
 import { SystemDateClient } from "../../utils/date.utils";
 import { toCount } from "../../utils/formatting.utils";
@@ -55,6 +56,9 @@ export class ReviewEventSheetsService
   extends SheetsService<ReviewEvent, "name"> {
 
   protected override readonly key = "name";
+
+  // This spreadsheet doesn't change very often.
+  protected override refreshInterval = 3600 as Seconds;
 
   protected override async *parseData(
     rows: string[][],
