@@ -3,6 +3,7 @@ import fs from "node:fs";
 import { google, type sheets_v4 } from "googleapis";
 import { z } from "zod";
 
+import type { ISheetsClient } from "../interfaces/sheets.interface";
 import { PROJECT_ASSETS_ROOT, resolvePath } from "../utils/paths.utils";
 
 export const GOOGLE_CREDENTIALS_PATH
@@ -51,30 +52,46 @@ export function initGoogleSheetsClient(
   return sheets;
 }
 
-export class GoogleSheetsClient {
+export class SheetsGetError extends Error {
   constructor(
-    private readonly client: sheets_v4.Sheets,
-    public readonly spreadsheetId: string
+    public readonly spreadsheetId: string,
+    public readonly sheetName: string,
+  ) {
+    super(
+      `couldn't read data from sheet ${sheetName} ` +
+      `of spreadsheet ${spreadsheetId}`,
+    );
+  }
+}
+
+export class GoogleSheetsClient implements ISheetsClient {
+  constructor(
+    private readonly googleClient: sheets_v4.Sheets,
+    public readonly spreadsheetId: string,
+    public readonly sheetName: string,
   ) { }
 
-  public static fromCredentialsFile(spreadsheetId: string): GoogleSheetsClient {
+  public static fromCredentialsFile(
+    spreadsheetId: string,
+    sheetName: string,
+  ): GoogleSheetsClient {
     const credentials = loadServiceAccountCredentials();
-    const client = initGoogleSheetsClient(
+    const googleClient = initGoogleSheetsClient(
       credentials.client_email,
       credentials.private_key
     );
-    return new GoogleSheetsClient(client, spreadsheetId);
+    return new GoogleSheetsClient(googleClient, spreadsheetId, sheetName);
   }
 
-  public async getValues(
-    sheetName: string,
-    cellRange?: string
-  ): Promise<string[][] | null> {
-    const range = this.formatA1Notation(sheetName, cellRange);
-    const response = await this.client.spreadsheets.values.get({
+  public async getRows(cellRange?: string): Promise<string[][]> {
+    const range = this.formatA1Notation(this.sheetName, cellRange);
+    const response = await this.googleClient.spreadsheets.values.get({
       spreadsheetId: this.spreadsheetId,
       range,
     });
+    if (!response.data.values) {
+      throw new SheetsGetError(this.spreadsheetId, this.sheetName);
+    }
     return response.data.values ?? null;
   }
 

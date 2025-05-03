@@ -38,3 +38,9 @@ export function assertNonEmptyArray<T>(
 ): asserts array is [T, ...T[]] {
   assert(array.length > 0);
 }
+
+export type Mutable<T extends readonly unknown[]> = [...T];
+
+export function asMutable<T extends readonly unknown[]>(array: T): Mutable<T> {
+  return array as Mutable<T>;
+}
