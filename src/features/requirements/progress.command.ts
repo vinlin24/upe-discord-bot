@@ -98,26 +98,29 @@ class TrackerCommand extends SlashCommandHandler {
     }
     targetInductee ??= caller;
 
-    await interaction.editReply(
-      `Fetching inductee information (${this.getAgoMention()})...\n` +
-      `You can directly visit the ${TRACKER_HYPERLINK} if this takes too long.`,
+    const loadingLines: string[] = [];
+
+    loadingLines.push(
+      `Resolving inductee (${this.getAgoMention()})...`,
     );
+    await interaction.editReply(this.formatLoadingLines(loadingLines));
     const { username } = targetInductee.user;
     const inducteeData = await inducteeSheetsService.getData(username);
     if (inducteeData === null) {
       const errorEmbed = makeErrorEmbed(
         "We don't seem to have data based on your username " +
         `${inlineCode(username)}. If you believe this is a mistake, ` +
-        `reach out to ${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}!`,
+        `reach out to ${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}!\n\n` +
+        `You can also visit the ${TRACKER_HYPERLINK} to view progress.`,
       );
       await interaction.editReply({ embeds: [errorEmbed] });
       return;
     }
 
-    await interaction.editReply(
-      `Fetching requirements progress (${this.getAgoMention()})...\n` +
-      `You can directly visit the ${TRACKER_HYPERLINK} if this takes too long.`,
-    )
+    loadingLines.push(
+      `Fetching requirements data (${this.getAgoMention()})...`,
+    );
+    await interaction.editReply(this.formatLoadingLines(loadingLines));
     const trackerName = inducteeData.preferredName ?? inducteeData.legalName;
     const requirementsData = await requirementSheetsService.getData(
       trackerName,
@@ -126,13 +129,19 @@ class TrackerCommand extends SlashCommandHandler {
       const errorEmbed = makeErrorEmbed(
         "Failed to retrieve requirement tracker data based on your provided " +
         `name ${inlineCode(trackerName)}. If you believe this is a mistake, ` +
-        `reach out to ${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}!`,
+        `reach out to ${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}!\n\n` +
+        `You can also visit the ${TRACKER_HYPERLINK} to view progress.`,
       );
       await interaction.editReply({ embeds: [errorEmbed] });
       return;
     }
 
+    loadingLines.push(
+      `Formatting your progress (${this.getAgoMention()})...`,
+    );
+    await interaction.editReply(this.formatLoadingLines(loadingLines));
     const embed = this.formatProgressEmbed(requirementsData, targetInductee);
+
     await interaction.editReply({ content: "", embeds: [embed] });
   }
 
@@ -265,6 +274,20 @@ class TrackerCommand extends SlashCommandHandler {
 
   private formatUnhandledProgress(title: string, referTo: string): string {
     return `${EMOJI_INFORMATION} ${bold(title + ":")} Refer to ${referTo}.`;
+  }
+
+  private formatLoadingLines(loadingLines: string[]): string {
+    const editedLines: string[] = [];
+
+    for (let index = 0; index < loadingLines.length - 1; index++) {
+      editedLines.push(`${loadingLines[index]} Done.`);
+    }
+    editedLines.push(loadingLines[loadingLines.length - 1]);
+    editedLines.push(
+      `You can directly visit the ${TRACKER_HYPERLINK} if this takes too long.`,
+    );
+
+    return editedLines.join("\n");
   }
 
   private getAgoMention(): string {
