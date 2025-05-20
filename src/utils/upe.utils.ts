@@ -3,6 +3,7 @@ import { type ColorResolvable, type RoleResolvable } from "discord.js";
 import env from "../env";
 import type { RoleId, UrlString } from "../types/branded.types";
 import { getEnumFromName } from "../types/generic.types";
+import { BidirectionalMap } from "./data.utils";
 import {
   ADVOCACY_ROLE_ID,
   ALUMNI_ROLE_ID,
@@ -55,6 +56,9 @@ export function getCommitteeFromName(
   return committee;
 }
 
+/**
+ * @deprecated Use the committee-role bidirectional map instead.
+ */
 export function committeeRoleToEnum(
   role: RoleResolvable,
 ): Committee | undefined {
@@ -93,6 +97,23 @@ export function committeeRoleToEnum(
       return undefined;
   }
 }
+
+export const COMMITTEE_ROLE_MAP = new BidirectionalMap([
+  [Committee.FinanceAndFacilities, FINANCE_AND_FACILITIES_ROLE_ID],
+  [Committee.Advocacy, ADVOCACY_ROLE_ID],
+  [Committee.Alumni, ALUMNI_ROLE_ID],
+  [Committee.DesignAndPublicity, DESIGN_AND_PUBLICITY_ROLE_ID],
+  [Committee.Mentorship, MENTORSHIP_ROLE_ID],
+  [Committee.Tutoring, TUTORING_ROLE_ID],
+  [Committee.Social, SOCIAL_ROLE_ID],
+  [Committee.Web, WEB_ROLE_ID],
+  [Committee.Corporate, CORPORATE_ROLE_ID],
+  [Committee.InductionAndMembership, INDUCTION_AND_MEMBERSHIP_ROLE_ID],
+  [Committee.Entrepreneurship, ENTREPRENEURSHIP_ROLE_ID],
+  [Committee.President, PRESIDENT_ROLE_ID],
+  [Committee.InternalVicePresident, IVP_ROLE_ID],
+  [Committee.ExternalVicePresident, EVP_ROLE_ID],
+]);
 
 export enum TeamType {
   Exec = "Exec",
