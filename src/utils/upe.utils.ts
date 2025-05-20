@@ -105,6 +105,28 @@ export type TeamTypeName = `${TeamType}`;
 
 export const TEAM_TYPE_NAMES: TeamTypeName[] = Object.values(TeamType);
 
+export enum Title {
+  Exec = "Exec",
+  Director = "Director",
+  Chair = "Chair",
+  // NOTE: There used to be officer "interns" as well, but that system has been
+  // abandoned.
+}
+
+export type TitleName = `${Title}`;
+
+export function getTitleFromName(
+  name: TitleName,
+): Title {
+  const title = getEnumFromName(Title, name);
+  if (title === undefined) {
+    throw new Error(
+      `${name} should have had a valid reverse mapping in title enum.`,
+    );
+  }
+  return title;
+}
+
 export const INDUCTION_LINKTREE
   = "https://linktr.ee/upe_induction" as UrlString;
 export const UPE_LINKTREE

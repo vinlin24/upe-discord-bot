@@ -36,7 +36,6 @@ export type UserId = Branded<Snowflake, "UserId">;
 export type CommandId = Branded<Snowflake, "CommandId">;
 
 export type SeasonId = Branded<`${"F" | "S"}${number}`, "SeasonId">;
-export type QuarterName = Branded<
-  `${"Fall" | "Winter" | "Spring"} ${number}`,
-  "QuarterName"
->;
+
+export type Quarter = "Fall" | "Winter" | "Spring";
+export type QuarterName = Branded<`${Quarter} ${number}`, "QuarterName">;
