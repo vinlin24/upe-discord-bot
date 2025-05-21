@@ -267,13 +267,36 @@ class OfficerAssignCommand extends SlashCommandHandler {
 
   private async changeNicknameIfNotHave(
     member: GuildMember,
-    nickname: string,
+    preferredName: string,
   ): Promise<boolean> {
-    if (member.nickname === nickname) {
+    if (member.nickname === null) {
+      await member.setNickname(preferredName, this.id);
+      return true;
+    }
+
+    // Ignore likely pronouns in existing bio (don't override them).
+    const [
+      existingName,
+      existingSuffix,
+    ] = this.splitNameAndPronouns(member.nickname);
+
+    if (preferredName === existingName) {
       return false;
     }
-    await member.setNickname(nickname, this.id);
+    await member.setNickname(preferredName + existingSuffix, this.id);
     return true;
+  }
+
+  private splitNameAndPronouns(
+    nickname: string,
+  ): [name: string, suffix: string] {
+    const suffixStart = nickname.indexOf("(");
+    if (suffixStart === -1) {
+      return [nickname, ""];
+    }
+    const name = nickname.slice(0, suffixStart).trimEnd();
+    const suffix = ` ${nickname.slice(suffixStart)}`; // Include leading ' '.
+    return [name, suffix];
   }
 
   private prepareResponseEmbed(
