@@ -323,7 +323,7 @@ class OfficerAssignCommand extends SlashCommandHandler {
         description += `\n\nSee: ${logsHyperlink}`;
       }
       return new EmbedBuilder()
-        .setTitle("Officer Roles Updated")
+        .setTitle("Officers Updated")
         .setDescription(description)
         .setColor(Colors.Green);
     }
@@ -353,7 +353,7 @@ class OfficerAssignCommand extends SlashCommandHandler {
     }
 
     return new EmbedBuilder()
-      .setTitle("Officer Updated [SOME ERROR]")
+      .setTitle("Officers Updated [SOME ERROR]")
       .setDescription(errorDescriptionLines.join("\n"))
       .setColor(Colors.Red);
   }
