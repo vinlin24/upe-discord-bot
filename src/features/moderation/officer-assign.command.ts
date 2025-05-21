@@ -26,6 +26,7 @@ import {
 import channelsService from "../../services/channels.service";
 import type { RoleId } from "../../types/branded.types";
 import { EMOJI_ALERT, EMOJI_WARNING } from "../../utils/emojis.utils";
+import { toBulletedList } from "../../utils/formatting.utils";
 import {
   DIRECTORS_ROLE_ID,
   OFFICERS_ROLE_ID,
@@ -138,6 +139,13 @@ class OfficerAssignCommand extends SlashCommandHandler {
     missingRoles: Committee[],
     commandResponse: Message,
   ): Promise<void> {
+    // Enforce nickname set to whatever they put for "preferred full name".
+
+    const nicknameChanged = await this.changeNicknameIfNotHave(
+      member,
+      data.preferredName,
+    );
+
     // Everyone gets the officers blanket role.
 
     const officerGiven = await this.addRoleIfNotHave(member, OFFICERS_ROLE_ID);
@@ -163,6 +171,7 @@ class OfficerAssignCommand extends SlashCommandHandler {
     // Acknowledge.
 
     await this.sendIndividualAcknowledgement(
+      nicknameChanged,
       officerGiven,
       committeeGiven,
       committeeRoleId,
@@ -173,6 +182,7 @@ class OfficerAssignCommand extends SlashCommandHandler {
   }
 
   private async sendIndividualAcknowledgement(
+    nicknameChanged: boolean,
     officerGiven: boolean,
     committeeGiven: boolean,
     committeeRoleId: RoleId | undefined,
@@ -186,13 +196,24 @@ class OfficerAssignCommand extends SlashCommandHandler {
       directorGiven ? DIRECTORS_ROLE_ID : "",
     ].filter(Boolean).map(roleMention).join(", ");
 
+    const descriptionLines: string[] = [];
+    if (rolesGivenString) {
+      descriptionLines.push(
+        `Gave ${rolesGivenString} to ${userMention(member.id)}.`,
+      );
+    }
+    if (nicknameChanged) {
+      descriptionLines.push(
+        `Set ${userMention(member.id)} nickname to ${bold(member.nickname!)}.`,
+      );
+    }
+    const description = toBulletedList(descriptionLines);
+
     // The member was parsed from the data but they already have all the roles
-    // they need. No need to clutter the output.
-    if (!rolesGivenString) {
+    // they need & nickname set. No need to clutter the output.
+    if (!description) {
       return;
     }
-
-    const description = `Gave ${rolesGivenString} to ${userMention(member.id)}`;
 
     const logSink = channelsService.getLogSink();
     if (logSink === null) {
@@ -212,7 +233,7 @@ class OfficerAssignCommand extends SlashCommandHandler {
     }
 
     const embed = new EmbedBuilder()
-      .setTitle("Officer Roles Updated")
+      .setTitle("Officer Updated")
       .setDescription(description)
       .setColor(committeeRoleColor);
 
@@ -241,6 +262,17 @@ class OfficerAssignCommand extends SlashCommandHandler {
       return false;
     }
     await member.roles.add(roleId, this.id);
+    return true;
+  }
+
+  private async changeNicknameIfNotHave(
+    member: GuildMember,
+    nickname: string,
+  ): Promise<boolean> {
+    if (member.nickname === nickname) {
+      return false;
+    }
+    await member.setNickname(nickname, this.id);
     return true;
   }
 
@@ -298,7 +330,7 @@ class OfficerAssignCommand extends SlashCommandHandler {
     }
 
     return new EmbedBuilder()
-      .setTitle("Officer Roles Updated [SOME ERROR]")
+      .setTitle("Officer Updated [SOME ERROR]")
       .setDescription(errorDescriptionLines.join("\n"))
       .setColor(Colors.Red);
   }
