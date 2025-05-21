@@ -3,6 +3,7 @@ import { type ColorResolvable, type RoleResolvable } from "discord.js";
 import env from "../env";
 import type { RoleId, UrlString } from "../types/branded.types";
 import { getEnumFromName } from "../types/generic.types";
+import { BidirectionalMap } from "./data.utils";
 import {
   ADVOCACY_ROLE_ID,
   ALUMNI_ROLE_ID,
@@ -55,6 +56,9 @@ export function getCommitteeFromName(
   return committee;
 }
 
+/**
+ * @deprecated Use the committee-role bidirectional map instead.
+ */
 export function committeeRoleToEnum(
   role: RoleResolvable,
 ): Committee | undefined {
@@ -94,6 +98,23 @@ export function committeeRoleToEnum(
   }
 }
 
+export const COMMITTEE_ROLE_MAP = new BidirectionalMap([
+  [Committee.FinanceAndFacilities, FINANCE_AND_FACILITIES_ROLE_ID],
+  [Committee.Advocacy, ADVOCACY_ROLE_ID],
+  [Committee.Alumni, ALUMNI_ROLE_ID],
+  [Committee.DesignAndPublicity, DESIGN_AND_PUBLICITY_ROLE_ID],
+  [Committee.Mentorship, MENTORSHIP_ROLE_ID],
+  [Committee.Tutoring, TUTORING_ROLE_ID],
+  [Committee.Social, SOCIAL_ROLE_ID],
+  [Committee.Web, WEB_ROLE_ID],
+  [Committee.Corporate, CORPORATE_ROLE_ID],
+  [Committee.InductionAndMembership, INDUCTION_AND_MEMBERSHIP_ROLE_ID],
+  [Committee.Entrepreneurship, ENTREPRENEURSHIP_ROLE_ID],
+  [Committee.President, PRESIDENT_ROLE_ID],
+  [Committee.InternalVicePresident, IVP_ROLE_ID],
+  [Committee.ExternalVicePresident, EVP_ROLE_ID],
+]);
+
 export enum TeamType {
   Exec = "Exec",
   Core = "Core",
@@ -104,6 +125,28 @@ export enum TeamType {
 export type TeamTypeName = `${TeamType}`;
 
 export const TEAM_TYPE_NAMES: TeamTypeName[] = Object.values(TeamType);
+
+export enum Title {
+  Exec = "Exec",
+  Director = "Director",
+  Chair = "Chair",
+  // NOTE: There used to be officer "interns" as well, but that system has been
+  // abandoned.
+}
+
+export type TitleName = `${Title}`;
+
+export function getTitleFromName(
+  name: TitleName,
+): Title {
+  const title = getEnumFromName(Title, name);
+  if (title === undefined) {
+    throw new Error(
+      `${name} should have had a valid reverse mapping in title enum.`,
+    );
+  }
+  return title;
+}
 
 export const INDUCTION_LINKTREE
   = "https://linktr.ee/upe_induction" as UrlString;
