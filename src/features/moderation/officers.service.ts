@@ -3,10 +3,11 @@ import assert from "node:assert";
 import { Collection } from "discord.js";
 import { z } from "zod";
 
-import { RowWiseSheetsService } from "../../abc/sheets.abc";
+import { RowWiseSheetsService, SheetsRowTransformError } from "../../abc/sheets.abc";
 import { GoogleSheetsClient } from "../../clients/sheets.client";
 import { UpeMajor } from "../../services/inductee-sheets.service";
 import type { Quarter, QuarterName } from "../../types/branded.types";
+import { getEnumFromName } from "../../types/generic.types";
 import { SystemDateClient } from "../../utils/date.utils";
 import {
   getCommitteeFromName,
@@ -36,6 +37,18 @@ enum Column {
   Uid,
 }
 
+// For handling slight variations in values meant to map to the UpeMajor enum.
+function resolveUpeMajor(value: string): UpeMajor | null {
+  const loweredValue = value.toLowerCase();
+  if (loweredValue.startsWith("math")) {
+    return UpeMajor.MathOfComp;
+  }
+  if (loweredValue.startsWith("ling")) {
+    return UpeMajor.LingCs;
+  }
+  return getEnumFromName(UpeMajor, value) ?? null;
+}
+
 const ColumnSchema = z.tuple([
   z.string().trim(),                                  // Timestamp
   z.string().trim().email(),                          // Email
@@ -44,7 +57,7 @@ const ColumnSchema = z.tuple([
   z.string().trim(),                                  // PreferredFull
   z.string().trim(),                                  // Pronouns
   z.string().trim(),                                  // BoardPosition
-  z.nativeEnum(UpeMajor),                             // Major
+  z.string().trim(),                                  // Major
   z.string().trim(),                                  // StudentYear
   z.string().trim(),                                  // GraduationQuarter
   z.string().trim().email(),                          // PreferredEmail
@@ -90,6 +103,8 @@ export class OfficersService extends RowWiseSheetsService<
       title,
     ] = this.validateBoardPosition(validatedRow[Column.BoardPosition]);
 
+    const upeMajor = this.validateUpeMajor(validatedRow[Column.Major]);
+
     const graduationQuarter = validatedRow[Column.GraduationQuarter];
     this.assertQuarterName(graduationQuarter);
 
@@ -104,7 +119,7 @@ export class OfficersService extends RowWiseSheetsService<
       pronouns: validatedRow[Column.Pronouns],
       committee,
       title,
-      major: validatedRow[Column.Major],
+      major: upeMajor,
       graduation: graduationQuarter,
       preferredEmail: validatedRow[Column.PreferredEmail],
       phoneNumber: validatedRow[Column.PhoneNumber],
@@ -123,6 +138,16 @@ export class OfficersService extends RowWiseSheetsService<
     const committeeName = tokens.join(" ") as CommitteeName;
     const committee = getCommitteeFromName(committeeName);
     return [committee, title];
+  }
+
+  private validateUpeMajor(value: string): UpeMajor {
+    const major = resolveUpeMajor(value);
+    if (major === null) {
+      throw new SheetsRowTransformError(
+        `'${value}' could not be resolved to a valid UPE major`,
+      );
+    }
+    return major;
   }
 
   private validateActiveQuarters(value: string): Quarter[] {

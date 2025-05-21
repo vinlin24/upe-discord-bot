@@ -74,6 +74,8 @@ export abstract class SheetsService<
   }
 }
 
+export class SheetsRowTransformError extends Error { }
+
 /**
  * Extraction and generalization of the most common sheet parsing flow:
  *
@@ -112,6 +114,10 @@ export abstract class RowWiseSheetsService<
           await this.handleParseError(error, rowIndex);
           continue;
         }
+        if (error instanceof SheetsRowTransformError) {
+          await this.handleTransformError(error, rowIndex);
+          continue;
+        }
         throw error;
       }
     }
@@ -133,6 +139,15 @@ export abstract class RowWiseSheetsService<
   ): Awaitable<void> {
     console.error(
       `Error validating data (row ${rowIndex + 1}): ${error.message}`,
+    );
+  }
+
+  protected handleTransformError(
+    error: SheetsRowTransformError,
+    rowIndex: number,
+  ): Awaitable<void> {
+    console.error(
+      `Error transforming data (row ${rowIndex + 1}): ${error.message}`,
     );
   }
 }
