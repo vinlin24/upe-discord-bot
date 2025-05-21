@@ -240,7 +240,7 @@ class OfficerAssignCommand extends SlashCommandHandler {
     if (member.roles.cache.has(roleId)) {
       return false;
     }
-    await member.roles.add(roleId);
+    await member.roles.add(roleId, this.id);
     return true;
   }
 
