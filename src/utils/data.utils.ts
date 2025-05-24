@@ -1,3 +1,5 @@
+import { Writable, type WritableOptions } from "node:stream";
+
 export class BidirectionalMap<TKey, TValue> implements Map<TKey, TValue> {
   private forwardMap = new Map<TKey, TValue>();
   private reverseMap = new Map<TValue, TKey>();
@@ -91,5 +93,46 @@ export class BidirectionalMap<TKey, TValue> implements Map<TKey, TValue> {
 
   public get [Symbol.toStringTag](): string {
     return this.constructor.name;
+  }
+}
+
+/**
+ * Implementation of an in-memory writable data stream. Courtesy of and adapted
+ * from ChatGPT. Node.js does not provide this built in for some reason.
+ */
+export class WritableMemoryStream extends Writable {
+  private chunks: Buffer[] = [];
+  private finished: boolean = false;
+  private finishPromise: Promise<Buffer>;
+
+  public constructor(options?: WritableOptions) {
+    super(options);
+
+    this.finishPromise = new Promise((resolve, reject) => {
+      this.on("finish", () => {
+        this.finished = true;
+        resolve(Buffer.concat(this.chunks));
+      });
+      this.on("error", reject);
+    });
+  }
+
+  public override _write(
+    chunk: any,
+    encoding: BufferEncoding,
+    callback: (error?: Error | null) => void,
+  ): void {
+    this.chunks.push(
+      Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk, encoding),
+    );
+    callback();
+  }
+
+  /**
+   * Return a Promise that resolves to the complete buffered data. If the stream
+   * has already ended, resolve immediately.
+   */
+  public async getData(): Promise<Buffer> {
+    return this.finished ? Buffer.concat(this.chunks) : this.finishPromise;
   }
 }

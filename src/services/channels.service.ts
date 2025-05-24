@@ -59,6 +59,19 @@ class ChannelService {
     error: Error | string | unknown,
     context?: BaseInteraction,
   ): Promise<void> {
+    try {
+      await this.unsafeSendDevError(error, context);
+    }
+    // Don't force the caller to add yet another layer to their error handling.
+    catch (error) {
+      console.error("FAILED TO SEND DEV ERROR:", error);
+    }
+  }
+
+  private async unsafeSendDevError(
+    error: Error | string | unknown,
+    context?: BaseInteraction,
+  ): Promise<void> {
     let contextLine = "";
 
     if (context !== undefined) {
