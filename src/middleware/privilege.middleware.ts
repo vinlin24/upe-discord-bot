@@ -11,6 +11,7 @@ import {
 } from "../abc/check.abc";
 import type { RoleId } from "../types/branded.types";
 import { BidirectionalMap } from "../utils/data.utils";
+import { getNumericEnumValues } from "../utils/enums.utils";
 import {
   ADMINS_ROLE_ID,
   DEVELOPER_ROLE_ID,
