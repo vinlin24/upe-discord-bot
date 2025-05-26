@@ -22,7 +22,7 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
     await channelsService.initialize(client);
 
     const [timeMention, relativeMention] = timestampPair(now);
-    await channelsService.getDev().send(
+    await channelsService.sendDev(
       `Bot has logged in at ${timeMention} (${relativeMention}).`,
     );
 

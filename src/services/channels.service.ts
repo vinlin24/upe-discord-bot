@@ -12,12 +12,14 @@ import {
   type DMChannel,
   type Guild,
   type GuildTextBasedChannel,
+  type MessageCreateOptions,
+  type MessagePayload,
 } from "discord.js";
 
 import { MESSAGE_CHARACTER_LIMIT } from "../utils/limits.utils";
 import {
   BOT_LOGS_CHANNEL_ID,
-  DEVELOPER_USER_ID,
+  DEVELOPER_ROLE_ID,
   UPE_GUILD_ID,
 } from "../utils/snowflakes.utils";
 
@@ -25,23 +27,29 @@ class ChannelService {
   private client: Client<true> | null = null;
   private upe: Guild | null = null;
 
-  private devDm: DMChannel | null = null;
+  private devDms: DMChannel[] = [];
   private logsChannel: GuildTextBasedChannel | null = null;
 
   public async initialize(client: Client<true>): Promise<void> {
     this.client = client;
-    const devUser = await client.users.fetch(DEVELOPER_USER_ID);
-    this.devDm = devUser.dmChannel ?? await devUser.createDM();
+
+    // TODO: Maybe implement some kind of "startup hook" system where services
+    // can sanity check they can meet their requirements and reliably crash the
+    // bot if not instead of waiting for an error to pop up deep in runtime.
 
     this.upe = await client.guilds.fetch(UPE_GUILD_ID);
-    await this.initLogsChannel();
-  }
 
-  public getDev(): DMChannel {
-    if (this.devDm === null) {
-      throw new Error(`developer DM channel requested before initialized`);
+    const developerRole = await this.upe.roles.fetch(DEVELOPER_ROLE_ID);
+    if (developerRole === null) {
+      return;
     }
-    return this.devDm;
+
+    for (const developer of developerRole.members.values()) {
+      const dmChannel = developer.dmChannel ?? await developer.createDM();
+      this.devDms.push(dmChannel);
+    }
+
+    await this.initLogsChannel();
   }
 
   public getLogSink(): GuildTextBasedChannel | null {
@@ -53,6 +61,23 @@ class ChannelService {
       return null;
     }
     return this.logsChannel;
+  }
+
+  public async sendDev(
+    options: string | MessagePayload | MessageCreateOptions,
+  ): Promise<void> {
+    for (const dmChannel of this.devDms) {
+      try {
+        await dmChannel.send(options);
+      }
+      // Don't force the caller to add yet another layer to their error handling.
+      catch (error) {
+        console.error(
+          `FAILED TO SEND DEV MESSAGE TO ${dmChannel.recipient}:`,
+          error,
+        );
+      }
+    }
   }
 
   public async sendDevError(
@@ -104,7 +129,7 @@ class ChannelService {
       content = content.slice(0, MESSAGE_CHARACTER_LIMIT - 6) + "...```";
     }
 
-    await this.getDev().send(content);
+    await this.sendDev(content);
   }
 
   private async initLogsChannel(): Promise<void> {

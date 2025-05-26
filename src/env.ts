@@ -43,10 +43,6 @@ export const ENV_SPEC = {
     desc: "Client application ID generated on the Discord Developer Dashboard.",
   }),
 
-  DEVELOPER_USER_ID: userIdValidator({
-    desc: "Discord ID of the user developing/maintaining this bot.",
-  }),
-
   INDUCTION_EMAIL: envalid.email({
     desc: "Email inductees use for private queries to the Induction committee.",
   }),

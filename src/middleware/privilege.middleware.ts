@@ -1,7 +1,6 @@
 import {
   codeBlock,
   GuildMember,
-  PermissionFlagsBits,
   userMention,
   type ChatInputCommandInteraction,
 } from "discord.js";
@@ -10,8 +9,11 @@ import {
   SlashCommandCheck,
   type SlashCommandCheckDetails,
 } from "../abc/check.abc";
+import type { RoleId } from "../types/branded.types";
+import { BidirectionalMap } from "../utils/data.utils";
 import {
-  DEVELOPER_USER_ID,
+  ADMINS_ROLE_ID,
+  DEVELOPER_ROLE_ID,
   INDUCTEES_ROLE_ID,
   INDUCTION_AND_MEMBERSHIP_ROLE_ID,
   MEMBERS_ROLE_ID,
@@ -28,24 +30,36 @@ export enum Privilege {
   Developer,
 }
 
+export const PRIVILEGE_ROLES = new BidirectionalMap<Privilege, RoleId>([
+  [Privilege.Inductee, INDUCTEES_ROLE_ID],
+  [Privilege.Member, MEMBERS_ROLE_ID],
+  [Privilege.Officer, OFFICERS_ROLE_ID],
+  [Privilege.Induction, INDUCTION_AND_MEMBERSHIP_ROLE_ID],
+  [Privilege.Administrator, ADMINS_ROLE_ID],
+  [Privilege.Developer, DEVELOPER_ROLE_ID],
+]);
+
+export const PRIVILEGE_VALUES: Readonly<Privilege[]>
+  = getNumericEnumValues(Privilege);
+
+// For highestPrivilege() checking.
+const REVERSED_PRIVILEGE_VALUES: Readonly<Privilege[]> = PRIVILEGE_VALUES
+  .slice()
+  .sort((lhs, rhs) => rhs - lhs);
+
 export function highestPrivilege(member: GuildMember): Privilege {
-  if (member.id === DEVELOPER_USER_ID) {
-    return Privilege.Developer;
-  }
-  if (member.permissions.has(PermissionFlagsBits.Administrator)) {
-    return Privilege.Administrator;
-  }
-  if (member.roles.cache.has(INDUCTION_AND_MEMBERSHIP_ROLE_ID)) {
-    return Privilege.Induction;
-  }
-  if (member.roles.cache.has(OFFICERS_ROLE_ID)) {
-    return Privilege.Officer;
-  }
-  if (member.roles.cache.has(MEMBERS_ROLE_ID)) {
-    return Privilege.Member;
-  }
-  if (member.roles.cache.has(INDUCTEES_ROLE_ID)) {
-    return Privilege.Inductee;
+  // Iterate from highest -> lowest privilege, returning the first privilege
+  // value whose role the member possesses.
+
+  for (const privilegeValue of REVERSED_PRIVILEGE_VALUES) {
+    const roleId = PRIVILEGE_ROLES.get(privilegeValue);
+    // Shouldn't happen, or iterated to `Privilege.None`.
+    if (roleId === undefined) {
+      continue;
+    }
+    if (member.roles.cache.has(roleId)) {
+      return privilegeValue;
+    }
   }
   return Privilege.None;
 }

@@ -32,16 +32,13 @@ export const EMERITUS_ROLE_ID = "854916094326341633" as RoleId;
 export const ADMINS_ROLE_ID = "778437029280612353" as RoleId;
 export const EXEC_ROLE_ID = "827989794667102248" as RoleId;
 export const DIRECTORS_ROLE_ID = "1091432095714398279" as RoleId;
+export const DEVELOPER_ROLE_ID = "1376451133354020996" as RoleId;
 export const OFFICERS_ROLE_ID = "778435056661823490" as RoleId;
 export const INTERNS_ROLE_ID = "931950245313646662" as RoleId;
 export const MEMBERS_ROLE_ID = "778438099176259674" as RoleId;
 export const INDUCTEES_ROLE_ID = "778438274695036957" as RoleId;
 export const BYTE_ROLE_ID = "899729573179162644" as RoleId;
 export const UPE_BOT_ROLE_ID = "1090790818866016337" as RoleId;
-
-// User IDs.
-
-export const { DEVELOPER_USER_ID } = env;
 
 // Channel IDs.
 
