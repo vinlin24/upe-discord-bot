@@ -6,7 +6,6 @@ import {
   EmbedBuilder,
   roleMention,
   SlashCommandBuilder,
-  userMention,
   type ChatInputCommandInteraction,
 } from "discord.js";
 
@@ -25,7 +24,7 @@ import {
 import {
   ADVOCACY_ROLE_ID,
   CORPORATE_ROLE_ID,
-  DEVELOPER_USER_ID,
+  DEVELOPER_ROLE_ID,
   INDUCTEES_CHAT_CHANNEL_ID,
   INDUCTEES_ROLE_ID,
   INDUCTION_AND_MEMBERSHIP_ROLE_ID,
@@ -93,7 +92,7 @@ const POINTS_OF_CONTACT =
     `${roleMention(ADVOCACY_ROLE_ID)}.`,
 
     "Discord-related question or if I ever go down because bro was testing " +
-    `in prod: reach out to ${userMention(DEVELOPER_USER_ID)}.`,
+    `in prod: reach out to ${roleMention(DEVELOPER_ROLE_ID)}.`,
   ]);
 
 const COMBINED_DESCRIPTION = [
