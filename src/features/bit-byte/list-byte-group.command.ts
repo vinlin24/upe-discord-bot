@@ -9,11 +9,11 @@ import {
 } from "discord.js";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
+import bitByteService from "../../services/bit-byte.service";
 import type { RoleId } from "../../types/branded.types";
 import { toBulletedList } from "../../utils/formatting.utils";
 import { ExtendedSlashCommandBuilder } from "../../utils/options.utils";
 import { BYTE_ROLE_ID, INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
-import { calculateBitByteGroupPoints, getActiveGroup, getAllActiveGroups } from "./bit-byte.utils";
 
 class ListByteGroupCommand extends SlashCommandHandler {
   public override readonly definition = new ExtendedSlashCommandBuilder()
@@ -38,7 +38,7 @@ class ListByteGroupCommand extends SlashCommandHandler {
       return;
     }
 
-    const group = await getActiveGroup(groupRole.id as RoleId);
+    const group = await bitByteService.getActiveGroup(groupRole.id as RoleId);
     if (group === null) {
       await this.replyError(
         interaction,
@@ -61,7 +61,8 @@ class ListByteGroupCommand extends SlashCommandHandler {
       `${this.formatMentionList(inductees)}`
     );
     const eventsLine = `${group.events.length} events completed`;
-    const pointsLine = `Points: ${calculateBitByteGroupPoints(group)}`;
+    const pointsLine
+      = `Points: ${bitByteService.calculateBitByteGroupPoints(group)}`;
 
     const description = toBulletedList(
       [roleLine, channelLine, bytesLine, inducteesLine, eventsLine, pointsLine],
@@ -75,7 +76,7 @@ class ListByteGroupCommand extends SlashCommandHandler {
   private async processListAllOption(
     interaction: ChatInputCommandInteraction,
   ): Promise<EmbedBuilder> {
-    const allGroups = await getAllActiveGroups();
+    const allGroups = await bitByteService.getAllActiveGroups();
 
     const lines: string[] = [];
 

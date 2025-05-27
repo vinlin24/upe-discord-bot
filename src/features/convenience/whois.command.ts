@@ -18,6 +18,7 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
+import bitByteService from "../../services/bit-byte.service";
 import inducteeSheetsService, {
   type InducteeData,
 } from "../../services/inductee-sheets.service";
@@ -28,7 +29,6 @@ import {
   AUTOCOMPLETE_CHOICE_NAME_MAX_LENGTH,
   AUTOCOMPLETE_MAX_CHOICES,
 } from "../../utils/limits.utils";
-import { determineGroup } from "../bit-byte/bit-byte.utils";
 
 class WhoisCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
@@ -128,7 +128,7 @@ class WhoisCommand extends SlashCommandHandler {
     inducteeData: InducteeData,
   ): Promise<EmbedBuilder> {
     const { legalName, preferredName, preferredEmail, major } = inducteeData;
-    const group = await determineGroup(inducteeMember);
+    const group = await bitByteService.determineGroup(inducteeMember);
 
     const lines = [
       `${bold("Name:")} ${legalName}`,

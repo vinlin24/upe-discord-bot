@@ -5,7 +5,7 @@ import type {
   RoleId,
   UnixSeconds,
   UrlString,
-} from "../../types/branded.types";
+} from "../types/branded.types";
 
 export enum BitByteLocation {
   OnCampus = "On-campus",

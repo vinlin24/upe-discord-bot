@@ -11,16 +11,12 @@ import {
 } from "discord.js";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
+import { type BitByteGroup } from "../../models/bit-byte.model";
+import bitByteService from "../../services/bit-byte.service";
 import type { RoleId } from "../../types/branded.types";
 import { isNonEmptyArray } from "../../types/generic.types";
 import { EmbedPagesManager } from "../../utils/components.utils";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
-import { type BitByteGroup } from "./bit-byte.model";
-import {
-  calculateBitByteEventPoints,
-  getActiveGroup,
-  getAllActiveGroups,
-} from "./bit-byte.utils";
 
 class ViewEventsCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
@@ -35,7 +31,7 @@ class ViewEventsCommand extends SlashCommandHandler {
   public override async execute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
-    const groups = await getAllActiveGroups();
+    const groups = await bitByteService.getAllActiveGroups();
 
     const selectMenuOptions: APISelectMenuOption[] = [];
     for (const [roleId,] of groups) {
@@ -70,7 +66,7 @@ class ViewEventsCommand extends SlashCommandHandler {
     }
 
     const selectedRoleId = interaction.values[0] as RoleId;
-    const group = await getActiveGroup(selectedRoleId);
+    const group = await bitByteService.getActiveGroup(selectedRoleId);
     if (group === null) {
       await interaction.editReply({
         content: (
@@ -90,8 +86,8 @@ class ViewEventsCommand extends SlashCommandHandler {
       const pointsField: APIEmbedField = {
         name: "Points Earned",
         value: (
-          `${calculateBitByteEventPoints(event)} (${event.numAttended} / ` +
-          `${event.numTotal} bits in ${event.location})`
+          `${bitByteService.calculateBitByteEventPoints(event)} ` +
+          `(${event.numAttended} / ${event.numTotal} bits in ${event.location})`
         ),
       };
       const dateField: APIEmbedField = {

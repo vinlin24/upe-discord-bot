@@ -12,18 +12,18 @@ import {
 import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { RoleCheck } from "../../middleware/role.middleware";
+import {
+  BitByteGroupModel,
+  BitByteLocation,
+  type BitByteEvent,
+} from "../../models/bit-byte.model";
+import bitByteService from "../../services/bit-byte.service";
 import channelsService from "../../services/channels.service";
 import type { RoleId, UrlString } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { EMOJI_FEARFUL, EMOJI_RAISED_EYEBROW } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { BYTE_ROLE_ID, INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
-import {
-  BitByteGroupModel,
-  BitByteLocation,
-  type BitByteEvent,
-} from "./bit-byte.model";
-import { calculateBitByteEventPoints, determineGroup } from "./bit-byte.utils";
 
 type ResolvedCommandOptions = {
   location: BitByteLocation;
@@ -76,7 +76,7 @@ class SubmitEventCommand extends SlashCommandHandler {
     const options = this.resolveOptions(interaction);
     const caller = interaction.member as GuildMember;
 
-    const group = await determineGroup(caller);
+    const group = await bitByteService.determineGroup(caller);
     if (group === null) {
       await this.replyError(interaction, (
         "You don't seem to be part of a registered bit-byte group!"
@@ -123,7 +123,7 @@ class SubmitEventCommand extends SlashCommandHandler {
       timestamp: this.dateClient.getNow(),
     };
 
-    const pointsEarned = calculateBitByteEventPoints(event);
+    const pointsEarned = bitByteService.calculateBitByteEventPoints(event);
 
     const description = (
       `${bold("Group:")} ${roleMention(groupRole.id)}\n` +
