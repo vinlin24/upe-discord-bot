@@ -7,7 +7,7 @@ import {
   BitByteGroupModel,
   BitByteLocation,
 } from "../models/bit-byte.model";
-import type { RoleId } from "../types/branded.types";
+import { UserId, type RoleId } from "../types/branded.types";
 import { SEASON_ID } from "../utils/upe.utils";
 
 // TODO: A lot of controllers under features/bit-byte/ still manipulate the
@@ -15,6 +15,10 @@ import { SEASON_ID } from "../utils/upe.utils";
 // them go through this service instead.
 export class BitByteService {
   public static readonly CATEGORY_NAME = `Bit-Byte ${SEASON_ID}`;
+
+  // NOTE: Realistically bits will not be moved between groups, so this cache
+  // should never need refreshing.
+  private readonly userCache = new Collection<UserId, BitByteGroup>();
 
   public calculateBitByteEventPoints(event: BitByteEvent): number {
     let distanceMultiplier: number;
@@ -66,9 +70,14 @@ export class BitByteService {
   public async determineGroup(
     member: GuildMember,
   ): Promise<BitByteGroup | null> {
+    const group = this.userCache.get(member.id as UserId);
+    if (group !== undefined) {
+      return group;
+    }
     for (const [roleId, group] of await this.getAllActiveGroups()) {
       const groupRole = member.roles.cache.get(roleId);
       if (groupRole !== undefined) {
+        this.userCache.set(member.id as UserId, group);
         return group;
       }
     }
