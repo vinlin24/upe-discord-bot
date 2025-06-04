@@ -153,12 +153,19 @@ export class PruneInducteesCommand extends SlashCommandHandler {
       return null;
     }
 
+    const description = (
+      `${userMention(actor.id)} removed ` +
+      `${rolesToRemove.map(roleMention).join(", ")} ` +
+      `from ${userMention(member.id)}.`
+    )
     const embed = new EmbedBuilder()
-      .setTitle("Inductee Roles Updated (Dropped)")
-      .setDescription(`Removed ${rolesToRemove.map(roleMention).join(", ")}.`);
+      .setTitle(`${this.id}: Inductee Roles Updated`)
+      .setDescription(description);
     return await logSink.send({
       content: interactionResponse.url,
       embeds: [embed],
     });
   }
 }
+
+export default new PruneInducteesCommand();
