@@ -13,13 +13,13 @@ import {
 import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { RoleCheck } from "../../middleware/role.middleware";
+import bitByteService from "../../services/bit-byte.service";
 import channelsService from "../../services/channels.service";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { normalizeChannelName } from "../../utils/formatting.utils";
 import { ROLE_NAME_MAX_LENGTH } from "../../utils/limits.utils";
 import { BYTE_ROLE_ID } from "../../utils/snowflakes.utils";
-import { determineGroup } from "./bit-byte.utils";
 
 class CustomizeGroupCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
@@ -62,7 +62,7 @@ class CustomizeGroupCommand extends SlashCommandHandler {
 
     progressString += `Fetching your group... (${this.ago()})`;
     await interaction.reply({ content: progressString });
-    const group = await determineGroup(caller);
+    const group = await bitByteService.determineGroup(caller);
     if (group === null) {
       await interaction.editReply({
         embeds: [makeErrorEmbed(

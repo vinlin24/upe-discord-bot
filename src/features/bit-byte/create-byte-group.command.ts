@@ -23,6 +23,11 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
+import {
+  BitByteGroupModel,
+  type BitByteGroup,
+} from "../../models/bit-byte.model";
+import { BitByteService } from "../../services/bit-byte.service";
 import channelsService from "../../services/channels.service";
 import type { ChannelId, RoleId } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
@@ -35,8 +40,8 @@ import {
   INDUCTION_AND_MEMBERSHIP_ROLE_ID,
   UPE_BOT_ROLE_ID,
 } from "../../utils/snowflakes.utils";
-import { BitByteGroupModel, type BitByteGroup } from "./bit-byte.model";
-import { BIT_BYTE_CATEGORY_NAME } from "./bit-byte.utils";
+
+const { CATEGORY_NAME: BIT_BYTE_CATEGORY_NAME } = BitByteService;
 
 class CreateByteGroupCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()

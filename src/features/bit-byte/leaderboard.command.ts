@@ -8,6 +8,7 @@ import {
 import _ from "lodash";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
+import bitByteService from "../../services/bit-byte.service";
 import type { RoleId } from "../../types/branded.types";
 import {
   EMOJI_EIGHT,
@@ -21,10 +22,6 @@ import {
   EMOJI_TEN,
   EMOJI_THIRD_PLACE,
 } from "../../utils/emojis.utils";
-import {
-  calculateBitByteGroupPoints,
-  getAllActiveGroups,
-} from "./bit-byte.utils";
 
 type LeaderboardEntry = {
   roleId: RoleId;
@@ -47,10 +44,10 @@ class LeaderboardCommand extends SlashCommandHandler {
   private async calculateLeaderboard(): Promise<LeaderboardEntry[]> {
     const leaderboard: LeaderboardEntry[] = [];
 
-    const groups = await getAllActiveGroups();
+    const groups = await bitByteService.getAllActiveGroups();
 
     for (const [roleId, group] of groups) {
-      const eventPoints = calculateBitByteGroupPoints(group);
+      const eventPoints = bitByteService.calculateBitByteGroupPoints(group);
       const totalPoints = eventPoints + group.jeopardyPoints;
       leaderboard.push({ roleId, points: totalPoints });
     }

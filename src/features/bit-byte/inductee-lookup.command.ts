@@ -17,12 +17,12 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
+import bitByteService from "../../services/bit-byte.service";
 import sheetsService, {
   type InducteeData,
 } from "../../services/inductee-sheets.service";
 import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
-import { determineGroup } from "./bit-byte.utils";
 
 class InducteeLookupCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
@@ -81,7 +81,7 @@ class InducteeLookupCommand extends SlashCommandHandler {
       return groupRole;
     }
 
-    const group = await determineGroup(member);
+    const group = await bitByteService.determineGroup(member);
     if (group === null) {
       return null;
     }

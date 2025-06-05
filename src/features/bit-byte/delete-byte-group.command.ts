@@ -12,8 +12,8 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
+import { BitByteGroupModel } from "../../models/bit-byte.model";
 import type { RoleId } from "../../types/branded.types";
-import { BitByteGroupModel } from "./bit-byte.model";
 
 class DeleteByteGroupCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
