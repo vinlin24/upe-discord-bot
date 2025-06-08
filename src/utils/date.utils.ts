@@ -21,6 +21,15 @@ export class SystemDateClient implements IDateClient {
   }
 }
 
+export function msecToUnixSeconds(milliseconds: number): UnixSeconds {
+  return Math.round(milliseconds / 1000) as UnixSeconds;
+}
+
+export function isoToUnixSeconds(isoString: string): UnixSeconds {
+  const unixMsec = new Date(isoString).getTime();
+  return msecToUnixSeconds(unixMsec);
+}
+
 export enum Month {
   January = 1,
   February,
