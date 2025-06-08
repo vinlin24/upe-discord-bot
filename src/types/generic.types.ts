@@ -44,3 +44,13 @@ export type Mutable<T extends readonly unknown[]> = [...T];
 export function asMutable<T extends readonly unknown[]>(array: T): Mutable<T> {
   return array as Mutable<T>;
 }
+
+/**
+ * Utility type to make the hover overlay of a complex object type more
+ * readable.
+ *
+ * Ref: https://www.totaltypescript.com/concepts/the-prettify-helper
+ */
+export type Prettify<T> = {
+  [K in keyof T]: T[K];
+} & unknown;

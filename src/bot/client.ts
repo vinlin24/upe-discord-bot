@@ -26,6 +26,7 @@ export class ClientManager {
     GatewayIntentBits.Guilds,
     GatewayIntentBits.GuildMembers,
     GatewayIntentBits.GuildPresences,
+    GatewayIntentBits.GuildModeration,
   ] as const satisfies readonly GatewayIntentBits[];
 
   public static readonly INITIAL_LISTENERS = [
