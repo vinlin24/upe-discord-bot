@@ -14,6 +14,7 @@ import {
 } from "../../middleware/privilege.middleware";
 import channelsService from "../../services/channels.service";
 import imagesService from "../../services/images.service";
+import { makeErrorEmbed } from "../../utils/errors.utils";
 import { ExtendedSlashCommandBuilder } from "../../utils/options.utils";
 
 class ImageToPdfCommand extends SlashCommandHandler {
@@ -38,6 +39,8 @@ class ImageToPdfCommand extends SlashCommandHandler {
     const imageAttachment = interaction.options.getAttachment("image", true);
     const ephemeral = interaction.options.getBoolean("ephemeral") ?? false;
 
+    await interaction.deferReply({ ephemeral });
+
     const imageBuffer = await this.imageUrlToBuffer(imageAttachment.url);
 
     let pdfBuffer: Buffer;
@@ -45,10 +48,11 @@ class ImageToPdfCommand extends SlashCommandHandler {
       pdfBuffer = await imagesService.toPdf(imageBuffer);
     }
     catch (error) {
-      await this.replyError(interaction, (
+      const embed = makeErrorEmbed(
         `Your uploaded attachment ${inlineCode(imageAttachment.name)} does ` +
         "not seem to contain valid image data."
-      ));
+      );
+      await interaction.editReply({ embeds: [embed] });
       await channelsService.sendDevError(error, interaction);
       return;
     }
@@ -56,7 +60,7 @@ class ImageToPdfCommand extends SlashCommandHandler {
     const pdfName = this.replaceExtension(imageAttachment.name, ".pdf");
     const pdfAttachment = new AttachmentBuilder(pdfBuffer).setName(pdfName);
 
-    await interaction.reply({ files: [pdfAttachment], ephemeral });
+    await interaction.editReply({ files: [pdfAttachment] });
   }
 
   private async imageUrlToBuffer(url: string): Promise<Buffer> {

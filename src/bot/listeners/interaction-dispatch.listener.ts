@@ -1,10 +1,9 @@
 import {
-  ChannelType,
   Events,
   type AutocompleteInteraction,
   type ChatInputCommandInteraction,
   type Interaction,
-  type MessageComponentInteraction,
+  type MessageComponentInteraction
 } from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
@@ -39,16 +38,20 @@ class InteractionDispatchListener extends
     }
 
     // Commands should only be used in text channels within the server (no DMs).
-    if (channel?.type !== ChannelType.GuildText) {
-      console.error(
-        "[DISPATCH] Invalid channel type: " +
-        `${channel && ChannelType[channel.type]}`,
-      );
-      return;
-    }
+    // if (channel === null || (
+    //   channel.type !== ChannelType.GuildText &&
+    //   channel.type !== ChannelType.PublicThread &&
+    //   channel.type !== ChannelType.PrivateThread
+    // )) {
+    //   console.error(
+    //     "[DISPATCH] Invalid channel type: " +
+    //     `${channel && ChannelType[channel.type]}`,
+    //   );
+    //   return;
+    // }
 
     console.log(
-      `[DISPATCH] ${command.id} by @${caller.username} in #${channel.name}`,
+      `[DISPATCH] ${command.id} by @${caller.username} in #${channel}`,
     );
     try {
       await command.dispatch(interaction);
