@@ -3,6 +3,7 @@ import { ActivityType, Events, type Client } from "discord.js";
 import { DiscordEventListener } from "../../abc/listener.abc";
 import helpCommand from "../../features/convenience/help.command";
 import channelsService from "../../services/channels.service";
+import orzService from "../../services/orz.service";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { timestampPair } from "../../utils/formatting.utils";
 
@@ -19,7 +20,10 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
       `[READY] Client is ready! Logged in as ${client.user.username}.`,
     );
 
+    // TODO: Maybe architect a cleaner/more organized way for "startup hooks" to
+    // register themselves.
     await channelsService.initialize(client);
+    await orzService.initialize(channelsService.getUpe());
 
     const [timeMention, relativeMention] = timestampPair(now);
     await channelsService.sendDev(
