@@ -157,7 +157,7 @@ class ChannelService {
     this.logsChannel = logsChannel;
   }
 
-  private getUpe(): Guild {
+  public getUpe(): Guild {
     if (this.upe === null) {
       throw new Error("UPE guild requested before initialized");
     }

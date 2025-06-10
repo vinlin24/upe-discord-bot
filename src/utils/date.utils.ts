@@ -30,6 +30,11 @@ export function isoToUnixSeconds(isoString: string): UnixSeconds {
   return msecToUnixSeconds(unixMsec);
 }
 
+export function dateToUnixSeconds(date: Date): UnixSeconds {
+  const unixMsec = date.getTime();
+  return msecToUnixSeconds(unixMsec);
+}
+
 export enum Month {
   January = 1,
   February,
