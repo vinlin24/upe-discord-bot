@@ -136,3 +136,18 @@ export class WritableMemoryStream extends Writable {
     return this.finished ? Buffer.concat(this.chunks) : this.finishPromise;
   }
 }
+
+/**
+ * Compute the set difference `lhs \ rhs`. This is provided because
+ * `Set.prototype.difference` is a new feature in Node.js and not yet widely
+ * supported.
+ */
+export function setDifference<T>(lhs: Set<T>, rhs: Set<T>): Set<T> {
+  const result = new Set<T>();
+  for (const element of lhs) {
+    if (!rhs.has(element)) {
+      result.add(element);
+    }
+  }
+  return result;
+}

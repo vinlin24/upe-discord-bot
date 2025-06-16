@@ -43,10 +43,6 @@ export const ENV_SPEC = {
     desc: "Client application ID generated on the Discord Developer Dashboard.",
   }),
 
-  ORZ_TARGET_USER_ID: userIdValidator({
-    desc: "Discord ID of the user to be orz'ed every midnight.",
-  }),
-
   INDUCTION_EMAIL: envalid.email({
     desc: "Email inductees use for private queries to the Induction committee.",
   }),
