@@ -1,9 +1,11 @@
 import { DateTime, type DateObjectUnits } from "luxon";
-import type { UnixSeconds } from "../types/branded.types";
+
+import { isBrandedNumber, type UnixSeconds } from "../types/branded.types";
 
 export interface IDateClient {
   getNow(): UnixSeconds;
   getDate(seconds: UnixSeconds): Date;
+  getDateTime(seconds: UnixSeconds, zone?: string): DateTime;
   getDateTime(units: DateObjectUnits, zone?: string): DateTime;
 }
 
@@ -16,8 +18,17 @@ export class SystemDateClient implements IDateClient {
     return new Date(seconds * 1000);
   }
 
-  public getDateTime(units: DateObjectUnits, zone?: string): DateTime {
-    return DateTime.fromObject(units, { zone });
+  public getDateTime(
+    arg: UnixSeconds | DateObjectUnits | Date,
+    zone?: string,
+  ): DateTime {
+    if (isBrandedNumber<UnixSeconds>(arg)) {
+      return DateTime.fromSeconds(arg);
+    }
+    if (arg instanceof Date) {
+      return DateTime.fromJSDate(arg);
+    }
+    return DateTime.fromObject(arg, { zone });
   }
 }
 
@@ -54,3 +65,9 @@ export type MonthName = keyof typeof Month;
 
 export const MONTH_NAMES = Object.values(Month)
   .filter(value => typeof value === "string") as MonthName[];
+
+export enum IanaTimeZone {
+  AmericaLosAngeles = "America/Los_Angeles",
+}
+
+export const UCLA_TIMEZONE = IanaTimeZone.AmericaLosAngeles;

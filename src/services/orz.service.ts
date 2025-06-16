@@ -3,13 +3,13 @@ import {
   type Guild,
   type GuildTextBasedChannel,
 } from "discord.js";
-import type { UnixSeconds } from "../types/branded.types";
+import { asBrandedNumber, type UnixSeconds } from "../types/branded.types";
 
 import env from "../env";
 import {
-  dateToUnixSeconds,
   SystemDateClient,
-  type IDateClient,
+  UCLA_TIMEZONE,
+  type IDateClient
 } from "../utils/date.utils";
 import { OFFICER_MEMES_CHANNEL_ID } from "../utils/snowflakes.utils";
 import channelsService from "./channels.service";
@@ -37,9 +37,14 @@ class OrzService {
   }
 
   private getNextMidnight(now: UnixSeconds): UnixSeconds {
-    const date = this.dateClient.getDate(now);
-    date.setHours(24, 0, 0, 0);
-    return dateToUnixSeconds(date);
+    const dateTime = this.dateClient.getDateTime(now, UCLA_TIMEZONE);
+    if (!dateTime.isValid) {
+      throw new Error(
+        `timestamp ${now} failed to convert: ${dateTime.invalidExplanation}`,
+      );
+    }
+    const nextMidnight = dateTime.plus({ days: 1 }).startOf("day");
+    return asBrandedNumber(nextMidnight.toSeconds());
   }
 
   private async sendOrz(officerMemes: GuildTextBasedChannel): Promise<void> {
