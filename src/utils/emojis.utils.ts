@@ -1,3 +1,4 @@
+import type { Message } from "discord.js";
 import type { Branded } from "../types/branded.types";
 
 export type BuiltinEmoji = Branded<`:${string}:`, "BuiltinEmoji">;
@@ -40,3 +41,27 @@ export const EMOJI_FIRST_PLACE = ":first_place:" as BuiltinEmoji;
 export const EMOJI_SECOND_PLACE = ":second_place:" as BuiltinEmoji;
 export const EMOJI_THIRD_PLACE = ":third_place:" as BuiltinEmoji;
 export const EMOJI_MEDAL = ":medal:" as BuiltinEmoji;
+
+export enum LetterReactionEmoji {
+  // TODO: Add all letters and also make an enum for numbers.
+  O = "🇴",
+  R = "🇷",
+  Z = "🇿",
+}
+
+export async function reactString(
+  message: Message,
+  sequence: string,
+): Promise<void> {
+  for (const character of sequence.toUpperCase()) {
+    const reactionEmoji = LetterReactionEmoji[
+      character as keyof typeof LetterReactionEmoji
+    ];
+    if (reactionEmoji === undefined) {
+      console.warn(`invalid letter to try and react with: ${character}`);
+    }
+    else {
+      await message.react(reactionEmoji);
+    }
+  }
+}

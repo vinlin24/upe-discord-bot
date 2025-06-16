@@ -12,6 +12,28 @@ export type Branded<T, B> = T & Brand<B>;
 /** Extract the brand tag of a branded type. */
 export type BrandOf<T> = T extends Brand<infer Tag> ? Tag : never;
 
+/**
+ * Convenience function for asserting that `value` is some `number`-derived
+ * branded type. Note that no check is done besides just checking that `value`
+ * is a `number`, so this is as type-safe as blindly asserting `as BrandedType`
+ * to an expression. Use with care.
+ */
+export function isBrandedNumber<T extends number>(
+  value: unknown,
+): value is T {
+  return typeof value === "number";
+}
+
+/**
+ * Convenience function for casting `value` to some `number`-derived branded
+ * type.
+ */
+export function asBrandedNumber<T extends number>(
+  value: unknown,
+): T {
+  return value as T;
+}
+
 /** Represents a filesystem path. */
 export type Path = Branded<string, "Path">;
 

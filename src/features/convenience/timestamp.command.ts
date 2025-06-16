@@ -20,6 +20,7 @@ import {
   Month,
   MONTH_NAMES,
   SystemDateClient,
+  UCLA_TIMEZONE,
   type IDateClient,
 } from "../../utils/date.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
@@ -61,13 +62,11 @@ const STYLE_CHOICES: APIApplicationCommandOptionChoice<TimestampStylesString>[]
   ];
 
 class TimestampCommand extends SlashCommandHandler {
-  private static readonly UCLA_TIMEZONE = "America/Los_Angeles";
-
   public override readonly definition = new SlashCommandBuilder()
     .setName("timestamp")
     .setDescription(
       "Format a timestamp mention based on input date/time, in UCLA time " +
-      `(${TimestampCommand.UCLA_TIMEZONE}).`,
+      `(${UCLA_TIMEZONE}).`,
     )
     .addBooleanOption(input => input
       .setName("help")
@@ -174,7 +173,7 @@ class TimestampCommand extends SlashCommandHandler {
 
     const dateTime = this.dateClient.getDateTime(
       { year, month, day, hour, minute, second },
-      TimestampCommand.UCLA_TIMEZONE,
+      UCLA_TIMEZONE,
     );
 
     if (dateTime.invalidReason !== null) {
@@ -194,7 +193,7 @@ class TimestampCommand extends SlashCommandHandler {
       "automatically renders in every user's current timezone. You can also " +
       `do neat things like using the ${italic("relative time")} format style ` +
       "to render countdowns. This command in particular will treat input as " +
-      `UCLA time (${inlineCode(TimestampCommand.UCLA_TIMEZONE)}).`
+      `UCLA time (${inlineCode(UCLA_TIMEZONE)}).`
     );
 
     const syntaxOverview = (
