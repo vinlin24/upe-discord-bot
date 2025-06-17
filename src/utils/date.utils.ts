@@ -23,10 +23,10 @@ export class SystemDateClient implements IDateClient {
     zone?: string,
   ): DateTime {
     if (isBrandedNumber<UnixSeconds>(arg)) {
-      return DateTime.fromSeconds(arg);
+      return DateTime.fromSeconds(arg, { zone });
     }
     if (arg instanceof Date) {
-      return DateTime.fromJSDate(arg);
+      return DateTime.fromJSDate(arg, { zone });
     }
     return DateTime.fromObject(arg, { zone });
   }
