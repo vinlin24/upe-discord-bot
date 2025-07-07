@@ -4,16 +4,18 @@ Discord Job Scraper Bot
 Scrapes job postings from GitHub repository and sends updates via Discord webhook
 """
 
-import requests
-import json
-import time
 import hashlib
-from datetime import datetime
-from bs4 import BeautifulSoup
+import json
 import logging
-from typing import Optional
 import os
+import time
 from dataclasses import dataclass
+from datetime import datetime
+from typing import Optional
+
+import dataclasses
+import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -32,7 +34,8 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class JobPosting:
-    """Represents a job posting with all relevant information"""
+    """Represents a job posting with all relevant information."""
+    
     company: str
     role: str
     location: str
@@ -40,6 +43,7 @@ class JobPosting:
     date_posted: str
     
     def to_dict(self) -> dict:
+        """Convert job posting to dictionary format."""
         return {
             'company': self.company,
             'role': self.role,
@@ -49,19 +53,22 @@ class JobPosting:
         }
 
 class JobScraper:
-    """Main class for scraping job postings and sending Discord notifications"""
+    """Main class for scraping job postings and sending Discord notifications."""
     
-    def __init__(self, webhook_url: str, github_url: str, cache_file: str = "job_cache.json"):
+    def __init__(self, webhook_url: str, github_url: str, 
+                 cache_file: str = "job_cache.json"):
+        """Initialize the job scraper with configuration."""
         self.webhook_url = webhook_url
         self.github_url = github_url
         self.cache_file = cache_file
         self.session = requests.Session()
         self.session.headers.update({
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            'User-Agent': ('Mozilla/5.0 (Windows NT 10.0; Win64; x64) '
+                          'AppleWebKit/537.36')
         })
-        
+    
     def get_page_content(self) -> Optional[str]:
-        """Fetch the HTML content from the GitHub repository"""
+        """Fetch the HTML content from the GitHub repository."""
         try:
             response = self.session.get(self.github_url, timeout=30)
             response.raise_for_status()
@@ -71,11 +78,11 @@ class JobScraper:
             return None
     
     def get_content_hash(self, content: str) -> str:
-        """Generate a hash of the content to detect changes"""
+        """Generate a hash of the content to detect changes."""
         return hashlib.md5(content.encode()).hexdigest()
     
     def load_cache(self) -> dict:
-        """Load cached data from file"""
+        """Load cached data from file."""
         if os.path.exists(self.cache_file):
             try:
                 with open(self.cache_file, 'r') as f:
@@ -85,7 +92,7 @@ class JobScraper:
         return {"content_hash": "", "jobs": []}
     
     def save_cache(self, content_hash: str, jobs: list[JobPosting]):
-        """Save current state to cache file"""
+        """Save current state to cache file."""
         cache_data = {
             "content_hash": content_hash,
             "jobs": [dataclasses.asdict(job) for job in jobs],
@@ -99,20 +106,23 @@ class JobScraper:
             logger.error(f"Error saving cache: {e}")
     
     def parse_job_table(self, html_content: str) -> list[JobPosting]:
-        """Parse the HTML content and extract job postings from table"""
+        """Parse the HTML content and extract job postings from table."""
         soup = BeautifulSoup(html_content, 'html.parser')
         jobs = []
         
         # Find the second table in the HTML content
         # Adjust the index if the structure changes
-        table = soup.find_all('table')[1]
-        if not table:
+        tables = soup.find_all('table')
+        if len(tables) < 2:
             logger.warning("No table found in HTML content")
             return jobs
+        
+        table = tables[1]
         
         # Skip header row
         rows = table.find_all('tr')[1:]
         last_company = ""
+        
         for row in rows:
             cells = row.find_all(['td', 'th'])
             if len(cells) >= 4:  # Adjust based on actual table structure
@@ -123,16 +133,19 @@ class JobScraper:
                         company = last_company
                     else:
                         last_company = company
+                    
                     role = cells[1].get_text(strip=True)
                     location = cells[2].get_text(strip=True)
                     
                     # Extract application link
                     link_cell = cells[3]
                     link_element = link_cell.find('a')
-                    application_link = link_element['href'] if link_element else "No link available"
+                    application_link = (link_element['href'] 
+                                      if link_element else "No link available")
                     
                     # Extract date (might be in a different column)
-                    date_posted = cells[4].get_text(strip=True) if len(cells) > 4 else "Not specified"
+                    date_posted = (cells[4].get_text(strip=True) 
+                                 if len(cells) > 4 else "Not specified")
                     
                     # Skip empty rows
                     if not company or not role:
@@ -150,17 +163,20 @@ class JobScraper:
                 except Exception as e:
                     logger.warning(f"Error parsing job row: {e}")
                     continue
+        
         jobs.reverse()
         logger.info(f"Parsed {len(jobs)} job postings")
         return jobs
     
-    def find_new_jobs(self, current_jobs: list[JobPosting], cached_jobs: list[dict]) -> list[JobPosting]:
-        """Compare current jobs with cached jobs to find new postings"""
+    def find_new_jobs(self, current_jobs: list[JobPosting], 
+                     cached_jobs: list[dict]) -> list[JobPosting]:
+        """Compare current jobs with cached jobs to find new postings."""
         cached_job_signatures = set()
         
         for job in cached_jobs:
             # Create a unique signature for each job
-            signature = f"{job.get('company', '')}-{job.get('role', '')}-{job.get('location', '')}"
+            signature = (f"{job.get('company', '')}-{job.get('role', '')}-"
+                        f"{job.get('location', '')}")
             cached_job_signatures.add(signature)
         
         new_jobs = []
@@ -172,10 +188,17 @@ class JobScraper:
         return new_jobs
     
     def create_discord_embed(self, job: JobPosting) -> dict:
-        """Create a Discord embed for a job posting"""
+        """Create a Discord embed for a job posting."""
+        # Create application link text
+        if job.application_link.startswith('http'):
+            link_text = f"[Apply Here]({job.application_link})"
+        else:
+            link_text = job.application_link
+        
         embed = {
             "title": f"🎯 New Job Posting: {job.role}",
-            "description": f"**{job.company}** has posted a new internship opportunity!",
+            "description": (f"**{job.company}** has posted a new "
+                           "internship opportunity!"),
             "color": 0x00ff00,  # Green color
             "fields": [
                 {
@@ -195,7 +218,7 @@ class JobScraper:
                 },
                 {
                     "name": "🔗 Application Link",
-                    "value": f"[Apply Here]({job.application_link})" if job.application_link.startswith('http') else job.application_link,
+                    "value": link_text,
                     "inline": False
                 },
                 {
@@ -206,19 +229,21 @@ class JobScraper:
             ],
             "footer": {
                 "text": "Job Scraper Bot • Summer 2026 Internships",
-                "icon_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+                "icon_url": ("https://github.githubassets.com/images/modules/"
+                            "logos_page/GitHub-Mark.png")
             },
             "timestamp": datetime.now().isoformat()
         }
         return embed
     
     def send_discord_notification(self, job: JobPosting) -> bool:
-        """Send a Discord notification for a new job posting"""
+        """Send a Discord notification for a new job posting."""
         try:
             embed = self.create_discord_embed(job)
             payload = {
                 "username": "Job Alert Bot",
-                "avatar_url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png",
+                "avatar_url": ("https://github.githubassets.com/images/modules/"
+                              "logos_page/GitHub-Mark.png"),
                 "embeds": [embed]
             }
             
@@ -229,7 +254,8 @@ class JobScraper:
             )
             response.raise_for_status()
             
-            logger.info(f"Successfully sent notification for {job.company} - {job.role}")
+            logger.info(f"Successfully sent notification for {job.company} - "
+                       f"{job.role}")
             return True
             
         except requests.RequestException as e:
@@ -237,7 +263,7 @@ class JobScraper:
             return False
     
     def run_once(self):
-        """Run a single scraping cycle"""
+        """Run a single scraping cycle."""
         logger.info("Starting job scraping cycle...")
         
         # Get current page content
@@ -272,7 +298,8 @@ class JobScraper:
                 if success:
                     time.sleep(2)  # Rate limit: wait 2 seconds between messages
                 else:
-                    logger.warning(f"Failed to send notification for {job.company} - {job.role}")
+                    logger.warning(f"Failed to send notification for "
+                                 f"{job.company} - {job.role}")
         else:
             logger.info("No new jobs found")
         
@@ -281,8 +308,9 @@ class JobScraper:
         logger.info("Scraping cycle completed")
     
     def run_continuously(self, interval_minutes: int = 15):
-        """Run the scraper continuously with specified interval"""
-        logger.info(f"Starting continuous job scraping every {interval_minutes} minutes")
+        """Run the scraper continuously with specified interval."""
+        logger.info(f"Starting continuous job scraping every "
+                   f"{interval_minutes} minutes")
         
         while True:
             try:
@@ -299,26 +327,27 @@ class JobScraper:
                 time.sleep(60)  # Wait 1 minute before retrying
 
 def main():
-    """Main function to run the job scraper"""
+    """Main function to run the job scraper."""
     # Configuration from environment variables
-      # Load environment variables from .env file if exists
-    WEBHOOK_URL = os.getenv("DISCORD_WEBHOOK_URL")
-    GITHUB_URL = os.getenv("GITHUB_URL", "https://github.com/vanshb03/Summer2026-Internships")
-    SCRAPE_INTERVAL = int(os.getenv("SCRAPE_INTERVAL", "15"))  # minutes
+    # Load environment variables from .env file if exists
+    webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
+    github_url = os.getenv("GITHUB_URL", 
+                          "https://github.com/vanshb03/Summer2026-Internships")
+    scrape_interval = int(os.getenv("SCRAPE_INTERVAL", "15"))  # minutes
     
     # Validate required environment variables
-    if not WEBHOOK_URL:
+    if not webhook_url:
         logger.error("DISCORD_WEBHOOK_URL environment variable is required")
         return
     
     # Create and run scraper
-    scraper = JobScraper(WEBHOOK_URL, GITHUB_URL)
+    scraper = JobScraper(webhook_url, github_url)
     
     # Run once for testing
     # scraper.run_once()
     
     # Run continuously
-    scraper.run_continuously(SCRAPE_INTERVAL)
+    scraper.run_continuously(scrape_interval)
 
 if __name__ == "__main__":
     main()
