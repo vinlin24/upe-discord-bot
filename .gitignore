@@ -117,6 +117,7 @@ droplet.txt
 #venv/Python script info
 **/.venv/
 job-webhook/job_cache.json
+**/CLAUDE.md
 
 # Personal VS Code workspace settings
 .vscode*/
