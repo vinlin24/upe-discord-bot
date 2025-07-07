@@ -31,7 +31,7 @@ A Python bot that scrapes job postings from a GitHub repository and sends notifi
 
 ## Configuration
 
-The bot can be configured through environment variables or by modifying `config.py`:
+The bot can be configured through environment variables:
 
 - `DISCORD_WEBHOOK_URL`: Discord webhook URL for notifications
 - `GITHUB_URL`: GitHub repository URL to scrape
@@ -60,7 +60,6 @@ scraper.run_continuously(interval_minutes=15)
 The bot uses BeautifulSoup to parse HTML tables. You may need to adjust the parsing logic in `parse_job_table()` method based on the actual HTML structure:
 
 ```python
-# In config.py, modify TABLE_SELECTORS
 TABLE_SELECTORS = {
     "table": "table",  # CSS selector for the main table
     "header_rows_skip": 1,  # Number of header rows to skip

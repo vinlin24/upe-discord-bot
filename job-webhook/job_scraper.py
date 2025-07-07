@@ -9,13 +9,16 @@ import json
 import time
 import hashlib
 from datetime import datetime
-from typing import Dict, List, Optional, Set
 from bs4 import BeautifulSoup
 import logging
+from typing import Optional
 import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
+
 load_dotenv()
+MAGIC_LITERAL = "\u21b3"  # Magic literal for company name continuation
+
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -36,7 +39,7 @@ class JobPosting:
     application_link: str
     date_posted: str
     
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         return {
             'company': self.company,
             'role': self.role,
@@ -71,7 +74,7 @@ class JobScraper:
         """Generate a hash of the content to detect changes"""
         return hashlib.md5(content.encode()).hexdigest()
     
-    def load_cache(self) -> Dict:
+    def load_cache(self) -> dict:
         """Load cached data from file"""
         if os.path.exists(self.cache_file):
             try:
@@ -81,11 +84,11 @@ class JobScraper:
                 logger.warning("Cache file corrupted or not found, starting fresh")
         return {"content_hash": "", "jobs": []}
     
-    def save_cache(self, content_hash: str, jobs: List[JobPosting]):
+    def save_cache(self, content_hash: str, jobs: list[JobPosting]):
         """Save current state to cache file"""
         cache_data = {
             "content_hash": content_hash,
-            "jobs": [job.to_dict() for job in jobs],
+            "jobs": [dataclasses.asdict(job) for job in jobs],
             "last_updated": datetime.now().isoformat()
         }
         try:
@@ -95,13 +98,13 @@ class JobScraper:
         except Exception as e:
             logger.error(f"Error saving cache: {e}")
     
-    def parse_job_table(self, html_content: str) -> List[JobPosting]:
+    def parse_job_table(self, html_content: str) -> list[JobPosting]:
         """Parse the HTML content and extract job postings from table"""
         soup = BeautifulSoup(html_content, 'html.parser')
         jobs = []
         
-        # Find the main table - adjust selector based on actual HTML structure
-        # This is a template - you'll need to inspect the actual HTML structure
+        # Find the second table in the HTML content
+        # Adjust the index if the structure changes
         table = soup.find_all('table')[1]
         if not table:
             logger.warning("No table found in HTML content")
@@ -116,7 +119,7 @@ class JobScraper:
                 try:
                     # Extract job information - adjust indices based on actual table structure
                     company = cells[0].get_text(strip=True)
-                    if company == "\u21b3":
+                    if company == MAGIC_LITERAL:
                         company = last_company
                     else:
                         last_company = company
@@ -151,7 +154,7 @@ class JobScraper:
         logger.info(f"Parsed {len(jobs)} job postings")
         return jobs
     
-    def find_new_jobs(self, current_jobs: List[JobPosting], cached_jobs: List[Dict]) -> List[JobPosting]:
+    def find_new_jobs(self, current_jobs: list[JobPosting], cached_jobs: list[dict]) -> list[JobPosting]:
         """Compare current jobs with cached jobs to find new postings"""
         cached_job_signatures = set()
         
@@ -168,7 +171,7 @@ class JobScraper:
         
         return new_jobs
     
-    def create_discord_embed(self, job: JobPosting) -> Dict:
+    def create_discord_embed(self, job: JobPosting) -> dict:
         """Create a Discord embed for a job posting"""
         embed = {
             "title": f"🎯 New Job Posting: {job.role}",
