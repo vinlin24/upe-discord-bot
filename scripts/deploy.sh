@@ -21,7 +21,9 @@ fi
     (git checkout ${GIT_BRANCH} || git checkout -b ${GIT_BRANCH}) &&
     git reset --hard origin/${GIT_BRANCH} &&
     git clean -df &&
-    npm install
+    npm install &&
+    cd job-webhook &&
+    pip3 install -r requirements.txt
 EOF
 
 # Compile locally since the droplet can't handle it apparently.
@@ -42,18 +44,31 @@ npm run sync
 # Start a fresh version of the `terabyte` process.
 "$SSH" << EOF
     cd ~/upe-discord-bot &&
-    pm2 delete terabyte 2>/dev/null
+    pm2 delete terabyte 2>/dev/null &&
+    pm2 delete job-scraper 2>/dev/null
     pm2 start ~/upe-discord-bot/scripts/start-bot.sh \
         --no-autorestart \
         --name terabyte
+    pm2 start python3 \
+        --name job-scraper \
+        --cwd ~/upe-discord-bot/job-webhook \
+        -- job_scraper.py
 EOF
 
-# Sanity check that the process didn't immediately die right after `pm2 start`.
+# Sanity check that the processes didn't immediately die right after `pm2 start`.
 sleep 1
 # shellcheck disable=SC2016
 if "$SSH" 'test "$(pm2 pid terabyte)"'; then
-    echo 'PM2 process seems to stay online!'
+    echo 'Terabyte PM2 process seems to stay online!'
 else
-    echo >&2 'PM2 process does not seem to stay online!'
+    echo >&2 'Terabyte PM2 process does not seem to stay online!'
+    exit 1
+fi
+
+# shellcheck disable=SC2016
+if "$SSH" 'test "$(pm2 pid job-scraper)"'; then
+    echo 'Job scraper PM2 process seems to stay online!'
+else
+    echo >&2 'Job scraper PM2 process does not seem to stay online!'
     exit 1
 fi

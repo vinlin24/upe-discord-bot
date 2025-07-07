@@ -114,6 +114,10 @@ event-pics/
 google-credentials.json
 droplet.txt
 
+#venv/Python script info
+**/.venv/
+job-webhook/job_cache.json
+
 # Personal VS Code workspace settings
 .vscode*/
 *.code-workspace
