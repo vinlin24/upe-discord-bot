@@ -42,6 +42,8 @@ jobs:
       - name: Install Python dependencies for job scraper
         run: |
           cd job-webhook
+          python3 -m venv venv
+          source venv/bin/activate
           pip install -r requirements.txt
 
       - name: Sync repository on remote server
@@ -59,11 +61,6 @@ jobs:
           ssh "${{ secrets.SERVER_SSH }}" 'rm -rf ~/upe-discord-bot/dist'
           scp -r dist "${{ secrets.SERVER_SSH }}:~/upe-discord-bot"
 
-      - name: Upload job scraper files
-        run: |
-          ssh "${{ secrets.SERVER_SSH }}" 'mkdir -p ~/upe-discord-bot/job-webhook'
-          scp -r job-webhook/* "${{ secrets.SERVER_SSH }}:~/upe-discord-bot/job-webhook/"
-
       - name: Upload environment file
         run: |
           echo "${{ secrets.ENV_FILE_B64 }}" | base64 --decode > .env
@@ -77,6 +74,9 @@ jobs:
         run: |
           ssh "${{ secrets.SERVER_SSH }}" << 'EOF'
             cd ~/upe-discord-bot/job-webhook &&
+            python3 -m venv venv &&
+            source venv/bin/activate &&
+            python3 -m pip install --upgrade pip &&
             pip3 install -r requirements.txt
           EOF
 
