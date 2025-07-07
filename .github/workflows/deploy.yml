@@ -39,6 +39,11 @@ jobs:
       - name: Compile source
         run: npm run build
 
+      - name: Install Python dependencies for job scraper
+        run: |
+          cd job-webhook
+          pip install -r requirements.txt
+
       - name: Sync repository on remote server
         run: |
           ssh "${{ secrets.SERVER_SSH }}" << 'EOF'
@@ -54,6 +59,11 @@ jobs:
           ssh "${{ secrets.SERVER_SSH }}" 'rm -rf ~/upe-discord-bot/dist'
           scp -r dist "${{ secrets.SERVER_SSH }}:~/upe-discord-bot"
 
+      - name: Upload job scraper files
+        run: |
+          ssh "${{ secrets.SERVER_SSH }}" 'mkdir -p ~/upe-discord-bot/job-webhook'
+          scp -r job-webhook/* "${{ secrets.SERVER_SSH }}:~/upe-discord-bot/job-webhook/"
+
       - name: Upload environment file
         run: |
           echo "${{ secrets.ENV_FILE_B64 }}" | base64 --decode > .env
@@ -63,17 +73,29 @@ jobs:
       - name: Sync application commands
         run: npm run sync
 
+      - name: Install Python dependencies on server
+        run: |
+          ssh "${{ secrets.SERVER_SSH }}" << 'EOF'
+            cd ~/upe-discord-bot/job-webhook &&
+            pip3 install -r requirements.txt
+          EOF
+
       - name: Restart hosted process
         run: |
           ssh "${{ secrets.SERVER_SSH }}" << 'EOF'
             cd ~/upe-discord-bot &&
             pm2 delete terabyte 2>/dev/null
+            pm2 delete job-scraper 2>/dev/null
             pm2 start ~/upe-discord-bot/scripts/start-bot.sh \
                 --no-autorestart \
                 --name terabyte
+            pm2 start ~/upe-discord-bot/job-webhook/job_scraper.py \
+                --interpreter python3 \
+                --name job-scraper
           EOF
 
       - name: Sanity check PM2 status
         run: |
           sleep 1
           ssh "${{ secrets.SERVER_SSH }}" 'test "$(pm2 pid terabyte)"'
+          ssh "${{ secrets.SERVER_SSH }}" 'test "$(pm2 pid job-scraper)"'
