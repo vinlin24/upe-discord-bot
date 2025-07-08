@@ -13,15 +13,21 @@ A Python bot that scrapes job postings from a GitHub repository and sends notifi
 
 ## Setup
 
-1. **Install dependencies:**
+1. **Install dependencies and activate virtual environment:**
    ```bash
+   cd job-webhook
+   python -m venv .venv
+   source .venv/bin/activate
    pip install -r requirements.txt
    ```
 
 2. **Configure environment variables:**
    ```bash
-   cp .env.example .env
-   # Edit .env with your settings
+   # Edit .env to contain the environment variable
+   DISCORD_WEBHOOK_URL=[INSERT WEBHOOK URL HERE]
+   # Optional Variables
+   GITHUB_URL=[URL OF GITHUB JOB POSTINGS]
+   SCRAPE_INTERVAL=[SCRAPE INTERVAL IN MINUTES]
    ```
 
 3. **Run the bot:**
@@ -36,8 +42,6 @@ The bot can be configured through environment variables:
 - `DISCORD_WEBHOOK_URL`: Discord webhook URL for notifications
 - `GITHUB_URL`: GitHub repository URL to scrape
 - `SCRAPE_INTERVAL`: How often to check for new jobs (minutes)
-- `CACHE_FILE`: Location of cache file
-- `LOG_FILE`: Location of log file
 
 ## Usage
 
@@ -60,17 +64,15 @@ scraper.run_continuously(interval_minutes=15)
 The bot uses BeautifulSoup to parse HTML tables. You may need to adjust the parsing logic in `parse_job_table()` method based on the actual HTML structure:
 
 ```python
-TABLE_SELECTORS = {
-    "table": "table",  # CSS selector for the main table
-    "header_rows_skip": 1,  # Number of header rows to skip
-    "columns": {
-        "company": 0,      # Column index for company name
-        "role": 1,         # Column index for role/position
-        "location": 2,     # Column index for location
-        "link": 3,         # Column index for application link
-        "date": 4          # Column index for date posted
-    }
-}
+company = cells[0].get_text(strip=True)
+if company == MAGIC_LITERAL:
+   company = last_company
+else:
+   last_company = company
+role = cells[1].get_text(strip=True)
+location = cells[2].get_text(strip=True)  
+# Extract application link
+link_cell = cells[3]
 ```
 
 ### Discord Embed Customization
@@ -81,7 +83,6 @@ Modify the `create_discord_embed()` method to customize the appearance of Discor
 
 - `job_scraper.py`: Main application file
 - `requirements.txt`: Python dependencies
-- `.env.example`: Environment variable template
 - `job_cache.json`: Cache file (created automatically)
 - `job_scraper.log`: Log file (created automatically)
 
