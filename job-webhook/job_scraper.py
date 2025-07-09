@@ -63,7 +63,7 @@ class EmbedFooter:
     """Represents the footer of a Discord embed."""
 
     text: str
-    icon_url: Optional[str] = None
+    icon_url: str | None = None
 
 
 @dataclasses.dataclass
