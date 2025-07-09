@@ -65,7 +65,7 @@ The bot uses BeautifulSoup to parse HTML tables. You may need to adjust the pars
 
 ```python
 company = cells[0].get_text(strip=True)
-if company == MAGIC_LITERAL:
+if company == COMPANY_NAME_CONTINUATION:
    company = last_company
 else:
    last_company = company
