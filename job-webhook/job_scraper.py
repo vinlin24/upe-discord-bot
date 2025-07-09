@@ -12,12 +12,12 @@ import os
 import time
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
 
 import requests
 from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
-load_dotenv()
 COMPANY_NAME_CONTINUATION = "\u21b3"
 
 # Configure logging
@@ -46,7 +46,7 @@ class JobCache:
 
     content_hash: str
     jobs: list[JobPosting]
-    last_updated: str
+    last_updated: datetime
 
 
 @dataclasses.dataclass
@@ -82,7 +82,7 @@ class JobScraper:
     """Main class for scraping job postings and sending Discord notifications."""
 
     def __init__(
-        self, webhook_url: str, github_url: str, cache_file: str = "job_cache.json"
+        self, webhook_url: str, github_url: str, cache_file: Path = Path("job_cache.json")
     ):
         """Initialize the job scraper with configuration."""
         self.webhook_url = webhook_url
@@ -113,15 +113,34 @@ class JobScraper:
 
     def load_cache(self) -> JobCache:
         """Load cached data from file."""
-        if os.path.exists(self.cache_file):
-            try:
-                with open(self.cache_file, "r") as f:
-                    return json.load(f)
-            except (json.JSONDecodeError, FileNotFoundError):
-                logger.warning("Cache file corrupted or not found, starting fresh")
-        return {"content_hash": "", "jobs": []}
-
-    def save_cache(self, content_hash: str, jobs: list[JobPosting]):
+        # Check if cache file exists and is not empty
+        if not self.cache_file.exists() or self.cache_file.stat().st_size == 0:
+            logger.info("Cache file not found or empty, returning empty cache")
+            return JobCache(
+                content_hash="",
+                jobs=[],
+                last_updated=datetime.now(),
+            )
+        
+        try:
+            with self.cache_file.open(encoding="utf-8") as f:
+                temp = json.load(f)
+            return JobCache(
+                content_hash=temp["content_hash"],
+                jobs=[
+                    JobPosting(**job) for job in temp["jobs"]
+                ],
+                last_updated=temp["last_updated"],
+            )
+        except (json.JSONDecodeError, KeyError, TypeError) as e:
+            logger.warning(f"Invalid cache file format, starting fresh: {e}")
+            return JobCache(
+                content_hash="",
+                jobs=[],
+                last_updated=datetime.now(),
+            )
+        
+    def save_cache(self, content_hash: str, jobs: list[JobPosting]) -> None:
         """Save current state to cache file."""
         cache_data = {
             "content_hash": content_hash,
@@ -129,7 +148,7 @@ class JobScraper:
             "last_updated": datetime.now().isoformat(),
         }
         try:
-            with open(self.cache_file, "w") as f:
+            with self.cache_file.open("w", encoding="utf-8") as f:
                 json.dump(cache_data, f, indent=2)
             logger.info(f"Cache saved with {len(jobs)} jobs")
         except Exception as e:
@@ -138,7 +157,7 @@ class JobScraper:
     def parse_job_table(self, html_content: str) -> list[JobPosting]:
         """Parse the HTML content and extract job postings from table."""
         soup = BeautifulSoup(html_content, "html.parser")
-        jobs = []
+        jobs: list[JobPosting] = []
 
         # Find the second table in the HTML content
         # Adjust the index if the structure changes
@@ -203,7 +222,7 @@ class JobScraper:
         return jobs
 
     def find_new_jobs(
-        self, current_jobs: list[JobPosting], cached_jobs: list[dict]
+        self, current_jobs: list[JobPosting], cached_jobs: list[JobPosting]
     ) -> list[JobPosting]:
         """Compare current jobs with cached jobs to find new postings."""
         cached_job_signatures = set()
@@ -211,8 +230,8 @@ class JobScraper:
         for job in cached_jobs:
             # Create a unique signature for each job
             signature = (
-                f"{job.get('company', '')}-{job.get('role', '')}-"
-                f"{job.get('location', '')}"
+                f"{job.company}-{job.role}-"
+                f"{job.location}"
             )
             cached_job_signatures.add(signature)
 
@@ -285,7 +304,7 @@ class JobScraper:
             logger.error(f"Error sending Discord notification: {e}")
             return False
 
-    def run_once(self):
+    def run_once(self) -> None:
         """Run a single scraping cycle."""
         logger.info("Starting job scraping cycle...")
 
@@ -299,7 +318,7 @@ class JobScraper:
         current_hash = self.get_content_hash(html_content)
         cache = self.load_cache()
 
-        if current_hash == cache.get("content_hash"):
+        if current_hash == cache.content_hash:
             logger.info("No changes detected in page content")
             return
 
@@ -310,7 +329,7 @@ class JobScraper:
             return
 
         # Find new jobs
-        new_jobs = self.find_new_jobs(current_jobs, cache.get("jobs", []))
+        new_jobs = self.find_new_jobs(current_jobs, cache.jobs)
 
         if new_jobs:
             logger.info(f"Found {len(new_jobs)} new job postings")
@@ -332,7 +351,7 @@ class JobScraper:
         self.save_cache(current_hash, current_jobs)
         logger.info("Scraping cycle completed")
 
-    def run_continuously(self, interval_minutes: int = 15):
+    def run_continuously(self, interval_minutes: int = 15) -> None:
         """Run the scraper continuously with specified interval."""
         logger.info(
             f"Starting continuous job scraping every " f"{interval_minutes} minutes"
@@ -353,22 +372,20 @@ class JobScraper:
                 time.sleep(60)  # Wait 1 minute before retrying
 
 
-def main():
+def main() -> None:
     """Main function to run the job scraper."""
     # Configuration from environment variables
-    # Load environment variables from .env file if exists
+    load_dotenv()
     webhook_url = os.getenv("DISCORD_WEBHOOK_URL")
     github_url = os.getenv(
         "GITHUB_URL", "https://github.com/vanshb03/Summer2026-Internships"
     )
     scrape_interval_minutes = int(os.getenv("SCRAPE_INTERVAL", "15"))
 
-    # Validate required environment variables
     if not webhook_url:
         logger.error("DISCORD_WEBHOOK_URL environment variable is required")
         return
 
-    # Create and run scraper
     scraper = JobScraper(webhook_url, github_url)
 
     # Run once for testing
