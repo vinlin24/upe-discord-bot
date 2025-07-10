@@ -19,7 +19,7 @@ from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 COMPANY_NAME_CONTINUATION = "\u21b3"
-
+GREEN_COLOR = 0x00FF00
 # Configure logging
 logging.basicConfig(
     level=logging.INFO,
@@ -272,7 +272,7 @@ class JobScraper:
             description=(
                 f"**{job.company}** has posted a new " "internship opportunity!"
             ),
-            color=0x00FF00,  # Green color
+            color=GREEN_COLOR,
             fields=fields,
             footer=footer,
             timestamp=datetime.now().isoformat(),
