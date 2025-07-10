@@ -130,7 +130,7 @@ class JobScraper:
                 jobs=[
                     JobPosting(**job) for job in temp["jobs"]
                 ],
-                last_updated=temp["last_updated"],
+                last_updated=datetime.fromisoformat(temp["last_updated"]),
             )
         except (json.JSONDecodeError, KeyError, TypeError) as e:
             logger.warning(f"Invalid cache file format, starting fresh: {e}")
