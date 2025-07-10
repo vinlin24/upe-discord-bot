@@ -97,7 +97,7 @@ class JobScraper:
             }
         )
 
-    def get_page_content(self) -> Optional[str]:
+    def get_page_content(self) -> str | None:
         """Fetch the HTML content from the GitHub repository."""
         try:
             response = self.session.get(self.github_url, timeout=30)
