@@ -60,7 +60,7 @@ class EmbedField:
 
 @dataclasses.dataclass
 class EmbedFooter:
-    """Represents the footer of a Discord embed."""
+    """Represents an embed footer in the Discord API."""
 
     text: str
     icon_url: str | None = None
@@ -68,7 +68,7 @@ class EmbedFooter:
 
 @dataclasses.dataclass
 class DiscordEmbed:
-    """Represents a Discord embed structure."""
+    """Represents an embed to post in the Discord API."""
 
     title: str
     description: str
