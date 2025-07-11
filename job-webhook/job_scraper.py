@@ -279,7 +279,8 @@ class JobScraper:
         return embed
 
     def send_discord_notification(self, job: JobPosting) -> bool:
-        """Send a Discord notification for a new job posting. True if successful, False otherwise."""
+        """Send a Discord notification for a new job posting.
+        Return True if successful, False otherwise."""
         try:
             embed = self.create_discord_embed(job)
             payload = {
