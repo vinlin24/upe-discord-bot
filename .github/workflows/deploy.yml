@@ -63,17 +63,32 @@ jobs:
       - name: Sync application commands
         run: npm run sync
 
+      - name: Install Python dependencies on server
+        run: |
+          ssh "${{ secrets.SERVER_SSH }}" << 'EOF'
+            cd ~/upe-discord-bot/job-webhook &&
+            python3 -m venv .venv &&
+            source .venv/bin/activate &&
+            python3 -m pip install --upgrade pip &&
+            pip3 install -r requirements.txt
+          EOF
+
       - name: Restart hosted process
         run: |
           ssh "${{ secrets.SERVER_SSH }}" << 'EOF'
             cd ~/upe-discord-bot &&
             pm2 delete terabyte 2>/dev/null
+            pm2 delete job-scraper 2>/dev/null
             pm2 start ~/upe-discord-bot/scripts/start-bot.sh \
                 --no-autorestart \
                 --name terabyte
+            pm2 start ~/upe-discord-bot/job-webhook/job_scraper.py \
+                --interpreter python3 \
+                --name job-scraper
           EOF
 
       - name: Sanity check PM2 status
         run: |
           sleep 1
           ssh "${{ secrets.SERVER_SSH }}" 'test "$(pm2 pid terabyte)"'
+          ssh "${{ secrets.SERVER_SSH }}" 'test "$(pm2 pid job-scraper)"'
