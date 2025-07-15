@@ -13,6 +13,7 @@ import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import {
   ADMINS_ROLE_ID,
   CORPORATE_ROLE_ID,
+  DEVELOPER_ROLE_ID,
 } from "../../utils/snowflakes.utils";
 
 class ArfListener extends DiscordEventListener<Events.MessageCreate> {
@@ -46,7 +47,10 @@ class ArfListener extends DiscordEventListener<Events.MessageCreate> {
   }
 
   private isTargetOfficer(member: GuildMember): boolean {
-    return member.roles.cache.hasAll(ADMINS_ROLE_ID, CORPORATE_ROLE_ID);
+    return (
+      member.roles.cache.hasAll(ADMINS_ROLE_ID, CORPORATE_ROLE_ID)
+      && !member.roles.cache.has(DEVELOPER_ROLE_ID)
+    );
   }
 
   private isPrivateChannel(channel: GuildTextBasedChannel): boolean {
