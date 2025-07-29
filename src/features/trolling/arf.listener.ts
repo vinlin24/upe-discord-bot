@@ -20,7 +20,7 @@ class ArfListener extends DiscordEventListener<Events.MessageCreate> {
   public override readonly event = Events.MessageCreate;
   private cooldownExpiration = 0 as UnixSeconds;
 
-  private static readonly COOLDOWN_INTERVAL = 600 as UnixSeconds;
+  private static readonly COOLDOWN_INTERVAL = 3600 as UnixSeconds;
 
   public constructor(private readonly dateClient: IDateClient) { super(); }
 
