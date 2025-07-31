@@ -13,13 +13,14 @@ import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import {
   ADMINS_ROLE_ID,
   CORPORATE_ROLE_ID,
+  DEVELOPER_ROLE_ID,
 } from "../../utils/snowflakes.utils";
 
 class ArfListener extends DiscordEventListener<Events.MessageCreate> {
   public override readonly event = Events.MessageCreate;
   private cooldownExpiration = 0 as UnixSeconds;
 
-  private static readonly COOLDOWN_INTERVAL = 600 as UnixSeconds;
+  private static readonly COOLDOWN_INTERVAL = 3600 as UnixSeconds;
 
   public constructor(private readonly dateClient: IDateClient) { super(); }
 
@@ -46,7 +47,10 @@ class ArfListener extends DiscordEventListener<Events.MessageCreate> {
   }
 
   private isTargetOfficer(member: GuildMember): boolean {
-    return member.roles.cache.hasAll(ADMINS_ROLE_ID, CORPORATE_ROLE_ID);
+    return (
+      member.roles.cache.hasAll(ADMINS_ROLE_ID, CORPORATE_ROLE_ID)
+      && !member.roles.cache.has(DEVELOPER_ROLE_ID)
+    );
   }
 
   private isPrivateChannel(channel: GuildTextBasedChannel): boolean {
