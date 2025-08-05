@@ -57,6 +57,7 @@ export enum LetterReactionEmoji {
 export type ReactionEmoji = UnicodeReactionEmoji | LetterReactionEmoji;
 
 export const REACTION_BOT_ERROR = "😵" as UnicodeReactionEmoji;
+export const REACTION_UNKNOWN_TEXT_COMMAND = "❓" as UnicodeReactionEmoji;
 
 export async function reactString(
   message: Message,
