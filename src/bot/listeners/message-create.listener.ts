@@ -2,7 +2,7 @@ import { Events, Message } from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import { TextCommandHandler } from "../../abc/text-command.abc";
-import { removePrefix } from "../../utils/data.utils";
+import { isSpace, removePrefix } from "../../utils/data.utils";
 import {
   REACTION_BOT_ERROR,
   REACTION_UNKNOWN_TEXT_COMMAND,
@@ -19,12 +19,7 @@ class MessageCreateListener extends DiscordEventListener<Events.MessageCreate> {
       return;
     }
 
-    // TODO: Forward command args and/or implement argument lexing.
-    const [invocation, ..._commandArgs] = content.split(/\s+/);
-    const commandName = removePrefix(
-      invocation,
-      TextCommandHandler.COMMAND_PREFIX,
-    );
+    const [commandName, corpus] = this.splitInvocation(content);
 
     const handler = textCommandLoader.get(commandName);
     if (handler === null) {
@@ -33,10 +28,27 @@ class MessageCreateListener extends DiscordEventListener<Events.MessageCreate> {
     }
 
     console.log(
+      `[TRANSFORM] ${handler.id} by @${caller.username} in #${channel}`,
+    );
+    let commandArgs: unknown[];
+    try {
+      commandArgs = await handler.transformArguments(corpus);
+    }
+    catch (error) {
+      console.error(
+        "[TRANSFORM] Uncaught error in text command " +
+        "argument transformation callback:",
+      );
+      console.error(error);
+      await message.react(REACTION_BOT_ERROR);
+      return;
+    }
+
+    console.log(
       `[DISPATCH] ${handler.id} by @${caller.username} in #${channel}`,
     );
     try {
-      await handler.dispatch(message);
+      await handler.dispatch(message, commandArgs);
     }
     catch (error) {
       console.error(
@@ -45,6 +57,27 @@ class MessageCreateListener extends DiscordEventListener<Events.MessageCreate> {
       console.error(error);
       await message.react(REACTION_BOT_ERROR);
     }
+  }
+
+  /**
+   * Split the message content into the command name (the command invocation
+   * without the command prefix) and the trimmed rest-of-string (to be
+   * transformed into command arguments).
+   */
+  private splitInvocation(
+    content: string,
+  ): [commandName: string, corpus: string] {
+    let splitIndex = 0;
+    while (splitIndex < content.length && !isSpace(content[splitIndex])) {
+      splitIndex++;
+    }
+    const commandInvocation = content.slice(0, splitIndex);
+    const commandName = removePrefix(
+      commandInvocation,
+      TextCommandHandler.COMMAND_PREFIX,
+    );
+    const restOfContent = content.slice(splitIndex).trim();
+    return [commandName, restOfContent];
   }
 }
 

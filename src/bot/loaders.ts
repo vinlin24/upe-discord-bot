@@ -166,7 +166,9 @@ class ListenerLoader extends HandlerLoader<DiscordEventListener<any>> {
 
 export const listenerLoader = new ListenerLoader();
 
-class TextCommandLoader extends HandlerLoader<TextCommandHandler<boolean>> {
+class TextCommandLoader
+  extends HandlerLoader<TextCommandHandler<unknown[], boolean>> {
+
   public constructor() {
     super(TextCommandHandler);
   }

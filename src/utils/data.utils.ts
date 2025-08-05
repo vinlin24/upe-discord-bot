@@ -159,3 +159,8 @@ export function removePrefix(original: string, prefix: string): string {
   }
   return original;
 }
+
+/** Imitation of Python's `str.isspace(s)`. */
+export function isSpace(s: string): boolean {
+  return /^\s*$/.test(s);
+}

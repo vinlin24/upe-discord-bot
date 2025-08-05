@@ -4,7 +4,10 @@ import channelsService from "../services/channels.service";
 import { REACTION_BOT_ERROR } from "../utils/emojis.utils";
 import { assertErrorThrown } from "../utils/errors.utils";
 
-export abstract class TextCommandHandler<InGuild extends boolean = true> {
+export abstract class TextCommandHandler<
+  TArguments extends unknown[] = [],
+  InGuild extends boolean = true,
+> {
   public static readonly COMMAND_PREFIX = "!";
 
   /**
@@ -18,7 +21,8 @@ export abstract class TextCommandHandler<InGuild extends boolean = true> {
   // TODO: Add support for checks like SlashCommandHandler has.
 
   /** Pipeline execution engine to manage handler lifecycle. */
-  private readonly pipeline = new TextCommandExecutionPipeline<InGuild>(this)
+  private readonly pipeline
+    = new TextCommandExecutionPipeline<TArguments, InGuild>(this);
 
   /**
    * ID to identify a handler class. Should be unique. Defaults to the command
@@ -33,9 +37,16 @@ export abstract class TextCommandHandler<InGuild extends boolean = true> {
     return `${this.id} text command handler`
   }
 
+  /**
+   * Transform the entire text following the command invocation into the
+   * properly typed argument vector.
+   */
+  public abstract transformArguments(corpus: string): Awaitable<TArguments>;
+
   /** Main callback to execute when the text command is invoked. */
   public abstract execute(
-    message: Message<InGuild>
+    message: Message<InGuild>,
+    commandArgs: TArguments,
   ): Awaitable<any>;
 
   /** Fallback callback for if the main callback throws an `Error`. */
@@ -51,23 +62,27 @@ export abstract class TextCommandHandler<InGuild extends boolean = true> {
 
   /** Run full execution pipeline for a slash command invocation. */
   public async dispatch(
-    message: Message<InGuild>
+    message: Message<InGuild>,
+    commandArgs: TArguments,
   ): Promise<void> {
-    await this.pipeline.run(message)
+    await this.pipeline.run(message, commandArgs);
   }
 }
 
-class TextCommandExecutionPipeline<InGuild extends boolean = true> {
-  public constructor(private readonly handler: TextCommandHandler<InGuild>) { }
+class TextCommandExecutionPipeline<
+  TArguments extends unknown[],
+  InGuild extends boolean,
+> {
+  public constructor(
+    private readonly handler: TextCommandHandler<TArguments, InGuild>,
+  ) { }
 
-  public async run(message: Message<InGuild>): Promise<void> {
-    await this.executeMain(message)
-  }
-
-  private async executeMain(message: Message<InGuild>): Promise<boolean> {
+  public async run(
+    message: Message<InGuild>,
+    commandArgs: TArguments,
+  ): Promise<void> {
     try {
-      await this.handler.execute(message);
-      return true;
+      await this.handler.execute(message, commandArgs);
     }
     catch (error) {
       assertErrorThrown(error);
@@ -81,6 +96,5 @@ class TextCommandExecutionPipeline<InGuild extends boolean = true> {
         throw error;
       }
     }
-    return false;
   }
 }
