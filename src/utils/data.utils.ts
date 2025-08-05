@@ -151,3 +151,16 @@ export function setDifference<T>(lhs: Set<T>, rhs: Set<T>): Set<T> {
   }
   return result;
 }
+
+/** Imitation of Python's `str.removeprefix(original, prefix)`. */
+export function removePrefix(original: string, prefix: string): string {
+  if (original.startsWith(prefix)) {
+    return original.slice(prefix.length);
+  }
+  return original;
+}
+
+/** Imitation of Python's `str.isspace(s)`. */
+export function isSpace(s: string): boolean {
+  return /^\s*$/.test(s);
+}

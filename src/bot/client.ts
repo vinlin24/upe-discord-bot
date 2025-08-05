@@ -5,12 +5,14 @@ import type { DiscordEventListener } from "../abc/listener.abc";
 import type { Path } from "../types/branded.types";
 import { UPE_GUILD_ID } from "../utils/snowflakes.utils";
 import interactionDispatchListener from "./listeners/interaction-dispatch.listener";
+import messageCreateListener from "./listeners/message-create.listener";
 import readyListener from "./listeners/ready.listener";
-import { commandLoader, listenerLoader } from "./loaders";
+import { commandLoader, listenerLoader, textCommandLoader } from "./loaders";
 
 export type ClientManagerOptions = {
   commandsRoot: Path;
   listenersRoot: Path;
+  textCommandsRoot: Path;
   databaseConnectionString: string;
   databaseName: string;
   botToken: string;
@@ -28,11 +30,13 @@ export class ClientManager {
     GatewayIntentBits.GuildPresences,
     GatewayIntentBits.GuildModeration,
     GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
   ] as const satisfies readonly GatewayIntentBits[];
 
   public static readonly INITIAL_LISTENERS = [
     readyListener,
     interactionDispatchListener,
+    messageCreateListener,
   ] as const satisfies readonly DiscordEventListener<any>[];
 
   private readonly client = new Client({
@@ -74,6 +78,7 @@ export class ClientManager {
     this.registerInitialListeners();
     await this.loadCommands();
     await this.loadListeners();
+    await this.loadTextCommands();
     await this.initializeDatabase();
 
     this.initialized = true;
@@ -107,6 +112,16 @@ export class ClientManager {
       `[INIT] Discovered, loaded, and registered ${listeners.size} ` +
       "event listener(s).",
     );
+  }
+
+  private async loadTextCommands(): Promise<void> {
+    const textCommands = await textCommandLoader.loadAll(
+      this.options.textCommandsRoot,
+    );
+    console.log(
+      `[INIT] Discovered & loaded ${textCommands.size} ` +
+      "text command handler(s).",
+    )
   }
 
   private async initializeDatabase(): Promise<void> {

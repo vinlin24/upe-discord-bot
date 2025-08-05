@@ -6,6 +6,7 @@ async function main(): Promise<void> {
   const clientManager = new ClientManager({
     commandsRoot: PROJECT_FEATURES_ROOT,
     listenersRoot: PROJECT_FEATURES_ROOT,
+    textCommandsRoot: PROJECT_FEATURES_ROOT,
     databaseConnectionString: env.DB_CONNECTION_STRING,
     databaseName: env.DB_NAME,
     botToken: env.BOT_TOKEN,

@@ -5,6 +5,7 @@ import { Collection } from "discord.js";
 
 import { SlashCommandHandler } from "../abc/command.abc";
 import { DiscordEventListener } from "../abc/listener.abc";
+import { TextCommandHandler } from "../abc/text-command.abc";
 import type { Path } from "../types/branded.types";
 
 abstract class HandlerLoader<Handler> {
@@ -164,3 +165,22 @@ class ListenerLoader extends HandlerLoader<DiscordEventListener<any>> {
 }
 
 export const listenerLoader = new ListenerLoader();
+
+class TextCommandLoader
+  extends HandlerLoader<TextCommandHandler<unknown[], boolean>> {
+
+  public constructor() {
+    super(TextCommandHandler);
+  }
+
+  protected override getHandlerName(handler: TextCommandHandler): string {
+    return handler.name;
+  }
+
+  protected override isHandlerFile(path: Path): boolean {
+    return path.endsWith(".text-command.js")
+      || path.endsWith(".text-command.ts");
+  }
+}
+
+export const textCommandLoader = new TextCommandLoader();
