@@ -1,21 +1,23 @@
 import util from "node:util";
 
 import {
+  BaseInteraction,
   bold,
   channelMention,
   codeBlock,
   inlineCode,
   PermissionFlagsBits,
   userMention,
-  type BaseInteraction,
   type Client,
   type DMChannel,
   type Guild,
   type GuildTextBasedChannel,
+  type Message,
   type MessageCreateOptions,
   type MessagePayload,
 } from "discord.js";
 
+import { TextCommandHandler } from "../abc/text-command.abc";
 import { MESSAGE_CHARACTER_LIMIT } from "../utils/limits.utils";
 import {
   BOT_LOGS_CHANNEL_ID,
@@ -82,7 +84,7 @@ class ChannelService {
 
   public async sendDevError(
     error: Error | string | unknown,
-    context?: BaseInteraction,
+    context?: BaseInteraction | Message,
   ): Promise<void> {
     try {
       await this.unsafeSendDevError(error, context);
@@ -95,20 +97,12 @@ class ChannelService {
 
   private async unsafeSendDevError(
     error: Error | string | unknown,
-    context?: BaseInteraction,
+    context?: BaseInteraction | Message,
   ): Promise<void> {
-    let contextLine = "";
-
-    if (context !== undefined) {
-      const commandName = context.isCommand() ? context.commandName : "";
-      const sourceMention = channelMention(context.channel!.id);
-      const callerMention = userMention(context.user.id);
-
-      contextLine = `For ${callerMention} in ${sourceMention}`;
-      if (commandName) {
-        contextLine += ` (${bold(inlineCode("/" + commandName))})`;
-      }
-    }
+    const contextLine
+      = context !== undefined
+        ? this.resolveContextLine(context)
+        : "";
 
     let errorLine: string;
     let dumpLine = "";
@@ -130,6 +124,33 @@ class ChannelService {
     }
 
     await this.sendDev(content);
+  }
+
+  private resolveContextLine(context: BaseInteraction | Message): string {
+    if (context instanceof BaseInteraction) {
+      const commandName = context.isCommand() ? context.commandName : "";
+      const sourceMention = channelMention(context.channel!.id);
+      const callerMention = userMention(context.user.id);
+
+      let contextLine = `For ${callerMention} in ${sourceMention}`;
+      if (commandName) {
+        contextLine += ` (${bold(inlineCode("/" + commandName))})`;
+      }
+      return contextLine;
+    }
+
+    const commandToken
+      = context.content.startsWith(TextCommandHandler.COMMAND_PREFIX)
+        ? context.content.split(/\s+/)[0]
+        : "";
+    const sourceMention = channelMention(context.channelId);
+    const callerMention = userMention(context.author.id);
+
+    let contextLine = `For ${callerMention} in ${sourceMention}`;
+    if (commandToken) {
+      contextLine += ` (${bold(inlineCode("/" + commandToken))})`;
+    }
+    return contextLine;
   }
 
   private async initLogsChannel(): Promise<void> {

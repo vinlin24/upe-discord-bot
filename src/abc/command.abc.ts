@@ -12,7 +12,7 @@ import {
   Privilege,
 } from "../middleware/privilege.middleware";
 import channelsService from "../services/channels.service";
-import { makeErrorEmbed } from "../utils/errors.utils";
+import { assertErrorThrown, makeErrorEmbed } from "../utils/errors.utils";
 import type { SlashCommandCheck, SlashCommandCheckDetails } from "./check.abc";
 
 export abstract class SlashCommandHandler {
@@ -192,7 +192,7 @@ class CommandExecutionPipeline {
         this.passedChecks.push([check, details]);
       }
       catch (error) {
-        this.assertErrorThrown(error);
+        assertErrorThrown(error);
         try {
           await check.handleError(error, interaction);
         }
@@ -213,7 +213,7 @@ class CommandExecutionPipeline {
       return true;
     }
     catch (error) {
-      this.assertErrorThrown(error);
+      assertErrorThrown(error);
       try {
         await this.handler.handleError(error, interaction);
       }
@@ -235,7 +235,7 @@ class CommandExecutionPipeline {
         await filter.postHook(details, interaction);
       }
       catch (error) {
-        this.assertErrorThrown(error);
+        assertErrorThrown(error);
         try {
           await filter.handleError(error, interaction);
         }
@@ -254,7 +254,7 @@ class CommandExecutionPipeline {
       await this.handler.onComponent(interaction);
     }
     catch (error) {
-      this.assertErrorThrown(error);
+      assertErrorThrown(error);
       try {
         await this.handler.handleComponentError(error, interaction);
       }
@@ -275,7 +275,7 @@ class CommandExecutionPipeline {
       await this.handler.autocomplete(interaction);
     }
     catch (error) {
-      this.assertErrorThrown(error);
+      assertErrorThrown(error);
       try {
         await this.handler.handleAutocompleteError(error, interaction);
       }
@@ -286,13 +286,6 @@ class CommandExecutionPipeline {
         )
         throw error;
       }
-    }
-  }
-
-  private assertErrorThrown(thrown: unknown): asserts thrown is Error {
-    if (!(thrown instanceof Error)) {
-      console.error(`non-Error object thrown: ${thrown}`);
-      throw thrown;
     }
   }
 }

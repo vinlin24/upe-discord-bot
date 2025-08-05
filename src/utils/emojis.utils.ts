@@ -42,12 +42,21 @@ export const EMOJI_SECOND_PLACE = ":second_place:" as BuiltinEmoji;
 export const EMOJI_THIRD_PLACE = ":third_place:" as BuiltinEmoji;
 export const EMOJI_MEDAL = ":medal:" as BuiltinEmoji;
 
+// NOTE: We distinguish reaction emojis from "built-in emojis" because we need
+// to pass in the actual Unicode emoji string to reaction APIs instead of the
+// colon form.
+export type UnicodeReactionEmoji = Branded<string, "RawReactionEmoji">;
+
 export enum LetterReactionEmoji {
   // TODO: Add all letters and also make an enum for numbers.
   O = "🇴",
   R = "🇷",
   Z = "🇿",
 }
+
+export type ReactionEmoji = UnicodeReactionEmoji | LetterReactionEmoji;
+
+export const REACTION_BOT_ERROR = "😵" as UnicodeReactionEmoji;
 
 export async function reactString(
   message: Message,

@@ -64,3 +64,10 @@ export function isMongoDuplicateKeyError(error: unknown)
   : error is MongoErrorWithCode<11000> {
   return error instanceof MongoError && error.code === 11000;
 }
+
+export function assertErrorThrown(thrown: unknown): asserts thrown is Error {
+  if (!(thrown instanceof Error)) {
+    console.error(`non-Error object thrown: ${thrown}`);
+    throw thrown;
+  }
+}
