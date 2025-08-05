@@ -30,9 +30,12 @@ class MessageCreateListener extends DiscordEventListener<Events.MessageCreate> {
     console.log(
       `[TRANSFORM] ${handler.id} by @${caller.username} in #${channel}`,
     );
-    let commandArgs: unknown[];
+    let commandArgs: unknown[] | null;
     try {
-      commandArgs = await handler.transformArguments(corpus);
+      commandArgs = await handler.transformArguments(corpus, message);
+      if (commandArgs === null) {
+        return;
+      }
     }
     catch (error) {
       console.error(

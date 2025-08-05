@@ -39,9 +39,14 @@ export abstract class TextCommandHandler<
 
   /**
    * Transform the entire text following the command invocation into the
-   * properly typed argument vector.
+   * properly typed argument vector. Return `null` if there is an error in
+   * transformation. The callee is responsible for any user-facing response to
+   * acknowledge bad input.
    */
-  public abstract transformArguments(corpus: string): Awaitable<TArguments>;
+  public abstract transformArguments(
+    corpus: string,
+    message: Message<InGuild>,
+  ): Awaitable<TArguments | null>;
 
   /** Main callback to execute when the text command is invoked. */
   public abstract execute(

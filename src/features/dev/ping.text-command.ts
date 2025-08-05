@@ -7,8 +7,16 @@ import { DEVELOPER_ROLE_ID } from "../../utils/snowflakes.utils";
 class PingTextCommand extends TextCommandHandler<string[]> {
   public override readonly name = "ping";
 
-  public override transformArguments(corpus: string): string[] {
-    return corpus.split(/\s+/);
+  public override async transformArguments(
+    corpus: string,
+    message: Message,
+  ): Promise<string[] | null> {
+    const tokens = corpus.split(/\s+/);
+    if (tokens.some(token => token === "NONO-STRING")) {
+      await message.reply("You said the nono string!");
+      return null;
+    }
+    return tokens;
   }
 
   public override async execute(
