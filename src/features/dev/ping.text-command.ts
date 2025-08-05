@@ -16,6 +16,10 @@ class PingTextCommand extends TextCommandHandler<string[]> {
       await message.reply("You said the nono string!");
       return null;
     }
+    // Edge case.
+    if (tokens.length === 1 && tokens[0] === "") {
+      return [];
+    }
     return tokens;
   }
 
