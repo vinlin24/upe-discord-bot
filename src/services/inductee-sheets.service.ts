@@ -13,6 +13,7 @@ export enum UpeMajor {
   Ce = "Computer Engineering",
   LingCs = "Linguistics & Computer Science",
   MathOfComp = "Mathematics of Computation",
+  CompBio = "Computational and Systems Biology",
 }
 
 enum QuestionnaireColumn {
