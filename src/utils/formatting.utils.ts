@@ -1,4 +1,5 @@
 import {
+  bold,
   EmbedBuilder,
   hyperlink,
   time,
@@ -137,4 +138,12 @@ export function formatMailbox<Name extends string, Email extends string>(
   escaped?: boolean,
 ): `${Name} <${Email}>` | `${Name} \\<${Email}\\>` {
   return escaped ? `${name} \\<${email}\\>` : `${name} <${email}>`;
+}
+
+/**
+ * Shortcut function for the annoying pattern of needing to `.toString()` a
+ * `number` before passing it into discord.js' `bold()` formatter.
+ */
+export function boldNum(num: number): string {
+  return bold(num.toString());
 }
