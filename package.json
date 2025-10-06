@@ -13,9 +13,7 @@
     "sync": "ts-node src/index.ts --sync",
     "prepare": "husky",
     "lint": "eslint",
-    "lint:fix": "npm run lint -- --fix",
-    "format": "prettier --write --ignore-unknown .",
-    "format:check": "prettier --check --ignore-unknown ."
+    "lint:fix": "npm run lint -- --fix"
   },
   "repository": {
     "type": "git",
@@ -55,10 +53,8 @@
     "@types/pdfkit": "^0.13.9",
     "copyfiles": "^2.4.1",
     "eslint": "^9.25.1",
-    "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-node": "^11.1.0",
     "husky": "^9.1.7",
-    "prettier": "^3.6.2",
     "ts-node": "^10.9.1",
     "typescript": "^5.0.2",
     "typescript-eslint": "^8.31.0"

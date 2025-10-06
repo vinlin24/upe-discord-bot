@@ -1,6 +1,0 @@
-**/.git
-**/.svn
-**/.hg
-**/node_modules
-job-webhook/__pycache__
-job-webhook/.mypy_cache

@@ -1,4 +1,0 @@
-echo "dist/
-node_modules/
-*.js.map
-*.d.ts" > .eslintignore
