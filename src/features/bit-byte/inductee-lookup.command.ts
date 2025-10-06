@@ -21,6 +21,7 @@ import bitByteService from "../../services/bit-byte.service";
 import sheetsService, {
   type InducteeData,
 } from "../../services/inductee-sheets.service";
+import type { UserId } from "../../types/branded.types";
 import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
 
@@ -58,13 +59,12 @@ class InducteeLookupCommand extends SlashCommandHandler {
 
     const inductees = await sheetsService.getAllData();
 
-    const { username } = inducteeMember.user;
-    const inducteeData = inductees.get(username);
+    const inducteeData = inductees.get(inducteeMember.id as UserId);
     if (inducteeData === undefined) {
       await this.replyError(
         interaction,
         `${userMention(inducteeMember.id)} doesn't seem to be a registered ` +
-        `inductee (searched with username ${inlineCode(username)}).`,
+        `inductee (searched with user ID ${inlineCode(inducteeMember.id)}).`,
       );
       return;
     }
@@ -117,7 +117,7 @@ class InducteeLookupCommand extends SlashCommandHandler {
     }
 
     const mention = inducteeMember === null
-      ? (inlineCode(`@${inducteeData.discordUsername}`) + " (not in server)")
+      ? (inlineCode(userMention(inducteeData.discordId)) + " (not in server)")
       : userMention(inducteeMember.id);
 
     const description = mention + "\n" + toBulletedList(lines.filter(Boolean));

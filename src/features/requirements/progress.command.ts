@@ -22,6 +22,7 @@ import requirementSheetsService, {
   type RequirementsData,
 } from "../../services/requirement-sheets.service";
 import type { TutoringData } from "../../services/tutoring-sheets.service";
+import type { UserId } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import {
   EMOJI_CHECK,
@@ -104,12 +105,12 @@ class TrackerCommand extends SlashCommandHandler {
       `Resolving inductee (${this.getAgoMention()})...`,
     );
     await interaction.editReply(this.formatLoadingLines(loadingLines));
-    const { username } = targetInductee.user;
-    const inducteeData = await inducteeSheetsService.getData(username);
+    const userId = targetInductee.user.id as UserId;
+    const inducteeData = await inducteeSheetsService.getData(userId);
     if (inducteeData === null) {
       const errorEmbed = makeErrorEmbed(
-        "We don't seem to have data based on your username " +
-        `${inlineCode(username)}. If you believe this is a mistake, ` +
+        "We don't seem to have data for your user. " +
+        "If you believe this is a mistake, " +
         `reach out to ${roleMention(INDUCTION_AND_MEMBERSHIP_ROLE_ID)}!\n\n` +
         `You can also visit the ${TRACKER_HYPERLINK} to view progress.`,
       );

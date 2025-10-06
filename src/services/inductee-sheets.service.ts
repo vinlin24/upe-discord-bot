@@ -4,7 +4,7 @@ import { RowWiseSheetsService } from "../abc/sheets.abc";
 import { GoogleSheetsClient } from "../clients/sheets.client";
 import env from "../env";
 import { cleanProvidedUsername } from "../features/inductee-role/input.utils";
-import type { Seconds } from "../types/branded.types";
+import type { Seconds, UserId } from "../types/branded.types";
 import { SystemDateClient } from "../utils/date.utils";
 
 export enum UpeMajor {
@@ -25,7 +25,7 @@ enum QuestionnaireColumn {
   LegalLast,
   PreferredFirst,
   PreferredLast,
-  DiscordUsername,
+  DiscordId,
   Major,
 }
 
@@ -38,7 +38,7 @@ const QuestionnaireSchema = z.tuple([
   z.string().trim(),                            // LegalLast
   z.string().trim(),                            // PreferredFirst
   z.string().trim(),                            // PreferredLast
-  z.string().transform(cleanProvidedUsername),  // DiscordUsername
+  z.string().transform(cleanProvidedUsername),  // DiscordId
   z.nativeEnum(UpeMajor),                       // Major
 ]).rest(z.any());
 
@@ -48,27 +48,27 @@ export type InducteeData = {
   preferredEmail: string;
   legalName: string;
   preferredName?: string;
-  discordUsername: string;
+  discordId: UserId;
   major: UpeMajor;
 };
 
 export class InducteeSheetsService extends RowWiseSheetsService<
   InducteeData,
-  "discordUsername",
+  "discordId",
   QuestionnaireRow
 > {
   // Don't refresh. Use retries/force instead.
   protected override refreshInterval = Infinity as Seconds;
 
-  protected override readonly key = "discordUsername";
+  protected override readonly key = "discordId";
   protected override readonly schema = QuestionnaireSchema;
 
   public override async getData(
-    username: string,
+    userId: UserId,
   ): Promise<InducteeData | null> {
-    let data = await super.getData(username);
+    let data = await super.getData(userId);
     if (data === null) {
-      data = await super.getData(username, true);
+      data = await super.getData(userId, true);
     }
     return data;
   }
@@ -96,7 +96,7 @@ export class InducteeSheetsService extends RowWiseSheetsService<
       preferredEmail: validatedRow[QuestionnaireColumn.PreferredEmail],
       legalName: `${legalFirst} ${legalLast}`,
       preferredName: `${preferredFirst} ${preferredLast}`.trim() || undefined,
-      discordUsername: validatedRow[QuestionnaireColumn.DiscordUsername],
+      discordId: validatedRow[QuestionnaireColumn.DiscordId] as UserId,
       major: validatedRow[QuestionnaireColumn.Major],
     };
   }

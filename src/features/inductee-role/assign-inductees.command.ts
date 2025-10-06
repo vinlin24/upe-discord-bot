@@ -13,6 +13,7 @@ import {
   inlineCode,
   roleMention,
   spoiler,
+  userMention,
   type Collection,
   type Message,
 } from "discord.js";
@@ -329,9 +330,9 @@ class AssignInducteesCommand extends SlashCommandHandler {
     }
 
     function infoToBulletPoint(info: InducteeData): string {
-      const { legalName, discordUsername: username } = info;
+      const { legalName, discordId } = info;
       return (
-        "* " + inlineCode(`@${username}`) + " " + `(${legalName})`
+        "* " + inlineCode(userMention(discordId)) + " " + `(${legalName})`
       );
     }
 
@@ -381,14 +382,14 @@ class AssignInducteesCommand extends SlashCommandHandler {
     console.warn("WARNING: The following users were not found in the server:");
     const embedEntries: string[] = [];
 
-    for (const { legalName, discordUsername } of missing) {
-      console.error(`${legalName} (@${discordUsername})`);
-      embedEntries.push(`${legalName} (${inlineCode("@" + discordUsername)})`);
+    for (const { legalName, discordId } of missing) {
+      console.error(`${legalName} (${discordId})`);
+      embedEntries.push(`${legalName} (${inlineCode(userMention(discordId))}`);
     }
 
     const commaSepEmails = missing.map(info => info.preferredEmail).join(",");
     console.warn(
-      "ENDWARNING.The following are the email addresses you can use to " +
+      "ENDWARNING. The following are the email addresses you can use to " +
       "contact these users to let them know their Discord username is " +
       "invalid and/or they are not in the server:",
     );
