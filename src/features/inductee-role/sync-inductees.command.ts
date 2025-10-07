@@ -12,6 +12,7 @@ import {
   type Guild,
   type GuildMember,
   type Message,
+  type Role,
 } from "discord.js";
 
 import _ from "lodash";
@@ -30,7 +31,6 @@ import inducteeSheetsService, {
 import type { UrlString, UserId } from "../../types/branded.types";
 import { setDifference } from "../../utils/data.utils";
 import {
-  EMOJI_ALERT,
   EMOJI_CHECK,
   EMOJI_IN_PROGRESS,
   EMOJI_INFORMATION,
@@ -65,19 +65,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
 
     const upe = interaction.guild!;
     const caller = interaction.member as GuildMember;
-
-    const inducteeRole = upe.roles.cache.get(INDUCTEES_ROLE_ID);
-    if (inducteeRole === undefined) {
-      await interaction.editReply({
-        embeds: [
-          new EmbedBuilder().setDescription(
-            `${EMOJI_ALERT} CRITICAL: Inductee role not found ` +
-            `(expected ID ${inlineCode(INDUCTEES_ROLE_ID)})`
-          )
-        ],
-      })
-      return;
-    }
+    let inducteeRole = await this.getInducteeRole(upe);
 
     const loadingLines: string[] = [];
 
@@ -114,6 +102,10 @@ class SyncInducteesCommand extends SlashCommandHandler {
       caller,
     );
 
+    // Sanity check that num @Inductees === num registered.
+    inducteeRole = await this.getInducteeRole(upe);
+    const numInducteeUsersNow = inducteeRole.members.size;
+
     // Final ACK.
     const ackEmbed = new EmbedBuilder();
     const ackDetails = [
@@ -123,10 +115,16 @@ class SyncInducteesCommand extends SlashCommandHandler {
       `There ${italic("were")} ${boldNum(idsWithRole.size)} server members ` +
       `already with ${roleMention(INDUCTEES_ROLE_ID)}`,
 
+      `There are ${italic("now")} ${boldNum(numInducteeUsersNow)} server ` +
+      `members with ${roleMention(INDUCTEES_ROLE_ID)}`,
+
       `Revoked ${roleMention(INDUCTEES_ROLE_ID)} from ` +
       `${boldNum(idsExpiredRole.size)} server members`,
     ];
-    if (idsNotInServer.length === 0) {
+    if (
+      idsNotInServer.length === 0
+      && registeredInductees.size === numInducteeUsersNow
+    ) {
       ackEmbed.setColor(Colors.Green);
       ackEmbed.setTitle(`${EMOJI_INFORMATION} ${this.id} Success`);
       ackDetails.push(
@@ -300,6 +298,16 @@ class SyncInducteesCommand extends SlashCommandHandler {
     }
 
     return editedLines.join("\n");
+  }
+
+  private async getInducteeRole(upe: Guild): Promise<Role> {
+    const role = await upe.roles.fetch(INDUCTEES_ROLE_ID);
+    if (role === null) {
+      throw new Error(
+        `CRITICAL: Inductee role not found (expected ID ${INDUCTEES_ROLE_ID})`,
+      );
+    }
+    return role;
   }
 }
 
