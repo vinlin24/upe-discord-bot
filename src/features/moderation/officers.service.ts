@@ -46,6 +46,9 @@ function resolveUpeMajor(value: string): UpeMajor | null {
   if (loweredValue.startsWith("ling")) {
     return UpeMajor.LingCs;
   }
+  if (loweredValue.startsWith("comp") || loweredValue.startsWith("bio")) {
+    return UpeMajor.CompBio;
+  }
   return getEnumFromName(UpeMajor, value) ?? null;
 }
 

@@ -72,15 +72,16 @@ class WhoisCommand extends SlashCommandHandler {
       return;
     }
 
-    const queryResult = await interaction.guild!.members.fetch({
-      query: inducteeFound.discordUsername,
-      limit: 1,
-    });
-    const member = queryResult.first();
-    if (member === undefined) {
+    let member: GuildMember;
+    try {
+      member = await interaction.guild!.members.fetch(
+        inducteeFound.discordId,
+      );
+    }
+    catch (error) {
       await interaction.editReply({
         embeds: [makeErrorEmbed(
-          `Found the username ${inlineCode(inducteeFound.discordUsername)} ` +
+          `Found the user ID ${inlineCode(inducteeFound.discordId)} ` +
           `associated with name ${inlineCode(name)}, but they do not seem ` +
           "to be in the server.",
         )],

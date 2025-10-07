@@ -2,7 +2,6 @@ import {
   Colors,
   EmbedBuilder,
   Events,
-  inlineCode,
   roleMention,
   userMention,
   type GuildMember,
@@ -10,8 +9,10 @@ import {
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import channelsService from "../../services/channels.service";
-import inducteeSheetsService, { type InducteeData } from "../../services/inductee-sheets.service";
-import { EMOJI_WARNING } from "../../utils/emojis.utils";
+import inducteeSheetsService, {
+  type InducteeData,
+} from "../../services/inductee-sheets.service";
+import type { UserId } from "../../types/branded.types";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
 export class InducteeJoinListener
@@ -20,30 +21,23 @@ export class InducteeJoinListener
   public override readonly event = Events.GuildMemberAdd;
 
   public override async execute(member: GuildMember): Promise<boolean> {
-    const { user, displayName } = member;
     // TODO: Proper logging.
-    console.log(`User ${user.username} joined.`);
+    console.log(`User ${member.user.username} joined.`);
 
-    let inducteeData = await inducteeSheetsService.getData(user.username);
-    let byDisplayName = false;
+    let inducteeData = await inducteeSheetsService.getData(member.id as UserId);
 
     if (inducteeData === null) {
-      inducteeData = await inducteeSheetsService.getData(displayName);
-      if (inducteeData === null) {
-        return false;
-      }
-      byDisplayName = true;
+      return false;
     }
 
-    await member.roles.add(INDUCTEES_ROLE_ID);
-    await this.notifyLogs(member, inducteeData, byDisplayName);
+    await member.roles.add(INDUCTEES_ROLE_ID, "User is a registered inductee");
+    await this.notifyLogs(member, inducteeData);
     return true;
   }
 
   private async notifyLogs(
     member: GuildMember,
     inducteeData: InducteeData,
-    byDisplayName: boolean,
   ): Promise<void> {
     const preferredName = inducteeData.preferredName ?? inducteeData.legalName;
 
@@ -51,14 +45,6 @@ export class InducteeJoinListener
       `${userMention(member.id)} (${preferredName}) just joined the server ` +
       `and was given the ${roleMention(INDUCTEES_ROLE_ID)} role.`
     );
-
-    if (byDisplayName) {
-      description += (
-        `\n\n${EMOJI_WARNING} Inductee was detected by display name ` +
-        `(${inlineCode(member.displayName)}) instead of username. Consider ` +
-        "checking that this member is indeed an inductee."
-      );
-    }
 
     await channelsService.getLogSink()?.send({
       embeds: [new EmbedBuilder()
