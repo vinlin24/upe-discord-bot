@@ -81,8 +81,6 @@ class SyncInducteesCommand extends SlashCommandHandler {
 
     const loadingLines: string[] = [];
 
-    const idsInServer = new Set(upe.members.cache.keys()) as Set<UserId>;
-
     loadingLines.push(
       `Reading inductee data from ${quietHyperlink("registry", REGISTRY_URL)}`,
     );
@@ -105,7 +103,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
     );
 
     // Users that are registered && don't have the role need the role.
-    const idsNeedingRole = setDifference(registeredIds, idsInServer);
+    const idsNeedingRole = setDifference(registeredIds, idsWithRole);
     loadingLines.push(
       `Attempting to grant role to ${idsNeedingRole.size} users`,
     );
@@ -123,7 +121,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
       quietHyperlink("registered inductees", REGISTRY_URL),
 
       `There ${italic("were")} ${boldNum(idsWithRole.size)} server members ` +
-      `with ${roleMention(INDUCTEES_ROLE_ID)}`,
+      `already with ${roleMention(INDUCTEES_ROLE_ID)}`,
 
       `Revoked ${roleMention(INDUCTEES_ROLE_ID)} from ` +
       `${boldNum(idsExpiredRole.size)} server members`,
@@ -144,6 +142,10 @@ class SyncInducteesCommand extends SlashCommandHandler {
         `Granted ${roleMention(INDUCTEES_ROLE_ID)} to ` +
         `${boldNum(actualNumGranted)} server members`,
       );
+      ackDetails.push(
+        `Couldn't find ${boldNum(idsNotInServer.length)} registered ` +
+        "inductees in the server",
+      )
     }
     ackEmbed.setDescription(toBulletedList(ackDetails));
 
