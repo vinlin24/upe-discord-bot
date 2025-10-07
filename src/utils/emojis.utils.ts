@@ -22,6 +22,7 @@ export const EMOJI_WARNING = ":warning:" as BuiltinEmoji;
 export const EMOJI_ALERT = ":rotating_light:" as BuiltinEmoji;
 export const EMOJI_INFORMATION = ":information_source:" as BuiltinEmoji;
 export const EMOJI_ANNOUNCEMENT = ":mega:" as BuiltinEmoji;
+export const EMOJI_WIP = ":construction:" as BuiltinEmoji;
 
 export const EMOJI_CLOCK = ":watch:" as BuiltinEmoji;
 export const EMOJI_GRADUATION = ":mortar_board:" as BuiltinEmoji;
