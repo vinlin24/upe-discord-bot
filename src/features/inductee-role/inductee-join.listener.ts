@@ -4,12 +4,14 @@ import {
   Events,
   roleMention,
   userMention,
-  type GuildMember
+  type GuildMember,
 } from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import channelsService from "../../services/channels.service";
-import inducteeSheetsService, { type InducteeData } from "../../services/inductee-sheets.service";
+import inducteeSheetsService, {
+  type InducteeData,
+} from "../../services/inductee-sheets.service";
 import type { UserId } from "../../types/branded.types";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
@@ -19,9 +21,8 @@ export class InducteeJoinListener
   public override readonly event = Events.GuildMemberAdd;
 
   public override async execute(member: GuildMember): Promise<boolean> {
-    const { user, displayName } = member;
     // TODO: Proper logging.
-    console.log(`User ${user.username} joined.`);
+    console.log(`User ${member.user.username} joined.`);
 
     let inducteeData = await inducteeSheetsService.getData(member.id as UserId);
 
@@ -29,7 +30,7 @@ export class InducteeJoinListener
       return false;
     }
 
-    await member.roles.add(INDUCTEES_ROLE_ID);
+    await member.roles.add(INDUCTEES_ROLE_ID, "User is a registered inductee");
     await this.notifyLogs(member, inducteeData);
     return true;
   }
