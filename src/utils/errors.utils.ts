@@ -13,7 +13,7 @@ export type DiscordAPIErrorWithCode<Opcode extends number>
 export function isUnknownMemberError(
   error: unknown,
 ): error is DiscordAPIErrorWithCode<10007> {
-  return error instanceof DiscordAPIError && error.code === 50001
+  return error instanceof DiscordAPIError && error.code === 10007
 }
 
 /**

@@ -34,6 +34,7 @@ import {
   EMOJI_CHECK,
   EMOJI_IN_PROGRESS,
   EMOJI_INFORMATION,
+  EMOJI_WARNING,
 } from "../../utils/emojis.utils";
 import { isUnknownMemberError } from "../../utils/errors.utils";
 import {
@@ -116,8 +117,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
     );
 
     // Final ACK.
-    const ackEmbed = new EmbedBuilder()
-      .setTitle(`${EMOJI_INFORMATION} ${this.id} Complete`);
+    const ackEmbed = new EmbedBuilder();
     const ackDetails = [
       `There are ${boldNum(registeredInductees.size)} ` +
       quietHyperlink("registered inductees", REGISTRY_URL),
@@ -127,11 +127,10 @@ class SyncInducteesCommand extends SlashCommandHandler {
 
       `Revoked ${roleMention(INDUCTEES_ROLE_ID)} from ` +
       `${boldNum(idsExpiredRole.size)} server members`,
-
-
     ];
     if (idsNotInServer.length === 0) {
       ackEmbed.setColor(Colors.Green);
+      ackEmbed.setTitle(`${EMOJI_INFORMATION} ${this.id} Success`);
       ackDetails.push(
         `Granted ${roleMention(INDUCTEES_ROLE_ID)} to ` +
         `${boldNum(idsNeedingRole.size)} server members`,
@@ -139,12 +138,14 @@ class SyncInducteesCommand extends SlashCommandHandler {
     }
     else {
       ackEmbed.setColor(Colors.Red);
+      ackEmbed.setTitle(`${EMOJI_WARNING} ${this.id} Partial Success`);
       const actualNumGranted = idsNeedingRole.size - idsNotInServer.length;
       ackDetails.push(
         `Granted ${roleMention(INDUCTEES_ROLE_ID)} to ` +
         `${boldNum(actualNumGranted)} server members`,
       );
     }
+    ackEmbed.setDescription(toBulletedList(ackDetails));
 
     await interaction.editReply({
       content: this.formatLoadingLines(loadingLines, true),
