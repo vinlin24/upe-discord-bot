@@ -35,6 +35,7 @@ import {
   EMOJI_IN_PROGRESS,
   EMOJI_INFORMATION,
 } from "../../utils/emojis.utils";
+import { isUnknownMemberError } from "../../utils/errors.utils";
 import {
   boldNum,
   quietHyperlink,
@@ -104,7 +105,9 @@ class SyncInducteesCommand extends SlashCommandHandler {
 
     // Users that are registered && don't have the role need the role.
     const idsNeedingRole = setDifference(registeredIds, idsInServer);
-    loadingLines.push(`Granting role to ${idsNeedingRole.size} users`);
+    loadingLines.push(
+      `Attempting to grant role to ${idsNeedingRole.size} users`,
+    );
     await interaction.editReply(this.formatLoadingLines(loadingLines));
     const idsNotInServer = await this.grantInducteeRole(
       upe,
@@ -175,15 +178,20 @@ class SyncInducteesCommand extends SlashCommandHandler {
     const missingIds: UserId[] = [];
 
     for (const userId of userIds) {
-      const member = upe.members.cache.get(userId);
-      if (member === undefined) {
-        console.warn(
-          `Inductee with user Id ${userId} registered in registry but ` +
-          "not found in the server."
-        )
-
-        missingIds.push(userId);
-        continue;
+      let member: GuildMember;
+      try {
+        member = await upe.members.fetch(userId);
+      }
+      catch (error) {
+        if (isUnknownMemberError(error)) {
+          console.warn(
+            `Inductee with user Id ${userId} registered in registry but ` +
+            "not found in the server."
+          )
+          missingIds.push(userId);
+          continue;
+        }
+        throw error;
       }
 
       await member.roles.add(
@@ -201,16 +209,8 @@ class SyncInducteesCommand extends SlashCommandHandler {
     caller: GuildMember,
   ): Promise<void> {
     for (const userId of userIds) {
-      const member = upe.members.cache.get(userId);
-
-      // Supposedly shouldn't happen.
-      if (member === undefined) {
-        console.error(
-          "revokeInducteeRole() was passed a user ID that " +
-          `does not exist in the server: ${userId}`,
-        )
-        continue;
-      }
+      // Supposedly shouldn't error.
+      const member = await upe.members.fetch(userId);
 
       await member.roles.remove(
         INDUCTEES_ROLE_ID,

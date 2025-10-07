@@ -8,6 +8,15 @@ export type DiscordAPIErrorWithCode<Opcode extends number>
   = DiscordAPIError & { code: Opcode };
 
 /**
+ * DiscordAPIError[10007]: `Unknown member`.
+ */
+export function isUnknownMemberError(
+  error: unknown,
+): error is DiscordAPIErrorWithCode<10007> {
+  return error instanceof DiscordAPIError && error.code === 50001
+}
+
+/**
  * DiscordAPIError[50001]: `Missing access`. This can happen if the bot is
  * missing the required role permissions. Confusingly, this is distinct from
  * DiscordAPIError[50013]: `You lack permissions to perform that action`.
