@@ -74,7 +74,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
     );
     await interaction.editReply(this.formatLoadingLines(loadingLines));
 
-    const registeredInductees = await inducteeSheetsService.getAllData();
+    const registeredInductees = await inducteeSheetsService.getAllData(true);
     const registeredIds = new Set(
       registeredInductees.map(data => data.discordId)
     );
