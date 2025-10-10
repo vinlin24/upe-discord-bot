@@ -1,11 +1,23 @@
-import { ActivityType, Events, type Client } from "discord.js";
+import childProcess from "node:child_process";
+import util from "node:util";
+
+import {
+  ActivityType,
+  codeBlock,
+  Colors,
+  EmbedBuilder,
+  Events,
+  inlineCode,
+  type Client,
+} from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import helpCommand from "../../features/convenience/help.command";
 import channelsService from "../../services/channels.service";
 import orzService from "../../services/orz.service";
+import type { UnixSeconds, UrlString } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
-import { timestampPair } from "../../utils/formatting.utils";
+import { quietHyperlink, timestampPair } from "../../utils/formatting.utils";
 
 class ReadyListener extends DiscordEventListener<Events.ClientReady> {
   public override readonly event = Events.ClientReady;
@@ -25,15 +37,64 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
     await channelsService.initialize(client);
     await orzService.initialize(channelsService.getUpe());
 
-    const [timeMention, relativeMention] = timestampPair(now);
-    await channelsService.sendDev(
-      `Bot has logged in at ${timeMention} (${relativeMention}).`,
-    );
+    await this.notifyDevs(now);
 
     await client.user.setActivity({
       type: ActivityType.Listening,
       name: helpCommand.id,
     });
+  }
+
+  private async notifyDevs(loginTime: UnixSeconds): Promise<void> {
+    const [timeMention, relativeMention] = timestampPair(loginTime);
+
+    const gitContext = await this.getGitContext();
+
+    await channelsService.sendDev({
+      content: `Bot has logged in at ${timeMention} (${relativeMention}).`,
+      embeds: [gitContext],
+    });
+  }
+
+  private async getGitContext(): Promise<EmbedBuilder> {
+    const exec = util.promisify(childProcess.exec);
+
+    const failedEmbed = new EmbedBuilder()
+      .setColor(Colors.Red)
+      .setDescription("Failed to retrieve Git context via shell command.");
+
+    let { stdout: commitHash } = await exec("git rev-parse HEAD");
+    commitHash = commitHash.trim();
+    if (!commitHash) {
+      return failedEmbed;
+    }
+
+    let { stdout: commitTitle } = await exec("git show -s --format=%s HEAD");
+    commitTitle = commitTitle.trim();
+    if (!commitTitle) {
+      return failedEmbed;
+    }
+
+    // Ref: https://github.com/<USERNAME>/<REPOSITORY>/commit/<COMMIT_HASH>
+    // TODO: I would've cheesed it with the homepage property from package.json
+    // but tsconfig.json rootDir doesn't allow direct imports from it :/ so
+    // unfortunately I shall hard-code this and leave it up to successors to
+    // update this.
+    const repoUrl = "https://github.com/vinlin24/upe-discord-bot" as UrlString;
+    const gitHubCommitUrl = `${repoUrl}/commit/${commitHash}` as UrlString;
+    const commitHyperlink = quietHyperlink(
+      inlineCode(commitHash),
+      gitHubCommitUrl,
+    );
+
+    const embed = new EmbedBuilder()
+      .setColor(Colors.DarkButNotBlack)
+      .setDescription(
+        `Bot checked out at ${commitHyperlink}:\n` +
+        codeBlock(commitTitle)
+      );
+
+    return embed;
   }
 }
 
