@@ -51,11 +51,11 @@ const LINKTREE_DESCRIPTION = bold(
 ) + ` You can also load it by running ${LINKTREE_COMMAND_MENTION}.`;
 
 const BOELTER_HYPERLINK = quietHyperlink(
-  "Boelter Hall",
-  "https://maps.app.goo.gl/c42GSZa35owdpq2i6" as UrlString,
+  "Boelter Hall 4685",
+  "https://tinyurl.com/upe-clubhouse-diagram" as UrlString,
 );
 const TUTORING_INFO = (
-  `Drop-in tutoring is at ${bold(BOELTER_HYPERLINK + " 4685")}. ` +
+  `Drop-in tutoring is at ${bold(BOELTER_HYPERLINK)}. ` +
   "You can find the tutoring schedule " +
   `${quietHyperlink("on our website", TUTORING_SCHEDULE_WEBPAGE)}. ` +
   "Scan the QR code by the door to check in. You don't need to check out."
