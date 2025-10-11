@@ -20,7 +20,6 @@ import {
   UCLA_TIMEZONE,
   type IDateClient,
 } from "../utils/date.utils";
-import { reactString } from "../utils/emojis.utils";
 import {
   OFFICER_MEMES_CHANNEL_ID,
   OFFICERS_ROLE_ID,
@@ -79,8 +78,7 @@ class OrzService {
   ): Promise<void> {
     try {
       const orzee = await this.getNextOrzee(officersRole);
-      const message = await officerMemes.send(this.formatOrzMessage(orzee));
-      await reactString(message, "orz");
+      await officerMemes.send(this.formatOrzMessage(orzee));
     }
     // This callback is outside of our standard execution pipeline, so manually
     // suppress exceptions to prevent bringing down the bot.
