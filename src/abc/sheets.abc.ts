@@ -44,6 +44,7 @@ export abstract class SheetsService<
 
   protected async updateCache(): Promise<void> {
     const sheetData = await this.sheets.getRows();
+    this.cache.clear();
     for await (const requirementsData of this.parseData(sheetData)) {
       this.cache.set(requirementsData[this.key], requirementsData);
     }
