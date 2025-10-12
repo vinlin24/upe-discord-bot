@@ -32,7 +32,10 @@ type ResolvedCommandOptions = {
   picture: Attachment;
 };
 
+/** @deprecated As of F25, bit-byte no longer has a leaderboard/prize system. */
 class SubmitEventCommand extends SlashCommandHandler {
+  public override readonly shouldRegister = false;
+
   public override readonly definition = new SlashCommandBuilder()
     .setName("submitbitbyte")
     .setDescription("Get points for events with your bits!")
