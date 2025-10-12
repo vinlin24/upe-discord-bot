@@ -18,7 +18,10 @@ import { isNonEmptyArray } from "../../types/generic.types";
 import { EmbedPagesManager } from "../../utils/components.utils";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 
+/** @deprecated As of F25, bit-byte no longer has a leaderboard/prize system. */
 class ViewEventsCommand extends SlashCommandHandler {
+  public override readonly shouldRegister = false;
+
   public override readonly definition = new SlashCommandBuilder()
     .setName("eventsbitbyte")
     .setDescription("Look through any bit-byte group's submitted events.")

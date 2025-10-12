@@ -16,7 +16,10 @@ import {
 import { BitByteGroupModel } from "../../models/bit-byte.model";
 import type { RoleId } from "../../types/branded.types";
 
+/** @deprecated As of F25, bit-byte no longer has a leaderboard/prize system. */
 class SubmitJeopardyCommand extends SlashCommandHandler {
+  public override readonly shouldRegister = false;
+
   public override readonly definition = new SlashCommandBuilder()
     .setName("jeopardybitbyte")
     .setDescription("Submit the jeopardy event for a bit-byte group.")
