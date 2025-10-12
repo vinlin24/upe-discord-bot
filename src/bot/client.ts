@@ -50,7 +50,9 @@ export class ClientManager {
     await this.loadCommands();
 
     const handlers = Array.from(commandLoader.getAll().values());
-    const commandsJson = handlers.map(handler => handler.definition);
+    const commandsJson = handlers
+      .filter(handler => handler.shouldRegister)
+      .map(handler => handler.definition);
 
     const { botToken, applicationId } = this.options;
     const rest = new REST().setToken(botToken);

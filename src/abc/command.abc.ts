@@ -20,6 +20,12 @@ export abstract class SlashCommandHandler {
   public abstract readonly definition
     : RESTPostAPIChatInputApplicationCommandsJSONBody;
 
+  /**
+   * Set to false if we want to keep the definition around for whatever reason
+   * but currently do not want to expose it as an invocable command.
+   */
+  public readonly shouldRegister: boolean = true;
+
   /** Checks that must pass before the main command handler can run. */
   public checks: SlashCommandCheck[] = [];
 
