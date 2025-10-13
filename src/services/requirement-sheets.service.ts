@@ -21,9 +21,7 @@ enum TrackerColumn {
   Social,
   Ethics,
   OneOnOnes,
-  BitByteChallenge,
   TownHall,
-  Interview,
   Tests,
   Fee,
   Ceremony,
@@ -38,9 +36,7 @@ const trackerFields = [
   z.string().refine(isBlankOrNumeric),  // Social
   z.string().refine(isBlankOrNumeric),  // Ethics
   z.string().refine(isBlankOrNumeric),  // OneOnOnes
-  z.string().refine(isBlankOrNumeric),  // BitByteChallenge
   z.string().refine(isBlankOrNumeric),  // TownHall
-  z.string().refine(isBlankOrNumeric),  // Interview
   z.string(),                           // Tests
   z.string().refine(isBlankOrNumeric),  // Fee
   z.string(),                           // Ceremony
@@ -59,9 +55,7 @@ export type RequirementsData = {
   social: number;
   ethics: boolean;
   oneOnOnes: number;
-  bitByteChallenge: boolean;
   townHall: boolean;
-  interview: boolean;
   /** NOTE: This is handled by Web at the moment. */
   tests: number;
   fee: boolean;
@@ -100,9 +94,7 @@ export class RequirementSheetsService
       social: toCount(validatedRow[TrackerColumn.Social]),
       ethics: !!validatedRow[TrackerColumn.Ethics],
       oneOnOnes: toCount(validatedRow[TrackerColumn.OneOnOnes]),
-      bitByteChallenge: !!validatedRow[TrackerColumn.BitByteChallenge],
       townHall: !!validatedRow[TrackerColumn.TownHall],
-      interview: !!validatedRow[TrackerColumn.Interview],
       tests: toCount(validatedRow[TrackerColumn.Tests]),
       fee: !!validatedRow[TrackerColumn.Fee],
       ceremony: !!validatedRow[TrackerColumn.Ceremony],

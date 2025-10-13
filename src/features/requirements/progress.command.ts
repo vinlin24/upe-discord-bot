@@ -1,6 +1,5 @@
 import {
   bold,
-  Colors,
   EmbedBuilder,
   inlineCode,
   roleMention,
@@ -13,7 +12,6 @@ import {
 
 import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
-import env from "../../env";
 import {
   highestPrivilege,
   Privilege,
@@ -33,7 +31,6 @@ import {
   EMOJI_IN_PROGRESS,
   EMOJI_INFORMATION,
   EMOJI_WARNING,
-  EMOJI_WIP,
   type BuiltinEmoji,
 } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
@@ -83,27 +80,6 @@ class TrackerCommand extends SlashCommandHandler {
   public constructor(private readonly dateClient: IDateClient) { super(); }
 
   public override async execute(
-    interaction: ChatInputCommandInteraction,
-  ): Promise<void> {
-    // TODO: Temporary WIP response until requirement tracker & parsing logic
-    // are updated.
-    const requirementsHyperlink = quietHyperlink(
-      "requirements",
-      env.REQUIREMENTS_DOCUMENT_LINK,
-    );
-    const wipEmbed = new EmbedBuilder()
-      .setColor(Colors.Red)
-      .setTitle(`${EMOJI_WIP} ${this.id}: Under Construction`)
-      .setDescription(
-        `Due to changes in ${requirementsHyperlink} this quarter, this ` +
-        `feature is still being updated. Refer to the ${TRACKER_HYPERLINK}.`,
-      );
-    await interaction.reply({ embeds: [wipEmbed], ephemeral: true });
-  }
-
-  // TODO: The old execute() implementation, replaced by temporary WIP response
-  // for now until requirement tracker & parsing logic are updated.
-  private async disabledExecute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const broadcast = interaction.options.getBoolean("broadcast");
@@ -233,12 +209,7 @@ class TrackerCommand extends SlashCommandHandler {
         data.oneOnOnes,
         NUM_ONE_ON_ONES_REQUIRED,
       ),
-      this.formatBooleanProgress("Bit-Byte Challenge", data.bitByteChallenge),
       this.formatBooleanProgress("CS Town Hall Survey", data.townHall),
-      this.formatBooleanProgress(
-        "Technical Interview Workshop",
-        data.interview,
-      ),
       this.formatUnhandledProgress(
         `Upload ${NUM_TESTS_REQUIRED} Tests`,
         quietHyperlink("your web portal", UPE_WEBSITE),
