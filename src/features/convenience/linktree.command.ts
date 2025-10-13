@@ -49,29 +49,26 @@ export class LinktreeCommand extends SlashCommandHandler {
     const simple = interaction.options.getBoolean("simple");
     const broadcast = interaction.options.getBoolean("broadcast");
 
-    // let responseEmbed: EmbedBuilder;
-    // if (simple) {
-    //   responseEmbed = this.prepareSimpleResponse();
-    // }
-    // else {
-    //   const linktreeHtml = await this.fetchHTMLOfWebPage(
-    //     INDUCTION_LINKTREE_URL,
-    //   );
-    //   // Fetching failed, just display the Linktree link.
-    //   if (linktreeHtml === null) {
-    //     responseEmbed = this.prepareSimpleResponse();
-    //   }
-    //   else {
-    //     const linktreeEntries = this.extractLinktreeEntries(linktreeHtml);
-    //     responseEmbed = this.prepareExpandedResponse(linktreeEntries);
-    //   }
-    // }
+    let responseEmbed: EmbedBuilder;
+    if (simple) {
+      responseEmbed = this.prepareSimpleResponse();
+    }
+    else {
+      const linktreeHtml = await this.fetchHTMLOfWebPage(
+        INDUCTION_LINKTREE_URL,
+      );
+      // Fetching failed, just display the Linktree link.
+      if (linktreeHtml === null) {
+        responseEmbed = this.prepareSimpleResponse();
+      }
+      else {
+        const linktreeEntries = this.extractLinktreeEntries(linktreeHtml);
+        responseEmbed = this.prepareExpandedResponse(linktreeEntries);
+      }
+    }
 
-    // TODO: WIP, just return the Linktree URL until I fix the parsing due to
-    // new UI.
     await interaction.reply({
-      // embeds: [responseEmbed],
-      embeds: [this.prepareSimpleResponse()],
+      embeds: [responseEmbed],
       ephemeral: !broadcast,
     });
   }
@@ -145,7 +142,7 @@ export class LinktreeCommand extends SlashCommandHandler {
 
       // Traverse from the <h3>s parent div to the next <div>s containing the
       // <a> elements.
-      let nextDiv = $(element).parent().parent().next("div");
+      let nextDiv = $(element).parent().next("div");
 
       // Continue to traverse & extract links while <div>s contain link buttons.
       while (nextDiv.length && nextDiv.find(LINK_BUTTON_SELECTOR).length) {
