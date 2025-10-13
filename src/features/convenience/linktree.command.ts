@@ -4,7 +4,7 @@ import {
   ChatInputCommandInteraction,
   EmbedBuilder,
   hyperlink,
-  type Snowflake
+  type Snowflake,
 } from "discord.js";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
@@ -49,26 +49,29 @@ export class LinktreeCommand extends SlashCommandHandler {
     const simple = interaction.options.getBoolean("simple");
     const broadcast = interaction.options.getBoolean("broadcast");
 
-    let responseEmbed: EmbedBuilder;
-    if (simple) {
-      responseEmbed = this.prepareSimpleResponse();
-    }
-    else {
-      const linktreeHtml = await this.fetchHTMLOfWebPage(
-        INDUCTION_LINKTREE_URL,
-      );
-      // Fetching failed, just display the Linktree link.
-      if (linktreeHtml === null) {
-        responseEmbed = this.prepareSimpleResponse();
-      }
-      else {
-        const linktreeEntries = this.extractLinktreeEntries(linktreeHtml);
-        responseEmbed = this.prepareExpandedResponse(linktreeEntries);
-      }
-    }
+    // let responseEmbed: EmbedBuilder;
+    // if (simple) {
+    //   responseEmbed = this.prepareSimpleResponse();
+    // }
+    // else {
+    //   const linktreeHtml = await this.fetchHTMLOfWebPage(
+    //     INDUCTION_LINKTREE_URL,
+    //   );
+    //   // Fetching failed, just display the Linktree link.
+    //   if (linktreeHtml === null) {
+    //     responseEmbed = this.prepareSimpleResponse();
+    //   }
+    //   else {
+    //     const linktreeEntries = this.extractLinktreeEntries(linktreeHtml);
+    //     responseEmbed = this.prepareExpandedResponse(linktreeEntries);
+    //   }
+    // }
 
+    // TODO: WIP, just return the Linktree URL until I fix the parsing due to
+    // new UI.
     await interaction.reply({
-      embeds: [responseEmbed],
+      // embeds: [responseEmbed],
+      embeds: [this.prepareSimpleResponse()],
       ephemeral: !broadcast,
     });
   }
@@ -129,7 +132,7 @@ export class LinktreeCommand extends SlashCommandHandler {
 
   private extractLinktreeEntries(html: string): CategoryLinks[] {
     /** Selector of the actual link buttons in the Linktree. */
-    const LINK_BUTTON_SELECTOR = 'a[data-testid="LinkButton"]';
+    const LINK_BUTTON_SELECTOR = 'a[data-testid="LinkClickTriggerLink"]';
 
     const $ = cheerio.load(html);
     const categories: CategoryLinks[] = [];
@@ -151,7 +154,7 @@ export class LinktreeCommand extends SlashCommandHandler {
           const redirectLink = $(linkElement)
             .attr("href") as UrlString | undefined;
           const displayedText = $(linkElement)
-            .find("p").text().trim();
+            .find("div > div").text().trim();
 
           entries.push({ redirectLink, displayedText });
         });
