@@ -6,7 +6,6 @@ import {
   type Attachment,
   type ChatInputCommandInteraction,
   type GuildMember,
-  type Role,
 } from "discord.js";
 
 import type { SlashCommandCheck } from "../../abc/check.abc";
@@ -21,9 +20,9 @@ import bitByteService from "../../services/bit-byte.service";
 import channelsService from "../../services/channels.service";
 import type { RoleId, UrlString } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
-import { EMOJI_FEARFUL, EMOJI_RAISED_EYEBROW } from "../../utils/emojis.utils";
+import { EMOJI_FEARFUL } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
-import { BYTE_ROLE_ID, INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
+import { BYTE_ROLE_ID } from "../../utils/snowflakes.utils";
 
 type ResolvedCommandOptions = {
   location: BitByteLocation;
@@ -32,10 +31,7 @@ type ResolvedCommandOptions = {
   picture: Attachment;
 };
 
-/** @deprecated As of F25, bit-byte no longer has a leaderboard/prize system. */
 class SubmitEventCommand extends SlashCommandHandler {
-  public override readonly shouldRegister = false;
-
   public override readonly definition = new SlashCommandBuilder()
     .setName("submitbitbyte")
     .setDescription("Get points for events with your bits!")
@@ -55,8 +51,8 @@ class SubmitEventCommand extends SlashCommandHandler {
       .setRequired(true)
     )
     .addIntegerOption(input => input
-      .setName("num_inductees")
-      .setDescription("How many bits attended?")
+      .setName("num_bits")
+      .setDescription("How many bits attended? Be honest >:(")
       .setRequired(true)
       .setMinValue(1)
     )
@@ -90,17 +86,6 @@ class SubmitEventCommand extends SlashCommandHandler {
     // ! assert because caller must have the group role for determineGroup() to
     // have returned non-null. Doesn't feel very clean but ehh.
     const groupRole = caller.roles.cache.get(group.roleId)!;
-    const numBitsInGroup = this.getNumBitsInGroup(groupRole);
-
-    // Check that caller isn't BS'ing.
-    if (options.numInductees > numBitsInGroup) {
-      await this.replyError(
-        interaction,
-        `${EMOJI_RAISED_EYEBROW} You don't even have ${options.numInductees} ` +
-        `bits in your group. You have ${numBitsInGroup}.`,
-      );
-      return;
-    }
 
     // So the thing is: the URL of the uploaded attachment is EPHEMERAL, meaning
     // it will expire after some time, so we can't just cheese it by saving that
@@ -121,7 +106,6 @@ class SubmitEventCommand extends SlashCommandHandler {
       location: options.location,
       caption: options.caption,
       numAttended: options.numInductees,
-      numTotal: numBitsInGroup,
       picture: options.picture.url as UrlString, // To be replaced.
       timestamp: this.dateClient.getNow(),
     };
@@ -132,7 +116,7 @@ class SubmitEventCommand extends SlashCommandHandler {
       `${bold("Group:")} ${roleMention(groupRole.id)}\n` +
       `${bold("Caption:")} ${event.caption}\n` +
       `${bold("Location:")} ${event.location}\n` +
-      `${bold("Attendance:")} ${event.numAttended} / ${event.numTotal} bits\n` +
+      `${bold("Attendance:")} ${event.numAttended} bits\n` +
       `${bold("Points Earned:")} ${pointsEarned}`
     );
     await interaction.reply({
@@ -168,15 +152,9 @@ class SubmitEventCommand extends SlashCommandHandler {
     const location
       = interaction.options.getString("location", true) as BitByteLocation;
     const caption = interaction.options.getString("caption", true);
-    const numInductees = interaction.options.getInteger("num_inductees", true);
+    const numInductees = interaction.options.getInteger("num_bits", true);
     const picture = interaction.options.getAttachment("picture", true);
     return { location, caption, numInductees, picture };
-  }
-
-  private getNumBitsInGroup(groupRole: Role): number {
-    return groupRole.members
-      .filter(member => member.roles.cache.has(INDUCTEES_ROLE_ID))
-      .size;
   }
 
   private async addEvent(

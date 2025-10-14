@@ -1,13 +1,10 @@
 import {
-  ActionRowBuilder,
   EmbedBuilder,
-  inlineCode,
+  roleMention,
   SlashCommandBuilder,
-  StringSelectMenuBuilder,
   type APIEmbedField,
-  type APISelectMenuOption,
   type ChatInputCommandInteraction,
-  type MessageComponentInteraction,
+  type Role,
 } from "discord.js";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
@@ -18,69 +15,35 @@ import { isNonEmptyArray } from "../../types/generic.types";
 import { EmbedPagesManager } from "../../utils/components.utils";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 
-/** @deprecated As of F25, bit-byte no longer has a leaderboard/prize system. */
 class ViewEventsCommand extends SlashCommandHandler {
-  public override readonly shouldRegister = false;
-
   public override readonly definition = new SlashCommandBuilder()
     .setName("eventsbitbyte")
-    .setDescription("Look through any bit-byte group's submitted events.")
+    .setDescription("Look through a bit-byte family's submitted events.")
+    .addRoleOption(input => input
+      .setName("family_role")
+      .setDescription("Role associated with bit-byte family.")
+      .setRequired(true),
+    )
     .toJSON();
-
-  public override readonly componentIds = ["byteselector"];
 
   public constructor(private readonly dateClient: IDateClient) { super(); }
 
   public override async execute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
-    const groups = await bitByteService.getAllActiveGroups();
+    const familyRole = interaction.options.getRole("family_role", true) as Role;
+    const family = await bitByteService.getActiveGroup(familyRole.id as RoleId);
 
-    const selectMenuOptions: APISelectMenuOption[] = [];
-    for (const [roleId,] of groups) {
-      const role = interaction.guild!.roles.cache.get(roleId);
-      if (role === undefined) {
-        await this.replyError(
-          interaction,
-          `It seems like a bit-byte group's role (ID: ${roleId}) ` +
-          `does not exist anymore! Notify an admin.`,
-        );
-        return;
-      }
-      selectMenuOptions.push({ label: role.name, value: role.id });
-    }
-
-    const groupSelector = new ActionRowBuilder<StringSelectMenuBuilder>()
-      .addComponents(
-        new StringSelectMenuBuilder()
-          .setCustomId(this.componentIds[0])
-          .setPlaceholder("Pick a group")
-          .addOptions(selectMenuOptions),
+    if (family === null) {
+      await this.replyError(
+        interaction,
+        `The ${roleMention(familyRole.id)} role does not seem to be ` +
+        "associated with a bit-byte family this season!",
       );
-
-    await interaction.reply({ components: [groupSelector] });
-  }
-
-  public override async onComponent(
-    interaction: MessageComponentInteraction,
-  ): Promise<void> {
-    if (!interaction.isStringSelectMenu()) {
       return;
     }
 
-    const selectedRoleId = interaction.values[0] as RoleId;
-    const group = await bitByteService.getActiveGroup(selectedRoleId);
-    if (group === null) {
-      await interaction.editReply({
-        content: (
-          "Something went wrong in retrieving the bit-byte group " +
-          `for role ID: ${inlineCode(selectedRoleId)}?! Notify an admin.`
-        )
-      });
-      return;
-    }
-
-    const pages = this.preparePages(group);
+    const pages = await this.preparePages(family);
     await this.handlePages(interaction, pages);
   }
 
@@ -90,7 +53,7 @@ class ViewEventsCommand extends SlashCommandHandler {
         name: "Points Earned",
         value: (
           `${bitByteService.calculateBitByteEventPoints(event)} ` +
-          `(${event.numAttended} / ${event.numTotal} bits in ${event.location})`
+          `(${event.numAttended} bits in ${event.location})`
         ),
       };
       const dateField: APIEmbedField = {
@@ -107,7 +70,7 @@ class ViewEventsCommand extends SlashCommandHandler {
   }
 
   private async handlePages(
-    interaction: MessageComponentInteraction,
+    interaction: ChatInputCommandInteraction,
     pages: EmbedBuilder[],
   ): Promise<void> {
     await interaction.deferReply();

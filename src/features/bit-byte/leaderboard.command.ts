@@ -5,7 +5,6 @@ import {
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
 } from "discord.js";
-import _ from "lodash";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
 import bitByteService from "../../services/bit-byte.service";
@@ -25,13 +24,11 @@ import {
 
 type LeaderboardEntry = {
   roleId: RoleId;
+  place: number;
   points: number;
 };
 
-/** @deprecated As of F25, bit-byte no longer has a leaderboard/prize system. */
 class LeaderboardCommand extends SlashCommandHandler {
-  public override readonly shouldRegister = false;
-
   public override readonly definition = new SlashCommandBuilder()
     .setName("leaderboardbitbyte")
     .setDescription("Are ya winnin'?")
@@ -52,17 +49,34 @@ class LeaderboardCommand extends SlashCommandHandler {
     for (const [roleId, group] of groups) {
       const eventPoints = bitByteService.calculateBitByteGroupPoints(group);
       const totalPoints = eventPoints + group.jeopardyPoints;
-      leaderboard.push({ roleId, points: totalPoints });
+      leaderboard.push({ roleId, place: 1, points: totalPoints });
     }
 
     // Sort DESCENDING by points.
     leaderboard.sort((lhs, rhs) => rhs.points - lhs.points);
+
+    // Now assign place numbers, accounting for ties.
+    if (leaderboard.length > 0) {
+      leaderboard[0].place = 1;
+      let currentPlace = 1;
+
+      for (let index = 1; index < leaderboard.length; index++) {
+        if (leaderboard[index].points !== leaderboard[index - 1].points) {
+          currentPlace++;
+        }
+        leaderboard[index].place = currentPlace;
+      }
+    }
+
     return leaderboard;
   }
 
   private formatLeaderboard(leaderboard: LeaderboardEntry[]): EmbedBuilder {
-    const placeColumn = _.range(1, leaderboard.length + 1)
-      .map(place => this.getEmojiForPlace(place))
+    // TODO: While this columnar format looks nice on desktop, it looks bad on
+    // mobile (the "columns" just get stacked on top of each other).
+
+    const placeColumn = leaderboard
+      .map(entry => this.getEmojiForPlace(entry.place))
       .join("\n");
 
     const mentionColumn = leaderboard

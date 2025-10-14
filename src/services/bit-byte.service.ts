@@ -34,8 +34,22 @@ export class BitByteService {
         break;
     }
 
-    const participationRatio = event.numAttended / Math.max(1, event.numTotal);
-    return Math.ceil(100 * participationRatio * distanceMultiplier);
+    // NOTE: Updated F25. Since bit-byte has been opened up to beyond inductees,
+    // and we should really stop assuming everyone is in Discord, the formula
+    // has been updated to no longer depend on a "family size" variable (which
+    // without using Discord roles as source of truth is hard to track without
+    // doing brittle hard-coding/seasonal config).
+    //
+    // For historical context, the old formula was:
+    //
+    //    Math.ceil(100 * (num_attended / num_total_bits) * distance_multiplier)
+    //
+    // We now fix the denominator arbitrarily to 8:
+    //
+    //    Math.ceil(100 * (num_attended / 8) * distance_multiplier)
+
+    const participationScore = event.numAttended / 8;
+    return Math.ceil(100 * participationScore * distanceMultiplier);
   }
 
   public calculateBitByteGroupPoints(group: BitByteGroup): number {

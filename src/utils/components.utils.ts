@@ -4,6 +4,7 @@ import {
   ButtonStyle,
   ComponentType,
   type ButtonInteraction,
+  type ChatInputCommandInteraction,
   type EmbedBuilder,
   type MessageComponentInteraction,
 } from "discord.js";
@@ -77,7 +78,9 @@ export class EmbedPagesManager {
     );
   }
 
-  public async start(interaction: MessageComponentInteraction): Promise<void> {
+  public async start(
+    interaction: MessageComponentInteraction | ChatInputCommandInteraction,
+  ): Promise<void> {
     const currentPage = await interaction.editReply({
       embeds: [this.currentEmbed],
       components: [this.buttonRow],

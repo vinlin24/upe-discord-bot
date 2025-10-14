@@ -13,7 +13,7 @@ import bitByteService from "../../services/bit-byte.service";
 import type { RoleId } from "../../types/branded.types";
 import { toBulletedList } from "../../utils/formatting.utils";
 import { ExtendedSlashCommandBuilder } from "../../utils/options.utils";
-import { BYTE_ROLE_ID, INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
+import { BYTE_ROLE_ID } from "../../utils/snowflakes.utils";
 
 class ListByteGroupCommand extends SlashCommandHandler {
   public override readonly definition = new ExtendedSlashCommandBuilder()
@@ -47,8 +47,7 @@ class ListByteGroupCommand extends SlashCommandHandler {
       return;
     }
 
-    const bytes = this.getMembersAlsoHaving(groupRole, BYTE_ROLE_ID);
-    const inductees = this.getMembersAlsoHaving(groupRole, INDUCTEES_ROLE_ID);
+    const [bytes, bits] = this.partitionBytesAndBits(groupRole);
 
     const roleLine = `Role: ${roleMention(group.roleId)}`;
     const channelLine = `Channel: ${channelMention(group.channelId)}`;
@@ -56,16 +55,15 @@ class ListByteGroupCommand extends SlashCommandHandler {
       `${bytes.length} ${roleMention(BYTE_ROLE_ID)}: ` +
       `${this.formatMentionList(bytes)}`
     );
-    const inducteesLine = (
-      `${inductees.length} ${roleMention(INDUCTEES_ROLE_ID)}: ` +
-      `${this.formatMentionList(inductees)}`
+    const bitsLine = (
+      `${bits.length} bits (in server): ${this.formatMentionList(bits)}`
     );
     const eventsLine = `${group.events.length} events completed`;
     const pointsLine
       = `Points: ${bitByteService.calculateBitByteGroupPoints(group)}`;
 
     const description = toBulletedList(
-      [roleLine, channelLine, bytesLine, inducteesLine, eventsLine, pointsLine],
+      [roleLine, channelLine, bytesLine, bitsLine, eventsLine, pointsLine],
     );
     const embed = new EmbedBuilder()
       .setTitle("Bit-Byte Group")
@@ -88,12 +86,11 @@ class ListByteGroupCommand extends SlashCommandHandler {
         );
         continue;
       }
-      const bytes = this.getMembersAlsoHaving(role, BYTE_ROLE_ID);
-      const inductees = this.getMembersAlsoHaving(role, INDUCTEES_ROLE_ID);
-      // TODO: Also include point information.
+
+      const [bytes, bits] = this.partitionBytesAndBits(role);
       lines.push(
         `${roleMention(roleId)} ${channelMention(channelId)} ` +
-        `(${bytes.length} bytes, ${inductees.length} bits)`,
+        `(${bytes.length} bytes, ${bits.length} bits in server)`,
       );
     }
 
@@ -103,10 +100,20 @@ class ListByteGroupCommand extends SlashCommandHandler {
       .setDescription(description);
   }
 
-  private getMembersAlsoHaving(role: Role, otherRoleId: RoleId): GuildMember[] {
-    const bytesCollection = role.members
-      .filter(member => member.roles.cache.has(otherRoleId));
-    return Array.from(bytesCollection.values());
+  private partitionBytesAndBits(
+    role: Role,
+  ): [bytes: GuildMember[], bits: GuildMember[]] {
+    const bytes: GuildMember[] = [];
+    const bits: GuildMember[] = [];
+    for (const member of role.members.values()) {
+      if (member.roles.cache.has(BYTE_ROLE_ID)) {
+        bytes.push(member);
+      }
+      else {
+        bits.push(member);
+      }
+    }
+    return [bytes, bits];
   }
 
   private formatMentionList(members: GuildMember[]): string {

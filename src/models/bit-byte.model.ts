@@ -18,7 +18,6 @@ export type BitByteEvent = {
   caption: string;
   picture: UrlString;
   numAttended: number;
-  numTotal: number;
   timestamp: UnixSeconds;
 };
 
@@ -39,7 +38,6 @@ const bitByteEventSchema = new mongoose.Schema<BitByteEvent>({
   caption: { type: String, required: true },
   picture: { type: String, required: true },
   numAttended: { type: Number, required: true },
-  numTotal: { type: Number, required: true },
   timestamp: { type: Number, required: true },
 });
 
