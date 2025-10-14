@@ -55,7 +55,9 @@ class ListByteGroupCommand extends SlashCommandHandler {
       `${bytes.length} ${roleMention(BYTE_ROLE_ID)}: ` +
       `${this.formatMentionList(bytes)}`
     );
-    const bitsLine = `${bits.length} bits: ${this.formatMentionList(bits)}`;
+    const bitsLine = (
+      `${bits.length} bits (in server): ${this.formatMentionList(bits)}`
+    );
     const eventsLine = `${group.events.length} events completed`;
     const pointsLine
       = `Points: ${bitByteService.calculateBitByteGroupPoints(group)}`;
@@ -88,7 +90,7 @@ class ListByteGroupCommand extends SlashCommandHandler {
       const [bytes, bits] = this.partitionBytesAndBits(role);
       lines.push(
         `${roleMention(roleId)} ${channelMention(channelId)} ` +
-        `(${bytes.length} bytes, ${bits.length} bits)`,
+        `(${bytes.length} bytes, ${bits.length} bits in server)`,
       );
     }
 
