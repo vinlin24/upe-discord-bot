@@ -8,6 +8,7 @@ import {
 import _ from "lodash";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
+import { BitByteService } from "../../services/bit-byte.service";
 import type { UnixSeconds } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import {
@@ -30,7 +31,7 @@ class ArfListener extends DiscordEventListener<Events.MessageCreate> {
     if (now < this.cooldownExpiration) {
       return false;
     }
-    if (!this.isPrivateChannel(message.channel)) {
+    if (!await this.isPrivateChannel(message.channel)) {
       return false;
     }
     if (!message.member || !this.isTargetOfficer(message.member)) {
@@ -53,9 +54,19 @@ class ArfListener extends DiscordEventListener<Events.MessageCreate> {
     );
   }
 
-  private isPrivateChannel(channel: GuildTextBasedChannel): boolean {
-    return !channel.permissionsFor(channel.guild.roles.everyone)
+  private async isPrivateChannel(
+    channel: GuildTextBasedChannel,
+  ): Promise<boolean> {
+    const isPublic = channel.permissionsFor(channel.guild.roles.everyone)
       .has(PermissionFlagsBits.ViewChannel);
+
+    // Don't embarrass them in front of their bits.
+    const isBitByteChannel = (
+      channel.parent !== null &&
+      channel.parent.name === BitByteService.CATEGORY_NAME
+    );
+
+    return !isPublic && !isBitByteChannel;
   }
 
   private getReplyString(): string {
