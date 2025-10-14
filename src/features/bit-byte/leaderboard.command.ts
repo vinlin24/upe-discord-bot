@@ -28,10 +28,7 @@ type LeaderboardEntry = {
   points: number;
 };
 
-/** @deprecated As of F25, bit-byte no longer has a leaderboard/prize system. */
 class LeaderboardCommand extends SlashCommandHandler {
-  public override readonly shouldRegister = false;
-
   public override readonly definition = new SlashCommandBuilder()
     .setName("leaderboardbitbyte")
     .setDescription("Are ya winnin'?")
