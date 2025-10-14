@@ -24,7 +24,6 @@ import sheetsService, {
   type InducteeData,
 } from "../../services/inductee-sheets.service";
 import type { UserId } from "../../types/branded.types";
-import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
 
@@ -135,10 +134,10 @@ class InducteeLookupCommand extends SlashCommandHandler {
       ? await this.determineGroupCached(inducteeMember)
       : null;
     if (groupRole === null) {
-      lines.push(`${bold("Group:")} <pending assignment> ${EMOJI_WARNING}`);
+      lines.push(`${bold("Bit-Byte:")} (not participating)`);
     }
     else {
-      lines.push(`${bold("Group:")} ${roleMention(groupRole.id)}`);
+      lines.push(`${bold("Bit-Byte:")} ${roleMention(groupRole.id)}`);
     }
 
     const mention = inducteeMember === null
