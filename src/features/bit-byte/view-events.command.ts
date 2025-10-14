@@ -53,7 +53,7 @@ class ViewEventsCommand extends SlashCommandHandler {
         name: "Points Earned",
         value: (
           `${bitByteService.calculateBitByteEventPoints(event)} ` +
-          `(${event.numAttended} / ${event.numTotal} bits in ${event.location})`
+          `(${event.numAttended} bits in ${event.location})`
         ),
       };
       const dateField: APIEmbedField = {
