@@ -3,11 +3,13 @@ import {
   Collection,
   EmbedBuilder,
   inlineCode,
+  PermissionFlagsBits,
   roleMention,
   SlashCommandBuilder,
   userMention,
   type ChatInputCommandInteraction,
   type GuildMember,
+  type GuildTextBasedChannel,
   type Role,
 } from "discord.js";
 
@@ -23,6 +25,7 @@ import sheetsService, {
 } from "../../services/inductee-sheets.service";
 import type { UserId } from "../../types/branded.types";
 import { EMOJI_WARNING } from "../../utils/emojis.utils";
+import { makeErrorEmbed } from "../../utils/errors.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
 
 class InducteeLookupCommand extends SlashCommandHandler {
@@ -33,6 +36,10 @@ class InducteeLookupCommand extends SlashCommandHandler {
       .setName("inductee")
       .setDescription("Inductee user to request data for.")
       .setRequired(true),
+    )
+    .addBooleanOption(input => input
+      .setName("broadcast")
+      .setDescription("[PRIVATE CHANNEL ONLY] Respond visibly to others.")
     )
     .toJSON();
 
@@ -48,6 +55,7 @@ class InducteeLookupCommand extends SlashCommandHandler {
     const inducteeMember = interaction.options.getMember(
       "inductee",
     ) as GuildMember | null;
+    const broadcast = !!interaction.options.getBoolean("broadcast");
 
     if (inducteeMember === null) {
       await this.replyError(
@@ -70,7 +78,24 @@ class InducteeLookupCommand extends SlashCommandHandler {
     }
 
     const embed = await this.prepareEmbed(inducteeMember, inducteeData);
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    const embeds = [embed];
+
+    if (broadcast) {
+      let ephemeral = false;
+
+      if (!this.canBroadcast(interaction)) {
+        embeds.push(makeErrorEmbed(
+          "Cannot broadcast inductee data in a public channel. " +
+          "Replied ephemerally.",
+        ));
+        ephemeral = true;
+      }
+
+      await interaction.reply({ embeds, ephemeral });
+      return;
+    }
+
+    await interaction.reply({ embeds, ephemeral: true });
   }
 
   private async determineGroupCached(
@@ -126,6 +151,13 @@ class InducteeLookupCommand extends SlashCommandHandler {
       .setColor(groupRole?.color ?? null)
       .setTitle("Inductee Information")
       .setDescription(description);
+  }
+
+  private canBroadcast(interaction: ChatInputCommandInteraction): boolean {
+    const channel = interaction.channel as GuildTextBasedChannel;
+    const isPublicChannel = channel.permissionsFor(channel.guild.roles.everyone)
+      .has(PermissionFlagsBits.ViewChannel);
+    return !isPublicChannel;
   }
 }
 
