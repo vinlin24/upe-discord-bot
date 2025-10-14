@@ -21,7 +21,10 @@ import { normalizeChannelName } from "../../utils/formatting.utils";
 import { ROLE_NAME_MAX_LENGTH } from "../../utils/limits.utils";
 import { BYTE_ROLE_ID } from "../../utils/snowflakes.utils";
 
+/** @deprecated We're better off standardizing the byte group roles. */
 class CustomizeGroupCommand extends SlashCommandHandler {
+  public override readonly shouldRegister = false;
+
   public override readonly definition = new SlashCommandBuilder()
     .setName("customizebytegroup")
     .setDescription("Customize your byte group!")
