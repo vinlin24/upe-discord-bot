@@ -81,15 +81,10 @@ export class EmbedPagesManager {
   public async start(
     interaction: MessageComponentInteraction | ChatInputCommandInteraction,
   ): Promise<void> {
-    const currentPage = interaction.replied
-      ? await interaction.editReply({
-        embeds: [this.currentEmbed],
-        components: [this.buttonRow],
-      })
-      : await interaction.reply({
-        embeds: [this.currentEmbed],
-        components: [this.buttonRow],
-      })
+    const currentPage = await interaction.editReply({
+      embeds: [this.currentEmbed],
+      components: [this.buttonRow],
+    });
 
     const collector = await currentPage.createMessageComponentCollector({
       componentType: ComponentType.Button,
