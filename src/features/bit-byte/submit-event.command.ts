@@ -23,7 +23,7 @@ import type { RoleId, UrlString } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { EMOJI_FEARFUL, EMOJI_RAISED_EYEBROW } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
-import { BYTE_ROLE_ID, INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
+import { BYTE_ROLE_ID } from "../../utils/snowflakes.utils";
 
 type ResolvedCommandOptions = {
   location: BitByteLocation;
@@ -55,7 +55,7 @@ class SubmitEventCommand extends SlashCommandHandler {
       .setRequired(true)
     )
     .addIntegerOption(input => input
-      .setName("num_inductees")
+      .setName("num_bits")
       .setDescription("How many bits attended?")
       .setRequired(true)
       .setMinValue(1)
@@ -168,14 +168,14 @@ class SubmitEventCommand extends SlashCommandHandler {
     const location
       = interaction.options.getString("location", true) as BitByteLocation;
     const caption = interaction.options.getString("caption", true);
-    const numInductees = interaction.options.getInteger("num_inductees", true);
+    const numInductees = interaction.options.getInteger("num_bits", true);
     const picture = interaction.options.getAttachment("picture", true);
     return { location, caption, numInductees, picture };
   }
 
   private getNumBitsInGroup(groupRole: Role): number {
     return groupRole.members
-      .filter(member => member.roles.cache.has(INDUCTEES_ROLE_ID))
+      .filter(member => !member.roles.cache.has(BYTE_ROLE_ID))
       .size;
   }
 
