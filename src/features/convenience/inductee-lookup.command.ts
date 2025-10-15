@@ -21,9 +21,11 @@ import {
 } from "../../middleware/privilege.middleware";
 import bitByteService from "../../services/bit-byte.service";
 import sheetsService, {
+  InducteeStatus,
   type InducteeData,
 } from "../../services/inductee-sheets.service";
 import type { UserId } from "../../types/branded.types";
+import { EMOJI_CHECK, EMOJI_WARNING } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
 
@@ -121,7 +123,9 @@ class InducteeLookupCommand extends SlashCommandHandler {
     inducteeMember: GuildMember | null,
     inducteeData: InducteeData,
   ): Promise<EmbedBuilder> {
-    const { legalName, preferredName, preferredEmail, major } = inducteeData;
+    const {
+      status, legalName, preferredName, preferredEmail, major,
+    } = inducteeData;
 
     const lines = [
       `${bold("Name:")} ${legalName}`,
@@ -144,7 +148,13 @@ class InducteeLookupCommand extends SlashCommandHandler {
       ? (inlineCode(userMention(inducteeData.discordId)) + " (not in server)")
       : userMention(inducteeMember.id);
 
-    const description = mention + "\n" + toBulletedList(lines.filter(Boolean));
+    const statusText = `${status.toUpperCase()} ` + (
+      status === InducteeStatus.Active
+        ? EMOJI_CHECK
+        : EMOJI_WARNING
+    );
+    const header = `${mention} ${bold(`(${statusText})`)}`;
+    const description = header + "\n" + toBulletedList(lines.filter(Boolean));
 
     return new EmbedBuilder()
       .setColor(groupRole?.color ?? null)

@@ -10,6 +10,7 @@ import {
 import { DiscordEventListener } from "../../abc/listener.abc";
 import channelsService from "../../services/channels.service";
 import inducteeSheetsService, {
+  InducteeStatus,
   type InducteeData,
 } from "../../services/inductee-sheets.service";
 import type { UserId } from "../../types/branded.types";
@@ -24,9 +25,15 @@ export class InducteeJoinListener
     // TODO: Proper logging.
     console.log(`User ${member.user.username} joined.`);
 
-    let inducteeData = await inducteeSheetsService.getData(member.id as UserId);
+    const inducteeData = await inducteeSheetsService.getData(
+      member.id as UserId,
+    );
 
-    if (inducteeData === null) {
+    // Ignore members that aren't inductees or were inductees but got dropped.
+    if (
+      inducteeData === null ||
+      inducteeData.status !== InducteeStatus.Active
+    ) {
       return false;
     }
 

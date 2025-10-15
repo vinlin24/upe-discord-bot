@@ -6,8 +6,13 @@ import env from "../env";
 import type { Seconds, UserId } from "../types/branded.types";
 import { SystemDateClient } from "../utils/date.utils";
 
-// NOTE: The value side of the enum is the "full name" of the major used in thes
-// Google Forms/Sheets.
+export enum InducteeStatus {
+  Active = "Active",
+  Dropped = "Dropped",
+}
+
+// NOTE: The value side of the enum is the "full name" of the major used in
+// these Google Forms/Sheets.
 export enum UpeMajor {
   Cs = "Computer Science",
   Cse = "Computer Science & Engineering",
@@ -25,22 +30,25 @@ enum RegistryColumn {
   PreferredLast,
   DiscordId,
   Major,
+  Status,
 }
 
 const RegistrySchema = z.tuple([
-  z.string().trim(),      // PreferredEmail
-  z.string().trim(),      // LegalFirst
-  z.string().trim(),      // LegalLast
-  z.string().trim(),      // PreferredFirst
-  z.string().trim(),      // PreferredLast
-  z.string().trim(),      // DiscordId
-  z.nativeEnum(UpeMajor), // Major
+  z.string().trim(),            // PreferredEmail
+  z.string().trim(),            // LegalFirst
+  z.string().trim(),            // LegalLast
+  z.string().trim(),            // PreferredFirst
+  z.string().trim(),            // PreferredLast
+  z.string().trim(),            // DiscordId
+  z.nativeEnum(UpeMajor),       // Major
+  z.nativeEnum(InducteeStatus), // Status
 ]).rest(z.any());
 
 type RegistryRow = z.infer<typeof RegistrySchema>;
 
 /** The DTO passed around outside of this service, to represent an inductee. */
 export type InducteeData = {
+  status: InducteeStatus;
   preferredEmail: string;
   legalName: string;
   preferredName?: string;
@@ -68,12 +76,13 @@ export class InducteeSheetsService extends RowWiseSheetsService<
   }
 
   protected override acceptRow(rowIndex: number, _row: string[]): boolean {
-    return rowIndex >= 3; // Skip two comment rows & header rows.
+    return rowIndex >= 3; // Skip comment row & two header rows.
   }
 
   protected override transformRow(
     validatedRow: RegistryRow,
   ): InducteeData {
+    const status = validatedRow[RegistryColumn.Status];
     const legalFirst = validatedRow[RegistryColumn.LegalFirst];
     const legalLast = validatedRow[RegistryColumn.LegalLast];
 
@@ -88,6 +97,7 @@ export class InducteeSheetsService extends RowWiseSheetsService<
       = validatedRow[RegistryColumn.PreferredLast] || legalLast;
 
     return {
+      status,
       preferredEmail: validatedRow[RegistryColumn.PreferredEmail],
       legalName: `${legalFirst} ${legalLast}`,
       preferredName: `${preferredFirst} ${preferredLast}`.trim() || undefined,

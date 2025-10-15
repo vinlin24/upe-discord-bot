@@ -14,8 +14,8 @@ import {
   type Message,
   type Role,
 } from "discord.js";
-
 import _ from "lodash";
+
 import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { GoogleSheetsClient } from "../../clients/sheets.client";
@@ -26,6 +26,7 @@ import {
 } from "../../middleware/privilege.middleware";
 import channelsService from "../../services/channels.service";
 import inducteeSheetsService, {
+  InducteeStatus,
   type InducteeData,
 } from "../../services/inductee-sheets.service";
 import type { UrlString, UserId } from "../../types/branded.types";
@@ -75,13 +76,15 @@ class SyncInducteesCommand extends SlashCommandHandler {
     await interaction.editReply(this.formatLoadingLines(loadingLines));
 
     const registeredInductees = await inducteeSheetsService.getAllData(true);
-    const registeredIds = new Set(
-      registeredInductees.map(data => data.discordId)
+    const activeIds = new Set(
+      registeredInductees
+        .filter(data => data.status === InducteeStatus.Active)
+        .map(data => data.discordId),
     );
 
-    // Users that are not registered && have the role should have role removed.
+    // Users that are not active && have the role should have role removed.
     const idsWithRole = new Set(inducteeRole.members.keys()) as Set<UserId>;
-    const idsExpiredRole = setDifference(idsWithRole, registeredIds);
+    const idsExpiredRole = setDifference(idsWithRole, activeIds);
     loadingLines.push(`Revoking role from ${idsExpiredRole.size} users`);
     await interaction.editReply(this.formatLoadingLines(loadingLines));
     await this.revokeInducteeRole(
@@ -90,8 +93,8 @@ class SyncInducteesCommand extends SlashCommandHandler {
       caller,
     );
 
-    // Users that are registered && don't have the role need the role.
-    const idsNeedingRole = setDifference(registeredIds, idsWithRole);
+    // Users that are active && don't have the role need the role.
+    const idsNeedingRole = setDifference(activeIds, idsWithRole);
     loadingLines.push(
       `Attempting to grant role to ${idsNeedingRole.size} users`,
     );
@@ -102,15 +105,15 @@ class SyncInducteesCommand extends SlashCommandHandler {
       caller,
     );
 
-    // Sanity check that num @Inductees === num registered.
+    // Sanity check that num @Inductees === num active.
     inducteeRole = await this.getInducteeRole(upe);
     const numInducteeUsersNow = inducteeRole.members.size;
 
     // Final ACK.
     const ackEmbed = new EmbedBuilder();
     const ackDetails = [
-      `There are ${boldNum(registeredInductees.size)} ` +
-      quietHyperlink("registered inductees", REGISTRY_URL),
+      `There are ${boldNum(activeIds.size)} ` +
+      quietHyperlink("active inductees", REGISTRY_URL),
 
       `There ${italic("were")} ${boldNum(idsWithRole.size)} server members ` +
       `already with ${roleMention(INDUCTEES_ROLE_ID)}`,
@@ -123,7 +126,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
     ];
     if (
       idsNotInServer.length === 0
-      && registeredInductees.size === numInducteeUsersNow
+      && activeIds.size === numInducteeUsersNow
     ) {
       ackEmbed.setColor(Colors.Green);
       ackEmbed.setTitle(`${EMOJI_INFORMATION} ${this.id} Success`);
@@ -141,7 +144,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
         `${boldNum(actualNumGranted)} server members`,
       );
       ackDetails.push(
-        `Couldn't find ${boldNum(idsNotInServer.length)} registered ` +
+        `Couldn't find ${boldNum(idsNotInServer.length)} active ` +
         "inductees in the server",
       )
     }
@@ -186,7 +189,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
       catch (error) {
         if (isUnknownMemberError(error)) {
           console.warn(
-            `Inductee with user Id ${userId} registered in registry but ` +
+            `Inductee with user Id ${userId} active in registry but ` +
             "not found in the server."
           )
           missingIds.push(userId);
