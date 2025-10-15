@@ -2,10 +2,12 @@ import {
   bold,
   channelMention,
   EmbedBuilder,
+  PermissionFlagsBits,
   roleMention,
   SlashCommandBuilder,
   userMention,
   type ChatInputCommandInteraction,
+  type GuildTextBasedChannel,
   type User,
 } from "discord.js";
 
@@ -22,6 +24,7 @@ import bitByteService from "../../services/bit-byte.service";
 import channelsService from "../../services/channels.service";
 import type { RoleId } from "../../types/branded.types";
 import { EMOJI_INFORMATION } from "../../utils/emojis.utils";
+import { makeErrorEmbed } from "../../utils/errors.utils";
 import { quietHyperlink, toBulletedList } from "../../utils/formatting.utils";
 import { SEASON_ID } from "../../utils/upe.utils";
 import bitSheetsService, { type BitData } from "./bit-sheets.service";
@@ -35,6 +38,10 @@ class BitLookupCommand extends SlashCommandHandler {
       .setDescription("Bit user to request data for.")
       .setRequired(true),
     )
+    .addBooleanOption(input => input
+      .setName("broadcast")
+      .setDescription("[PRIVATE CHANNEL ONLY] Respond visibly to others.")
+    )
     .toJSON();
 
   public override readonly checks: SlashCommandCheck[] = [
@@ -45,6 +52,8 @@ class BitLookupCommand extends SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const bitUser = interaction.options.getUser("bit", true);
+    const broadcast = !!interaction.options.getBoolean("broadcast");
+
     const bitsData = await bitSheetsService.getAllData();
     const bitData = bitsData.find(data => data.discordId === bitUser.id);
 
@@ -57,7 +66,24 @@ class BitLookupCommand extends SlashCommandHandler {
     }
 
     const embed = await this.prepareEmbed(bitUser, bitData);
-    await interaction.reply({ embeds: [embed], ephemeral: true });
+    const embeds = [embed];
+
+    if (broadcast) {
+      let ephemeral = false;
+
+      if (!this.canBroadcast(interaction)) {
+        embeds.push(makeErrorEmbed(
+          "Cannot broadcast inductee data in a public channel. " +
+          "Replied ephemerally.",
+        ));
+        ephemeral = true;
+      }
+
+      await interaction.reply({ embeds, ephemeral });
+      return;
+    }
+
+    await interaction.reply({ embeds, ephemeral: true });
   }
 
   private async prepareEmbed(user: User, data: BitData): Promise<EmbedBuilder> {
@@ -112,6 +138,13 @@ class BitLookupCommand extends SlashCommandHandler {
     }
 
     return group;
+  }
+
+  private canBroadcast(interaction: ChatInputCommandInteraction): boolean {
+    const channel = interaction.channel as GuildTextBasedChannel;
+    const isPublicChannel = channel.permissionsFor(channel.guild.roles.everyone)
+      .has(PermissionFlagsBits.ViewChannel);
+    return !isPublicChannel;
   }
 }
 
