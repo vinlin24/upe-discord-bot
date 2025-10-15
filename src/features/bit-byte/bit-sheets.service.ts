@@ -57,7 +57,7 @@ class BitSheetsService extends RowWiseSheetsService<
   protected override transformRow(validatedRow: RegistryRow): BitData {
     const fullName = (
       validatedRow[RegistryColumn.FirstName] + " " +
-      validatedRow[RegistryColumn.FirstName]
+      validatedRow[RegistryColumn.LastName]
     );
 
     const discordIdText = validatedRow[RegistryColumn.DiscordId].trim();
