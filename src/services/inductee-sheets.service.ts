@@ -23,18 +23,17 @@ export enum UpeMajor {
 }
 
 enum RegistryColumn {
-  Status = 0,
-  PreferredEmail,
+  PreferredEmail = 0,
   LegalFirst,
   LegalLast,
   PreferredFirst,
   PreferredLast,
   DiscordId,
   Major,
+  Status,
 }
 
 const RegistrySchema = z.tuple([
-  z.nativeEnum(InducteeStatus), // Status
   z.string().trim(),            // PreferredEmail
   z.string().trim(),            // LegalFirst
   z.string().trim(),            // LegalLast
@@ -42,6 +41,7 @@ const RegistrySchema = z.tuple([
   z.string().trim(),            // PreferredLast
   z.string().trim(),            // DiscordId
   z.nativeEnum(UpeMajor),       // Major
+  z.nativeEnum(InducteeStatus), // Status
 ]).rest(z.any());
 
 type RegistryRow = z.infer<typeof RegistrySchema>;
