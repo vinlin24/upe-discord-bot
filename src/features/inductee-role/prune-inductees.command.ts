@@ -23,7 +23,13 @@ import { type UserId } from "../../types/branded.types";
 import { toBulletedList } from "../../utils/formatting.utils";
 import { INDUCTEES_ROLE_ID } from "../../utils/snowflakes.utils";
 
+/**
+ * @deprecated As of F25, bit-byte is no longer tied to induction, so this
+ * command doesn't make much sense anymore.
+ */
 export class PruneInducteesCommand extends SlashCommandHandler {
+  public override readonly shouldRegister = false;
+
   public override readonly definition = new SlashCommandBuilder()
     .setName("pruneinductees")
     .setDescription(
