@@ -3,7 +3,7 @@ import { z } from "zod";
 import { RowWiseSheetsService } from "../../abc/sheets.abc";
 import { GoogleSheetsClient } from "../../clients/sheets.client";
 import env from "../../env";
-import type { Seconds, UserId } from "../../types/branded.types";
+import type { UserId } from "../../types/branded.types";
 import { SystemDateClient } from "../../utils/date.utils";
 
 enum RegistryColumn {
@@ -44,9 +44,6 @@ class BitSheetsService extends RowWiseSheetsService<
   "_key",
   RegistryRow
 > {
-  // Don't refresh. Use retries/force instead.
-  protected override refreshInterval = Infinity as Seconds;
-
   protected override readonly key = "_key";
   protected override readonly schema = RegistrySchema;
 
