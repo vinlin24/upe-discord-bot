@@ -59,8 +59,8 @@ class BitLookupCommand extends SlashCommandHandler {
 
     if (bitData === undefined) {
       await this.replyError(interaction, (
-        `We don't have data on which person ${userMention(bitUser.id)} ` +
-        "refers to!"
+        `${userMention(bitUser.id)} is either not a bit or we don't have ` +
+        "data on which person the Discord user refers to!"
       ));
       return;
     }
