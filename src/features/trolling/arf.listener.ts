@@ -61,10 +61,14 @@ class ArfListener extends DiscordEventListener<Events.MessageCreate> {
       .has(PermissionFlagsBits.ViewChannel);
 
     // Don't embarrass them in front of their bits.
-    const isBitByteChannel = (
-      channel.parent !== null &&
-      channel.parent.name === BitByteService.CATEGORY_NAME
-    );
+    const isBitByteChannel
+      = (
+        // Case: bit-byte channel directly under the bit-byte category.
+        channel.parent?.name === BitByteService.CATEGORY_NAME
+      ) || (
+        // Case: thread under a bit-byte channel under the bit-byte category.
+        channel.parent?.parent?.name === BitByteService.CATEGORY_NAME
+      );
 
     return !isPublic && !isBitByteChannel;
   }
