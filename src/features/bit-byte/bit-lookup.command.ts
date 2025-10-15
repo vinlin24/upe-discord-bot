@@ -2,6 +2,7 @@ import {
   bold,
   channelMention,
   EmbedBuilder,
+  inlineCode,
   PermissionFlagsBits,
   roleMention,
   SlashCommandBuilder,
@@ -95,7 +96,7 @@ class BitLookupCommand extends SlashCommandHandler {
 
     const lines = [
       `${bold("Name:")} ${data.name}`,
-      `${bold("Email:")} ${data.email}`,
+      `${bold("Email:")} ${inlineCode(data.email)}`,
       `${bold("Family:")} ${familyMentions}`,
     ];
 
