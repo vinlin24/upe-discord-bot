@@ -1,6 +1,5 @@
 import {
   bold,
-  codeBlock,
   Collection,
   EmbedBuilder,
   inlineCode,
@@ -26,6 +25,7 @@ import sheetsService, {
   type InducteeData,
 } from "../../services/inductee-sheets.service";
 import type { UserId } from "../../types/branded.types";
+import { EMOJI_CHECK, EMOJI_WARNING } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { toBulletedList } from "../../utils/formatting.utils";
 
@@ -144,18 +144,17 @@ class InducteeLookupCommand extends SlashCommandHandler {
       lines.push(`${bold("Bit-Byte:")} ${roleMention(groupRole.id)}`);
     }
 
-    // Cool green banner if active, red if otherwise.
-    const statusBanner = bold("Induction Status:") + codeBlock(
-      "diff",
-      (status === InducteeStatus.Active ? "+" : "-") + status,
-    );
-    lines.push(statusBanner);
-
     const mention = inducteeMember === null
       ? (inlineCode(userMention(inducteeData.discordId)) + " (not in server)")
       : userMention(inducteeMember.id);
 
-    const description = mention + "\n" + toBulletedList(lines.filter(Boolean));
+    const statusText = `${status.toUpperCase()} ` + (
+      status === InducteeStatus.Active
+        ? EMOJI_CHECK
+        : EMOJI_WARNING
+    );
+    const header = `${mention} ${bold(`(${statusText})`)}`;
+    const description = header + "\n" + toBulletedList(lines.filter(Boolean));
 
     return new EmbedBuilder()
       .setColor(groupRole?.color ?? null)
