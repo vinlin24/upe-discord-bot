@@ -59,6 +59,10 @@ export const ENV_SPEC = {
     desc: "ID of the seasonal inductee data Google Sheets spreadsheet.",
   }),
 
+  BIT_DATA_SPREADSHEET_ID: envalid.str({
+    desc: "ID of the seasonal bit-byte data Google Sheets spreadsheet.",
+  }),
+
   REQUIREMENTS_DOCUMENT_LINK: urlStringValidator({
     desc: "URL of the seasonal induction requirements document.",
   }),
