@@ -22,7 +22,7 @@ const LP_MAP = new Map<string, UrlString>([
   ["Earn Trust", "https://youtu.be/SD5GB_6pGOg" as UrlString],
   ["Dive Deep", "https://youtu.be/trHT6thsoZ0" as UrlString],
   ["Have Backbone; Disagree and Commit", "https://youtu.be/BtjBkf8qDW4" as UrlString],
-  ["Deliver Result", "https://youtu.be/bgOyaYq8UNI" as UrlString],
+  ["Deliver Results", "https://youtu.be/bgOyaYq8UNI" as UrlString],
   ["Strive to be Earth’s Best Employer", "https://youtu.be/i8iRGy8ynTo" as UrlString],
   ["Success and Scale Bring Broad Responsibility", "https://youtu.be/6UbFkMF4Q-U" as UrlString],
 ]);
