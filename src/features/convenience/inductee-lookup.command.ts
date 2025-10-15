@@ -1,5 +1,6 @@
 import {
   bold,
+  codeBlock,
   Collection,
   EmbedBuilder,
   inlineCode,
@@ -21,6 +22,7 @@ import {
 } from "../../middleware/privilege.middleware";
 import bitByteService from "../../services/bit-byte.service";
 import sheetsService, {
+  InducteeStatus,
   type InducteeData,
 } from "../../services/inductee-sheets.service";
 import type { UserId } from "../../types/branded.types";
@@ -121,7 +123,9 @@ class InducteeLookupCommand extends SlashCommandHandler {
     inducteeMember: GuildMember | null,
     inducteeData: InducteeData,
   ): Promise<EmbedBuilder> {
-    const { legalName, preferredName, preferredEmail, major } = inducteeData;
+    const {
+      status, legalName, preferredName, preferredEmail, major,
+    } = inducteeData;
 
     const lines = [
       `${bold("Name:")} ${legalName}`,
@@ -139,6 +143,13 @@ class InducteeLookupCommand extends SlashCommandHandler {
     else {
       lines.push(`${bold("Bit-Byte:")} ${roleMention(groupRole.id)}`);
     }
+
+    // Cool green banner if active, red if otherwise.
+    const statusBanner = bold("Induction Status:") + codeBlock(
+      "diff",
+      (status === InducteeStatus.Active ? "+" : "-") + status,
+    );
+    lines.push(statusBanner);
 
     const mention = inducteeMember === null
       ? (inlineCode(userMention(inducteeData.discordId)) + " (not in server)")
