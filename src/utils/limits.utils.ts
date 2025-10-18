@@ -16,6 +16,10 @@ export const EMBED_AUTHOR_NAME_LIMIT = 256;
 export const EMBED_TOTAL_LIMIT = 6000;
 export const EMBEDS_PER_MESSAGE_LIMIT = 10;
 
+// Ref: https://discord.com/developers/docs/resources/channel#channels-resource
+
+export const CHANNEL_TOPIC_LIMIT = 1024;
+
 // Discovered empirically (by FAFO) lol.
 
 export const ROLE_NAME_MAX_LENGTH = 100;
