@@ -43,11 +43,11 @@ class ViewEventsCommand extends SlashCommandHandler {
       return;
     }
 
-    const pages = await this.preparePages(family);
+    const pages = await this.preparePages(family, familyRole);
     await this.handlePages(interaction, pages);
   }
 
-  private preparePages(group: BitByteGroup): EmbedBuilder[] {
+  private preparePages(group: BitByteGroup, role: Role): EmbedBuilder[] {
     return group.events.map((event, index) => {
       const pointsField: APIEmbedField = {
         name: "Points Earned",
@@ -64,6 +64,7 @@ class ViewEventsCommand extends SlashCommandHandler {
       return new EmbedBuilder()
         .setTitle(event.caption)
         .setImage(event.picture)
+        .setColor(role.color)
         .addFields(pointsField, dateField)
         .setFooter({ text: `Page ${index + 1} / ${group.events.length}` });
     });

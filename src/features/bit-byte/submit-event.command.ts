@@ -123,6 +123,7 @@ class SubmitEventCommand extends SlashCommandHandler {
       embeds: [new EmbedBuilder()
         .setTitle("Bit-Byte Event Submitted")
         .setDescription(description)
+        .setColor(groupRole.color)
       ],
       files: [options.picture],
     });
