@@ -15,7 +15,6 @@ import { EMOJI_INFORMATION, EMOJI_WARNING } from "../../utils/emojis.utils";
 import {
   emailHyperlink,
   formatMailbox,
-  littleText,
   quietHyperlink,
   toBulletedList,
 } from "../../utils/formatting.utils";
@@ -98,21 +97,17 @@ class ReviewEventCommand extends SlashCommandHandler {
     ].filter(Boolean);
     const body = toBulletedList(lines);
 
-    const moreInformation = (
-      `${EMOJI_INFORMATION} Review sessions are organized by our ` +
-      `${roleMention(TUTORING_ROLE_ID)} committee.`
-    );
-
     const spreadsheetHyperlink = quietHyperlink(
       "UPE Tutoring events spreadsheet",
       GoogleSheetsClient.idToUrl(env.REVIEW_EVENTS_SPREADSHEET_ID),
     );
-    const disclaimer = littleText(
-      `${EMOJI_WARNING} This is an experimental feature. You can use the ` +
-      `${spreadsheetHyperlink} as the source of truth.`,
+    const moreInformation = (
+      `${EMOJI_INFORMATION} Review sessions are organized by our ` +
+      `${roleMention(TUTORING_ROLE_ID)} committee. You can use their ` +
+      `${spreadsheetHyperlink} as the source of truth.`
     );
 
-    const description = [body, moreInformation, disclaimer].join("\n\n");
+    const description = `${body}\n\n${moreInformation}`;
 
     return new EmbedBuilder()
       .setTitle(`UPE Review Session: ${eventData.name}`)
