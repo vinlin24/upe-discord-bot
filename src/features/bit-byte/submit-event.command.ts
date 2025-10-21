@@ -23,6 +23,7 @@ import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { EMOJI_FEARFUL } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { BYTE_ROLE_ID } from "../../utils/snowflakes.utils";
+import leaderboardCommand from "./leaderboard.command";
 
 type ResolvedCommandOptions = {
   location: BitByteLocation;
@@ -119,12 +120,16 @@ class SubmitEventCommand extends SlashCommandHandler {
       `${bold("Attendance:")} ${event.numAttended} bits\n` +
       `${bold("Points Earned:")} ${pointsEarned}`
     );
+
+    const tip = `Check /${leaderboardCommand.definition.name} for rankings!`;
+    const embed = new EmbedBuilder()
+      .setTitle("Bit-Byte Event Submitted")
+      .setDescription(description)
+      .setColor(groupRole.color)
+      .setFooter({ text: tip });
+
     await interaction.reply({
-      embeds: [new EmbedBuilder()
-        .setTitle("Bit-Byte Event Submitted")
-        .setDescription(description)
-        .setColor(groupRole.color)
-      ],
+      embeds: [embed],
       files: [options.picture],
     });
 
