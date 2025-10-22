@@ -11,7 +11,11 @@ import {
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { GoogleSheetsClient } from "../../clients/sheets.client";
 import env from "../../env";
-import { EMOJI_INFORMATION, EMOJI_WARNING } from "../../utils/emojis.utils";
+import {
+  EMOJI_CLOCK,
+  EMOJI_INFORMATION,
+  EMOJI_WARNING,
+} from "../../utils/emojis.utils";
 import {
   emailHyperlink,
   formatMailbox,
@@ -97,6 +101,11 @@ class ReviewEventCommand extends SlashCommandHandler {
     ].filter(Boolean);
     const body = toBulletedList(lines);
 
+    const timeInformation = (
+      `${EMOJI_CLOCK} All review sessions are at 7-9pm PST unless ` +
+      "noted otherwise."
+    );
+
     const spreadsheetHyperlink = quietHyperlink(
       "UPE Tutoring events spreadsheet",
       GoogleSheetsClient.idToUrl(env.REVIEW_EVENTS_SPREADSHEET_ID),
@@ -107,7 +116,7 @@ class ReviewEventCommand extends SlashCommandHandler {
       `${spreadsheetHyperlink} as the source of truth.`
     );
 
-    const description = `${body}\n\n${moreInformation}`;
+    const description = [body, timeInformation, moreInformation].join("\n\n");
 
     return new EmbedBuilder()
       .setTitle(`UPE Review Session: ${eventData.name}`)
