@@ -70,7 +70,9 @@ class MealService {
       }
     });
     collector.on("end", () => {
-      if (!acked) {
+      if (acked) {
+        this.streak += 1;
+      } else {
         this.streak = 0;
       }
       this.chan?.send(`${this.streak} day(s) without skipping dinner.`);
