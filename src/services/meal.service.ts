@@ -56,8 +56,8 @@ class MealService {
         `timestamp ${now} failed to convert: ${dateTime.invalidExplanation}`,
       );
     }
-    const nextMidnight = dateTime.plus({ days: 1 }).startOf("day").plus({ hours: 17 });
-    return asBrandedNumber(nextMidnight.toSeconds());
+    const nextDinTime = dateTime.plus({ days: 1 }).startOf("day").plus({ hours: 17 });
+    return asBrandedNumber(nextDinTime.toSeconds());
   }
 
   private async listenForAck(message: Message) {
