@@ -43,9 +43,9 @@ class MealService {
     this.chan = officerMemes;
 
     const now = this.dateClient.getNow();
-    const nextMidnight = this.getNextDinTime(now);
-    const msecLeft = (nextMidnight - now) * 1000;
-    // Schedule the first orz.
+    const nextDinTime = this.getNextDinTime(now);
+    const msecLeft = (nextDinTime - now) * 1000;
+    // Schedule the first reminder.
     setTimeout(this.sendReminder, msecLeft);
   }
 
@@ -95,10 +95,10 @@ class MealService {
       }
     }
 
-    // Schedule next orz.
+    // Schedule next reminder.
     const now = this.dateClient.getNow();
-    const nextMidnight = this.getNextDinTime(now);
-    const msecLeft = (nextMidnight - now) * 1000;
+    const nextDinTime = this.getNextDinTime(now);
+    const msecLeft = (nextDinTime - now) * 1000;
     setTimeout(this.sendReminder, msecLeft);
   }
 }
