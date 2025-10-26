@@ -83,7 +83,7 @@ class MealService {
     }
 
     try {
-      const message = await this.chan.send(`${userMention(USER)}, please eat dinner.`);
+      const message = await this.chan.send(`${userMention(USER)}, please eat dinner. React to dismiss.`);
       this.listenForAck(message);
     }
     // This callback is outside of our standard execution pipeline, so manually
