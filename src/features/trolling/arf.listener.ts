@@ -15,6 +15,8 @@ import {
   ADMINS_ROLE_ID,
   CORPORATE_ROLE_ID,
   DEVELOPER_ROLE_ID,
+  INDUCTEES_CHAT_CHANNEL_ID,
+  INDUCTION_ANNOUNCEMENTS_CHANNEL_ID,
 } from "../../utils/snowflakes.utils";
 
 class ArfListener extends DiscordEventListener<Events.MessageCreate> {
@@ -70,7 +72,13 @@ class ArfListener extends DiscordEventListener<Events.MessageCreate> {
         channel.parent?.parent?.name === BitByteService.CATEGORY_NAME
       );
 
-    return !isPublic && !isBitByteChannel;
+    // Not in front of the inductees either.
+    const isInductionChannel = (
+      channel.id === INDUCTION_ANNOUNCEMENTS_CHANNEL_ID ||
+      channel.id === INDUCTEES_CHAT_CHANNEL_ID
+    );
+
+    return !isPublic && !isBitByteChannel && !isInductionChannel;
   }
 
   private getReplyString(): string {
