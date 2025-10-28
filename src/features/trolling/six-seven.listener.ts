@@ -7,7 +7,9 @@ import {
   REACTION_SIX,
 } from "../../utils/emojis.utils";
 
-function sleep(ms: number): Promise<void> {
+import { Milliseconds } from "src/types/branded.types";
+
+function sleep(ms: Milliseconds): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -17,15 +19,17 @@ class SixSevenListener extends DiscordEventListener<Events.MessageCreate> {
   public override async execute(message: Message<true>): Promise<boolean> {
     // Strictly looks for the funny patterns to avoid accidental trigger.
 
-    const sixSevenMatch = message.content.match(/6 ?7|six ?seven/i);
+    const messageNoID = message.content.replace(/<(?:@|#|@&)\d+>/g, '');
+
+    const sixSevenMatch = messageNoID.match(/\D(?:6|six)\s*(?:7|seven)\D/i);
     if (sixSevenMatch === null) {
       return false;
     }
 
     await message.react(REACTION_SIX);
-    await sleep(200);
+    await sleep(200 as Milliseconds);
     await message.react(REACTION_SEVEN);
-    await sleep(200);
+    await sleep(200 as Milliseconds);
     await message.react(REACTION_SHRUG);
     return true;
   }
