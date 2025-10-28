@@ -7,25 +7,25 @@ import {
   REACTION_SIX,
 } from "../../utils/emojis.utils";
 
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
 class SixSevenListener extends DiscordEventListener<Events.MessageCreate> {
   public override readonly event = Events.MessageCreate;
 
   public override async execute(message: Message<true>): Promise<boolean> {
-    // Screw it, don't even care about sevens coming after sixes. Just naively
-    // look for the presence of six && presence of seven.
+    // Strictly looks for the funny patterns to avoid accidental trigger.
 
-    const sixMatch = message.content.match(/6|six/i);
-    if (sixMatch === null) {
-      return false;
-    }
-
-    const sevenMatch = message.content.match(/7|seven/i);
-    if (sevenMatch === null) {
+    const sixSevenMatch = message.content.match(/6 ?7|six ?seven/i);
+    if (sixSevenMatch === null) {
       return false;
     }
 
     await message.react(REACTION_SIX);
+    await sleep(200);
     await message.react(REACTION_SEVEN);
+    await sleep(200);
     await message.react(REACTION_SHRUG);
     return true;
   }
