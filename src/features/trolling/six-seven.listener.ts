@@ -7,7 +7,7 @@ import {
   REACTION_SIX,
 } from "../../utils/emojis.utils";
 
-import { Milliseconds } from "src/types/branded.types";
+import { Milliseconds } from "../../types/branded.types";
 
 function sleep(ms: Milliseconds): Promise<void> {
   return new Promise(resolve => setTimeout(resolve, ms));
