@@ -60,6 +60,9 @@ export type ReactionEmoji = UnicodeReactionEmoji | LetterReactionEmoji;
 export const REACTION_BOT_ERROR = "😵" as UnicodeReactionEmoji;
 export const REACTION_UNKNOWN_TEXT_COMMAND = "❓" as UnicodeReactionEmoji;
 export const REACTION_UNAUTHORIZED_TEXT_COMMAND = "⛔" as UnicodeReactionEmoji;
+export const REACTION_SIX = "6️⃣" as UnicodeReactionEmoji;
+export const REACTION_SEVEN = "7️⃣" as UnicodeReactionEmoji;
+export const REACTION_SHRUG = "🤷" as UnicodeReactionEmoji;
 
 export async function reactString(
   message: Message,
