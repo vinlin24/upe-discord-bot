@@ -19,7 +19,7 @@ class SixSevenListener extends DiscordEventListener<Events.MessageCreate> {
   public override async execute(message: Message<true>): Promise<boolean> {
     // Strictly looks for the funny patterns to avoid accidental trigger.
 
-    const messageNoID = message.content.replace(/<(?:@|#|@&)\d+>/g, '');
+    const messageNoId = message.content.replace(/<(?:@|#|@&)\d+>/g, "");
 
     const sixSevenMatch = messageNoID.match(/\D(?:6|six)\s*(?:7|seven)\D/i);
     if (sixSevenMatch === null) {
