@@ -21,7 +21,7 @@ class SixSevenListener extends DiscordEventListener<Events.MessageCreate> {
 
     const messageNoId = message.content.replace(/<(?:@|#|@&)\d+>/g, "");
 
-    const sixSevenMatch = messageNoID.match(/\D(?:6|six)\s*(?:7|seven)\D/i);
+    const sixSevenMatch = messageNoId.match(/\D(?:6|six)\s*(?:7|seven)\D/i);
     if (sixSevenMatch === null) {
       return false;
     }
