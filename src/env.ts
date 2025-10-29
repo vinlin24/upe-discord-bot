@@ -108,6 +108,12 @@ export const ENV_SPEC = {
   DB_CONNECTION_STRING: urlStringValidator({
     desc: "Connection string for the MongoDB service.",
   }),
+
+  NODE_ENV: envalid.str({
+    desc: "Environment mode (development, testing, production).",
+    choices: ["development", "testing", "production"],
+    default: "development",
+  }),
 };
 
 const env = envalid.cleanEnv(dotEnvOutput.parsed, ENV_SPEC);
