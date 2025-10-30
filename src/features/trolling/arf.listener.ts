@@ -10,6 +10,7 @@ import _ from "lodash";
 import { DiscordEventListener } from "../../abc/listener.abc";
 import { BitByteService } from "../../services/bit-byte.service";
 import type { UnixSeconds } from "../../types/branded.types";
+import { isWithinChannel } from "../../utils/channels.utils";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import {
   ADMINS_ROLE_ID,
@@ -63,19 +64,15 @@ class ArfListener extends DiscordEventListener<Events.MessageCreate> {
       .has(PermissionFlagsBits.ViewChannel);
 
     // Don't embarrass them in front of their bits.
-    const isBitByteChannel
-      = (
-        // Case: bit-byte channel directly under the bit-byte category.
-        channel.parent?.name === BitByteService.CATEGORY_NAME
-      ) || (
-        // Case: thread under a bit-byte channel under the bit-byte category.
-        channel.parent?.parent?.name === BitByteService.CATEGORY_NAME
-      );
+    const isBitByteChannel = isWithinChannel(
+      channel.parent,
+      (channel) => channel.name === BitByteService.CATEGORY_NAME,
+    );
 
     // Not in front of the inductees either.
     const isInductionChannel = (
-      channel.id === INDUCTION_ANNOUNCEMENTS_CHANNEL_ID ||
-      channel.id === INDUCTEES_CHAT_CHANNEL_ID
+      isWithinChannel(channel, INDUCTION_ANNOUNCEMENTS_CHANNEL_ID) ||
+      isWithinChannel(channel, INDUCTEES_CHAT_CHANNEL_ID)
     );
 
     return !isPublic && !isBitByteChannel && !isInductionChannel;
