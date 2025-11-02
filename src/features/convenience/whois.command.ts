@@ -22,7 +22,6 @@ import bitByteService from "../../services/bit-byte.service";
 import inducteeSheetsService, {
   type InducteeData,
 } from "../../services/inductee-sheets.service";
-import { EMOJI_WARNING } from "../../utils/emojis.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import { emailHyperlink, toBulletedList } from "../../utils/formatting.utils";
 import {
@@ -137,9 +136,9 @@ class WhoisCommand extends SlashCommandHandler {
       `${bold("Major:")} ${major}`,
       `${bold("Contact:")} ${emailHyperlink(preferredEmail)}`,
       `${bold("Member:")} ${userMention(inducteeMember.id)}`,
-      `${bold("Group:")} ` + (group
+      `${bold("Bit-Byte:")} ` + (group
         ? `${roleMention(group.roleId)} / ${channelMention(group.channelId)}`
-        : `<pending assignment> ${EMOJI_WARNING}`
+        : `(not participating)`
       ),
     ];
 
