@@ -13,7 +13,9 @@ enum Column {
   Event = 0,
   Professor,
   EmailDate,
+  EmailCheckbox,
   PublicityDate,
+  PublicityCheckbox,
   EventDate,
   TestDate,
   Location,
@@ -27,7 +29,9 @@ const REVIEW_EVENT_ROW_FIELDS = [
   z.string().trim(), // Event name; (blank).
   z.string().trim(), // Professor email; Professor name.
   z.string().trim(), // Email date; (blank).
+  z.string().trim(), // Email checkbox; (blank).
   z.string().trim(), // Publicity date; (blank).
+  z.string().trim(), // Publicity checkbox; (blank).
   z.string().trim(), // Event date; (day of the week).
   z.string().trim(), // Test date; (day of the week).
   z.string().trim(), // Location; (blank).
