@@ -11,6 +11,7 @@ import {
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { GoogleSheetsClient } from "../../clients/sheets.client";
 import env from "../../env";
+import { removePrefix } from "../../utils/data.utils";
 import {
   EMOJI_CLOCK,
   EMOJI_INFORMATION,
@@ -66,7 +67,8 @@ class ReviewEventCommand extends SlashCommandHandler {
     const eventsData = await reviewSheetsService.getAllData();
     const eventNames = Array.from(eventsData.keys());
     const filteredNames = eventNames.filter(name =>
-      name.toLowerCase().startsWith(focusedValue),
+      name.toLowerCase().startsWith(focusedValue) ||
+      removePrefix(name, "CS ").toLowerCase().startsWith(focusedValue),
     );
 
     const choices: ApplicationCommandOptionChoiceData[] = filteredNames
