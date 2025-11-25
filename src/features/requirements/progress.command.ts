@@ -1,10 +1,12 @@
 import {
   bold,
+  Colors,
   EmbedBuilder,
   inlineCode,
   roleMention,
   time,
   TimestampStyles,
+  underscore,
   userMention,
   type ChatInputCommandInteraction,
   type GuildMember,
@@ -153,7 +155,16 @@ class TrackerCommand extends SlashCommandHandler {
     // NOTE: Due to how requirements are trickily spread across different
     // sources of truth, the details returned may not be exhaustive.
 
-    const mention = `${bold("Inductee member:")} ${userMention(inductee.id)}`;
+    let mention = `${bold("Inductee member:")} ${userMention(inductee.id)}`;
+
+    const isReady = this.isReadyToInduct(data);
+    if (isReady) {
+      mention += (
+        `\n${EMOJI_CHECK} ` +
+        underscore(bold("READY TO INDUCT. Attend ceremony!"))
+      );
+    }
+
     const progressLines = toBulletedList(this.formatProgressLines(data));
 
     const information = (
@@ -186,7 +197,8 @@ class TrackerCommand extends SlashCommandHandler {
 
     return new EmbedBuilder()
       .setTitle(`${possessive(data.name)} Induction Progress`)
-      .setDescription(description);
+      .setDescription(description)
+      .setColor(isReady ? Colors.Green : null);
   }
 
   private formatProgressLines(data: RequirementsData): string[] {
@@ -284,6 +296,20 @@ class TrackerCommand extends SlashCommandHandler {
     );
 
     return editedLines.join("\n");
+  }
+
+  private isReadyToInduct(data: RequirementsData): boolean {
+    return (
+      data.demographics &&
+      data.ethics &&
+      data.fee &&
+      data.oneOnOnes === NUM_ONE_ON_ONES_REQUIRED &&
+      data.professional === NUM_PROFESSIONAL_EVENTS_REQUIRED &&
+      data.social === NUM_SOCIAL_EVENTS_REQUIRED &&
+      // data.tests === NUM_TESTS_REQUIRED &&
+      data.townHall &&
+      data.tutoring?.cappedTotal === data.tutoring?.requiredCount
+    );
   }
 
   private getAgoMention(): string {
