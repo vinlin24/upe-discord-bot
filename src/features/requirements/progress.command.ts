@@ -305,9 +305,9 @@ class TrackerCommand extends SlashCommandHandler {
       data.demographics &&
       data.ethics &&
       data.fee &&
-      data.oneOnOnes === NUM_ONE_ON_ONES_REQUIRED &&
-      data.professional === NUM_PROFESSIONAL_EVENTS_REQUIRED &&
-      data.social === NUM_SOCIAL_EVENTS_REQUIRED &&
+      data.oneOnOnes >= NUM_ONE_ON_ONES_REQUIRED &&
+      data.professional >= NUM_PROFESSIONAL_EVENTS_REQUIRED &&
+      data.social >= NUM_SOCIAL_EVENTS_REQUIRED &&
       // data.tests === NUM_TESTS_REQUIRED &&
       data.townHall
       // TODO: For F25 only, this check is bypassed. Tutoring tracker was broken
