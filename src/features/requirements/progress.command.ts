@@ -203,7 +203,9 @@ class TrackerCommand extends SlashCommandHandler {
 
   private formatProgressLines(data: RequirementsData): string[] {
     return [
-      this.formatTutoringProgress(data.tutoring),
+      // TODO: For F25 only, this check is bypassed. Tutoring tracker was broken
+      // the only quarter.
+      // this.formatTutoringProgress(data.tutoring),
       this.formatBooleanProgress("Demographics Survey", data.demographics),
       this.formatCountProgress(
         "Professional Events",
@@ -307,8 +309,10 @@ class TrackerCommand extends SlashCommandHandler {
       data.professional === NUM_PROFESSIONAL_EVENTS_REQUIRED &&
       data.social === NUM_SOCIAL_EVENTS_REQUIRED &&
       // data.tests === NUM_TESTS_REQUIRED &&
-      data.townHall &&
-      data.tutoring?.cappedTotal === data.tutoring?.requiredCount
+      data.townHall
+      // TODO: For F25 only, this check is bypassed. Tutoring tracker was broken
+      // the only quarter.
+      // data.tutoring?.cappedTotal === data.tutoring?.requiredCount
     );
   }
 
