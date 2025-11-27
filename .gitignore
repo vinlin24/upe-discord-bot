@@ -125,3 +125,6 @@ job-webhook/job_cache.json
 
 # MacOS nonsense
 .DS_Store
+
+# Playground for misc throwaway files
+/temp/

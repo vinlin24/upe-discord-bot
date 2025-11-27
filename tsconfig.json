@@ -14,12 +14,21 @@
     "resolveJsonModule": true,
     "forceConsistentCasingInFileNames": true,
     "removeComments": true,
-    "typeRoots": ["node_modules/@types"],
+    "typeRoots": [
+      "node_modules/@types"
+    ],
     "sourceMap": false,
     "baseUrl": "./"
   },
-  "include": ["./**/*.ts"],
-  "exclude": ["node_modules", "dist", "scripts"],
+  "include": [
+    "./**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "scripts",
+    "temp"
+  ],
   "ts-node": {
     "files": true
   }
