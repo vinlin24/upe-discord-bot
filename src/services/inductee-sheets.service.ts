@@ -9,6 +9,7 @@ import { SystemDateClient } from "../utils/date.utils";
 export enum InducteeStatus {
   Active = "Active",
   Dropped = "Dropped",
+  Deferred = "Deferred",
 }
 
 // NOTE: The value side of the enum is the "full name" of the major used in
