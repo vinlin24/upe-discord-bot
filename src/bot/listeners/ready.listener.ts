@@ -14,6 +14,7 @@ import {
 import { DiscordEventListener } from "../../abc/listener.abc";
 import helpCommand from "../../features/convenience/help.command";
 import channelsService from "../../services/channels.service";
+import mealService from "../../services/meal.service";
 import orzService from "../../services/orz.service";
 import type { UnixSeconds, UrlString } from "../../types/branded.types";
 import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
@@ -36,6 +37,7 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
     // register themselves.
     await channelsService.initialize(client);
     await orzService.initialize(channelsService.getUpe());
+    await mealService.initialize(channelsService.getUpe());
 
     await this.notifyDevs(now);
 
