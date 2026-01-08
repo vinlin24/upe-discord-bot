@@ -48,3 +48,4 @@ export const {
   INDUCTEES_CHAT_CHANNEL_ID,
 } = env;
 export const OFFICER_MEMES_CHANNEL_ID = "1308324958119657512" as ChannelId;
+export const MODERATION_CHANNEL_ID = "940477197410529290" as ChannelId;

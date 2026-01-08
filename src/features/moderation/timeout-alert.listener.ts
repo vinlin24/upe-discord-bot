@@ -18,6 +18,7 @@ import { isoToUnixSeconds, msecToUnixSeconds } from "../../utils/date.utils";
 import { EMOJI_ALERT, EMOJI_INFORMATION } from "../../utils/emojis.utils";
 import { timestampPair, toBulletedList } from "../../utils/formatting.utils";
 import {
+  MODERATION_CHANNEL_ID,
   OFFICER_MEMES_CHANNEL_ID,
   OFFICERS_ROLE_ID,
 } from "../../utils/snowflakes.utils";
@@ -69,6 +70,13 @@ class TimeoutAlertListener
       const memesChannel = await guild.channels.fetch(OFFICER_MEMES_CHANNEL_ID);
       if (memesChannel !== null && memesChannel.isTextBased()) {
         await memesChannel.send({ embeds: [embed] });
+      }
+    }
+    // Probably serious.
+    else {
+      const modChannel = await guild.channels.fetch(MODERATION_CHANNEL_ID);
+      if (modChannel !== null && modChannel.isTextBased()) {
+        await modChannel.send({ embeds: [embed] });
       }
     }
 
