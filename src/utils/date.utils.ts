@@ -1,6 +1,6 @@
 import { DateTime, type DateObjectUnits } from "luxon";
 
-import { isBrandedNumber, type UnixSeconds } from "../types/branded.types";
+import { isBrandedNumber, asBrandedNumber, type UnixSeconds } from "../types/branded.types";
 
 export interface IDateClient {
   getNow(): UnixSeconds;
@@ -45,6 +45,17 @@ export function dateToUnixSeconds(date: Date): UnixSeconds {
   const unixMsec = date.getTime();
   return msecToUnixSeconds(unixMsec);
 }
+
+export function getNextMidnight(now: UnixSeconds, dateClient: IDateClient): UnixSeconds {
+    const dateTime = dateClient.getDateTime(now, UCLA_TIMEZONE);
+    if (!dateTime.isValid) {
+      throw new Error(
+        `timestamp ${now} failed to convert: ${dateTime.invalidExplanation}`,
+      );
+    }
+    const nextMidnight = dateTime.plus({ days: 1 }).startOf("day");
+    return asBrandedNumber(nextMidnight.toSeconds());
+  }
 
 export enum Month {
   January = 1,

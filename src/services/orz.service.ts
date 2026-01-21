@@ -9,15 +9,13 @@ import _ from "lodash";
 
 import { OrzeeModel } from "../models/orzee.model";
 import {
-  asBrandedNumber,
-  type UnixSeconds,
   type UserId,
 } from "../types/branded.types";
 import { isNonEmptyArray } from "../types/generic.types";
 import { setDifference } from "../utils/data.utils";
 import {
   SystemDateClient,
-  UCLA_TIMEZONE,
+  getNextMidnight,
   type IDateClient,
 } from "../utils/date.utils";
 import {
@@ -52,24 +50,13 @@ class OrzService {
     }
 
     const now = this.dateClient.getNow();
-    const nextMidnight = this.getNextMidnight(now);
+    const nextMidnight = getNextMidnight(now, this.dateClient);
     const msecLeft = (nextMidnight - now) * 1000;
     // Schedule the first orz.
     setTimeout(
       async () => await this.sendOrz(officerMemes, officersRole),
       msecLeft,
     );
-  }
-
-  private getNextMidnight(now: UnixSeconds): UnixSeconds {
-    const dateTime = this.dateClient.getDateTime(now, UCLA_TIMEZONE);
-    if (!dateTime.isValid) {
-      throw new Error(
-        `timestamp ${now} failed to convert: ${dateTime.invalidExplanation}`,
-      );
-    }
-    const nextMidnight = dateTime.plus({ days: 1 }).startOf("day");
-    return asBrandedNumber(nextMidnight.toSeconds());
   }
 
   private async sendOrz(

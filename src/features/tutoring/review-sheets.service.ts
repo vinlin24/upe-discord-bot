@@ -1,3 +1,4 @@
+import { GuildTextBasedChannel, Role, type Guild } from "discord.js";
 import { DateTime } from "luxon";
 import { z } from "zod";
 
@@ -6,8 +7,14 @@ import { GoogleSheetsClient } from "../../clients/sheets.client";
 import env from "../../env";
 import type { Seconds } from "../../types/branded.types";
 import { asMutable } from "../../types/generic.types";
-import { SystemDateClient } from "../../utils/date.utils";
+import { SystemDateClient, getNextMidnight } from "../../utils/date.utils";
 import { toCount } from "../../utils/formatting.utils";
+import {
+  EMERITUS_ROLE_ID,
+  TUTORING_CHANNEL_ID,
+  TUTORING_ROLE_ID,
+} from "src/utils/snowflakes.utils";
+import channelsService from "../../services/channels.service";
 
 enum Column {
   Event = 0,
@@ -41,9 +48,9 @@ const REVIEW_EVENT_ROW_FIELDS = [
   z.string().trim(), // Expected attendance; (blank).
 ] as const;
 
-const ReviewEventRowSchema = z.tuple(
-  asMutable(REVIEW_EVENT_ROW_FIELDS),
-).rest(z.any());
+const ReviewEventRowSchema = z
+  .tuple(asMutable(REVIEW_EVENT_ROW_FIELDS))
+  .rest(z.any());
 
 export type ReviewEvent = {
   name: string;
@@ -51,6 +58,10 @@ export type ReviewEvent = {
     name: string;
     email: string;
   };
+  emailDate?: DateTime<true>;
+  emailDone?: boolean;
+  publicityDate?: DateTime<true>;
+  publicityDone?: boolean;
   eventDate?: DateTime<true>;
   testDate?: DateTime<true>;
   location: string;
@@ -60,13 +71,147 @@ export type ReviewEvent = {
   expectedAttendance?: number;
 };
 
-export class ReviewEventSheetsService
-  extends SheetsService<ReviewEvent, "name"> {
-
+export class ReviewEventSheetsService extends SheetsService<
+  ReviewEvent,
+  "name"
+> {
   protected override readonly key = "name";
 
   // This spreadsheet doesn't change very often.
   protected override refreshInterval = 3600 as Seconds;
+
+  public async initialize(upe: Guild): Promise<void> {
+    const tutoring = await upe.channels.fetch(TUTORING_CHANNEL_ID);
+    if (tutoring === null || !tutoring.isTextBased()) {
+      const errorMessage =
+        `tutoring officers channel (ID ${TUTORING_CHANNEL_ID}) is invalid: ` +
+        `${tutoring}`;
+      console.error(errorMessage);
+      await channelsService.sendDevError(errorMessage);
+      return;
+    }
+
+    const tutoringRole = await upe.roles.fetch(TUTORING_ROLE_ID);
+    if (tutoringRole === null) {
+      const errorMessage = `failed to get tutoring officers role (ID: ${TUTORING_ROLE_ID})`;
+      console.error(errorMessage);
+      await channelsService.sendDevError(errorMessage);
+      return;
+    }
+
+    const now = this.dates.getNow();
+    const nextMidnight = getNextMidnight(now, this.dates);
+    const msecLeft = (nextMidnight - now) * 1000;
+    // Schedule the first reminder.
+    setTimeout(
+      async () => await this.sendReminder(tutoring, tutoringRole),
+      msecLeft,
+    );
+  }
+
+  private async sendReminder(
+    tutoring: GuildTextBasedChannel,
+    tutoringRole: Role,
+  ): Promise<void> {
+    try {
+      const reminder = await this.getReminder(tutoringRole);
+
+      if (reminder !== null) {
+        await tutoring.send(reminder);
+      }
+    } catch (error) {
+      // This callback is outside of our standard execution pipeline, so manually
+      // suppress exceptions to prevent bringing down the bot.
+      console.error("failed to complete daily reminder:", error);
+      if (error instanceof Error) {
+        await channelsService.sendDevError(error);
+      }
+    }
+
+    // Schedule next reminder.
+    const ONE_DAY_MSEC = 3600 * 24 * 1000;
+    setTimeout(
+      async () => this.sendReminder(tutoring, tutoringRole),
+      ONE_DAY_MSEC,
+    );
+  }
+
+  private async getReminder(tutoringRole: Role): Promise<string | null> {
+    const messageSections = [];
+
+    const todayNormalized = this.dates
+      .getDateTime(this.dates.getNow())
+      .startOf("day");
+    const eventsData = await this.getAllData();
+    for (const event of eventsData.values()) {
+      // Email to professor is due today and not done.
+      if (
+        event.emailDate &&
+        event.emailDate <= todayNormalized &&
+        !event.emailDone
+      ) {
+        messageSections.push(
+          `${event.name} - Email to ${event.professor.name} via ${event.professor.email} is due! ${this.getPings(tutoringRole, event.leadHosts)}`,
+        );
+      }
+
+      // Publicity request is due today and not done.
+      if (
+        event.publicityDate &&
+        event.publicityDate <= todayNormalized &&
+        !event.publicityDone
+      ) {
+        messageSections.push(
+          `${event.name} - Email to ${event.professor.name} via ${event.professor.email} is due! ${this.getPings(tutoringRole, event.leadHosts)}`,
+        );
+      }
+
+      // Event is tomorrow/today.
+      if (
+        event.eventDate &&
+        todayNormalized.plus({ days: 1 }) == event.eventDate
+      ) {
+        messageSections.push(
+          `${event.name} is tomorrow! ${this.getPings(tutoringRole, event.leadHosts.concat(event.hosts, event.backupHosts))}`,
+        );
+      } else if (event.eventDate && todayNormalized == event.eventDate) {
+        messageSections.push(
+          `${event.name} is today! ${this.getPings(tutoringRole, event.leadHosts.concat(event.hosts, event.backupHosts))}`,
+        );
+      }
+    }
+
+    if (messageSections.length !== 0) {
+      return `Tutoring Reminder ${todayNormalized.toFormat("DDD")}
+      
+      ${messageSections.join("\n")}`;
+    }
+    return null;
+  }
+
+  private getPings(tutoringRole: Role, names: string[]) {
+    const pings = [];
+    for (const name of names) {
+      let located = false;
+      for (const officer of tutoringRole.members.values()) {
+        if (officer.roles.cache.has(EMERITUS_ROLE_ID)) {
+          continue;
+        }
+
+        if (officer.displayName.startsWith(name)) {
+          pings.push(officer);
+          located = true;
+          break;
+        }
+      }
+
+      if (!located) {
+        pings.push(name);
+      }
+    }
+
+    return pings.join(" ");
+  }
 
   protected override async *parseData(
     rows: string[][],
@@ -104,17 +249,17 @@ export class ReviewEventSheetsService
       name: data2[Column.Professor],
       email: data1[Column.Professor],
     };
+    const emailDate = this.resolveDateString(data1[Column.EmailDate]);
+    const emailDone = data1[Column.EmailCheckbox] === "TRUE";
+    const publicityDate = this.resolveDateString(data1[Column.PublicityDate]);
+    const publicityDone = data1[Column.PublicityCheckbox] === "TRUE";
     const eventDate = this.resolveDateString(data1[Column.EventDate]);
     const location = data1[Column.Location];
     const testDate = this.resolveDateString(data1[Column.TestDate]);
-    const leadHosts = [
-      data1[Column.LeadHosts],
-      data2[Column.LeadHosts],
-    ].filter(Boolean);
-    const hosts = [
-      data1[Column.Hosts],
-      data2[Column.Hosts],
-    ].filter(Boolean);
+    const leadHosts = [data1[Column.LeadHosts], data2[Column.LeadHosts]].filter(
+      Boolean,
+    );
+    const hosts = [data1[Column.Hosts], data2[Column.Hosts]].filter(Boolean);
     const backupHosts = [
       data1[Column.BackupHosts],
       data2[Column.BackupHosts],
@@ -124,6 +269,10 @@ export class ReviewEventSheetsService
     return {
       name: eventName,
       professor,
+      emailDate: emailDate ?? undefined,
+      emailDone: emailDone ?? undefined,
+      publicityDate: publicityDate ?? undefined,
+      publicityDone: publicityDone ?? undefined,
       eventDate: eventDate ?? undefined,
       testDate: testDate ?? undefined,
       location,
@@ -136,15 +285,12 @@ export class ReviewEventSheetsService
 
   private resolveDateString(text: string): DateTime<true> | null {
     // Ref: https://moment.github.io/luxon/#/parsing?id=table-of-tokens.
-    const format1 = "M/d";
-    const format2 = "M/d/y";
-    let dateTime = DateTime.fromFormat(text, format1);
-    if (dateTime.isValid) {
-      return dateTime;
-    }
-    dateTime = DateTime.fromFormat(text, format2);
-    if (dateTime.isValid) {
-      return dateTime;
+    const formats = ["M/d", "M/d/y", "DD"];
+    for (const format of formats) {
+      let dateTime = DateTime.fromFormat(text, format);
+      if (dateTime.isValid) {
+        return dateTime;
+      }
     }
     return null;
   }
