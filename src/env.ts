@@ -29,7 +29,7 @@ function makeBrandedValidator<BrandedType>(matcher: RegExp) {
 const userIdValidator = makeBrandedValidator<UserId>(/^[0-9]+$/);
 const channelIdValidator = makeBrandedValidator<ChannelId>(/^[0-9]+$/);
 const urlStringValidator = envalid.url<UrlString>;
-const seasonIdValidator = makeBrandedValidator<SeasonId>(/^[FS][0-9]+$/);
+const seasonIdValidator = makeBrandedValidator<SeasonId>(/^[FWS][0-9]+$/);
 const quarterNameValidator = makeBrandedValidator<QuarterName>(
   /^(Fall|Winter|Spring) [0-9]+$/,
 );
