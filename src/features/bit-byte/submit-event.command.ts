@@ -33,9 +33,6 @@ type ResolvedCommandOptions = {
 };
 
 class SubmitEventCommand extends SlashCommandHandler {
-  // TODO: Disabled as it is now over for F25. Re-enable for next season.
-  public override readonly shouldRegister = false;
-
   public override readonly definition = new SlashCommandBuilder()
     .setName("submitbitbyte")
     .setDescription("Get points for events with your bits!")
