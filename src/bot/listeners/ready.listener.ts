@@ -13,6 +13,7 @@ import {
 
 import { DiscordEventListener } from "../../abc/listener.abc";
 import helpCommand from "../../features/convenience/help.command";
+import reviewSheetsService from "../../features/tutoring/review-sheets.service";
 import channelsService from "../../services/channels.service";
 import orzService from "../../services/orz.service";
 import type { UnixSeconds, UrlString } from "../../types/branded.types";
@@ -36,6 +37,7 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
     // register themselves.
     await channelsService.initialize(client);
     await orzService.initialize(channelsService.getUpe());
+    await reviewSheetsService.initialize(channelsService.getUpe());
 
     await this.notifyDevs(now);
 
