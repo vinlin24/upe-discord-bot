@@ -90,5 +90,4 @@ export enum IanaTimeZone {
 }
 
 export const UCLA_TIMEZONE = IanaTimeZone.AmericaLosAngeles;
-
 export const ONE_DAY_MSEC = 24 * 3600 * 1000;
