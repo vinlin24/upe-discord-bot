@@ -7,10 +7,9 @@ import { GoogleSheetsClient } from "../../clients/sheets.client";
 import env from "../../env";
 import type { Seconds } from "../../types/branded.types";
 import { asMutable } from "../../types/generic.types";
-import { SystemDateClient, getNextMidnight } from "../../utils/date.utils";
+import { ONE_DAY_MSEC, SystemDateClient, getNextMidnight } from "../../utils/date.utils";
 import { toCount } from "../../utils/formatting.utils";
 import {
-  EMERITUS_ROLE_ID,
   TUTORING_CHANNEL_ID,
   TUTORING_ROLE_ID,
 } from "src/utils/snowflakes.utils";
@@ -129,7 +128,6 @@ export class ReviewEventSheetsService extends SheetsService<
     }
 
     // Schedule next reminder.
-    const ONE_DAY_MSEC = 3600 * 24 * 1000;
     setTimeout(
       async () => this.sendReminder(tutoring, tutoringRole),
       ONE_DAY_MSEC,
@@ -194,10 +192,6 @@ export class ReviewEventSheetsService extends SheetsService<
     for (const name of names) {
       let located = false;
       for (const officer of tutoringRole.members.values()) {
-        if (officer.roles.cache.has(EMERITUS_ROLE_ID)) {
-          continue;
-        }
-
         if (officer.displayName.startsWith(name)) {
           pings.push(officer);
           located = true;

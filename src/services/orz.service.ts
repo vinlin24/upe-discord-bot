@@ -14,6 +14,7 @@ import {
 import { isNonEmptyArray } from "../types/generic.types";
 import { setDifference } from "../utils/data.utils";
 import {
+  ONE_DAY_MSEC,
   SystemDateClient,
   getNextMidnight,
   type IDateClient,
@@ -76,7 +77,6 @@ class OrzService {
       }
     }
     // Schedule next orz.
-    const ONE_DAY_MSEC = 3600 * 24 * 1000;
     setTimeout(
       async () => this.sendOrz(officerMemes, officersRole),
       ONE_DAY_MSEC,
