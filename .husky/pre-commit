@@ -8,5 +8,7 @@ if git diff --staged --name-only | grep -q '^src/'; then
     npm run build
 fi
 
-make .env.example
-git add .env.example
+if ! git diff --quiet --staged src/env.ts; then
+    npx ts-node scripts/update-env-example.ts
+    git add .env.example
+fi
