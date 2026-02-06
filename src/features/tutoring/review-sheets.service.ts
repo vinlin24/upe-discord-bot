@@ -1,4 +1,4 @@
-import { GuildTextBasedChannel, Role, type Guild } from "discord.js";
+import { GuildTextBasedChannel, Role, userMention, type Guild } from "discord.js";
 import { DateTime } from "luxon";
 import { z } from "zod";
 
@@ -167,12 +167,12 @@ export class ReviewEventSheetsService extends SheetsService<
       // Event is tomorrow/today.
       if (
         event.eventDate &&
-        todayNormalized.plus({ days: 1 }) == event.eventDate
+        todayNormalized.plus({ days: 1 }).equals(event.eventDate)
       ) {
         messageSections.push(
           `${event.name} is tomorrow! ${this.getPings(tutoringRole, event.leadHosts.concat(event.hosts, event.backupHosts))}`,
         );
-      } else if (event.eventDate && todayNormalized == event.eventDate) {
+      } else if (event.eventDate && todayNormalized.equals(event.eventDate)) {
         messageSections.push(
           `${event.name} is today! ${this.getPings(tutoringRole, event.leadHosts.concat(event.hosts, event.backupHosts))}`,
         );
@@ -192,7 +192,7 @@ export class ReviewEventSheetsService extends SheetsService<
     for (const name of names) {
       let located = false;
       for (const officer of tutoringRole.members.values()) {
-        if (officer.displayName.startsWith(name)) {
+        if (officer.displayName.toLowerCase().startsWith(name.toLowerCase())) {
           pings.push(officer);
           located = true;
           break;
@@ -204,7 +204,9 @@ export class ReviewEventSheetsService extends SheetsService<
       }
     }
 
-    return pings.join(" ");
+    return pings.map(
+      (ping) => typeof ping === "string" ? `@${ping}` : userMention(ping.id)
+    ).join(" ");
   }
 
   protected override async *parseData(
