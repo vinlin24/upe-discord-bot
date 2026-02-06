@@ -9,6 +9,7 @@ import {
   Events,
   inlineCode,
   type Client,
+  type MessageCreateOptions,
 } from "discord.js";
 
 import { DiscordEventListener } from "../../abc/listener.abc";
@@ -37,7 +38,9 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
     await channelsService.initialize(client);
     await orzService.initialize(channelsService.getUpe());
 
-    await this.notifyDevs(now);
+    const startupMessage = await this.makeStartupMessage(now);
+    await channelsService.sendDev(startupMessage);
+    await channelsService.getLogSink()?.send(startupMessage);
 
     await client.user.setActivity({
       type: ActivityType.Listening,
@@ -45,15 +48,17 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
     });
   }
 
-  private async notifyDevs(loginTime: UnixSeconds): Promise<void> {
+  private async makeStartupMessage(
+    loginTime: UnixSeconds,
+  ): Promise<MessageCreateOptions> {
     const [timeMention, relativeMention] = timestampPair(loginTime);
 
     const gitContext = await this.getGitContext();
 
-    await channelsService.sendDev({
+    return {
       content: `Bot has logged in at ${timeMention} (${relativeMention}).`,
       embeds: [gitContext],
-    });
+    };
   }
 
   private async getGitContext(): Promise<EmbedBuilder> {
