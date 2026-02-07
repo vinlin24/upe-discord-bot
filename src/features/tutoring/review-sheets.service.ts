@@ -12,7 +12,7 @@ import { toCount } from "../../utils/formatting.utils";
 import {
   TUTORING_CHANNEL_ID,
   TUTORING_ROLE_ID,
-} from "src/utils/snowflakes.utils";
+} from "../../utils/snowflakes.utils";
 import channelsService from "../../services/channels.service";
 
 enum Column {
