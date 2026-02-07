@@ -49,3 +49,4 @@ export const {
 } = env;
 export const OFFICER_MEMES_CHANNEL_ID = "1308324958119657512" as ChannelId;
 export const MODERATION_CHANNEL_ID = "940477197410529290" as ChannelId;
+export const TUTORING_CHANNEL_ID = "827992133830312016" as ChannelId;

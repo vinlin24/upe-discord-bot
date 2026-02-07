@@ -1,6 +1,10 @@
 import { DateTime, type DateObjectUnits } from "luxon";
 
-import { isBrandedNumber, type UnixSeconds } from "../types/branded.types";
+import {
+  isBrandedNumber,
+  asBrandedNumber,
+  type UnixSeconds,
+} from "../types/branded.types";
 
 export interface IDateClient {
   getNow(): UnixSeconds;
@@ -46,6 +50,20 @@ export function dateToUnixSeconds(date: Date): UnixSeconds {
   return msecToUnixSeconds(unixMsec);
 }
 
+export function getNextMidnight(
+  now: UnixSeconds,
+  dateClient: IDateClient,
+): UnixSeconds {
+  const dateTime = dateClient.getDateTime(now, UCLA_TIMEZONE);
+  if (!dateTime.isValid) {
+    throw new Error(
+      `timestamp ${now} failed to convert: ${dateTime.invalidExplanation}`,
+    );
+  }
+  const nextMidnight = dateTime.plus({ days: 1 }).startOf("day");
+  return asBrandedNumber(nextMidnight.toSeconds());
+}
+
 export enum Month {
   January = 1,
   February,
@@ -63,11 +81,13 @@ export enum Month {
 
 export type MonthName = keyof typeof Month;
 
-export const MONTH_NAMES = Object.values(Month)
-  .filter(value => typeof value === "string") as MonthName[];
+export const MONTH_NAMES = Object.values(Month).filter(
+  (value) => typeof value === "string",
+) as MonthName[];
 
 export enum IanaTimeZone {
   AmericaLosAngeles = "America/Los_Angeles",
 }
 
 export const UCLA_TIMEZONE = IanaTimeZone.AmericaLosAngeles;
+export const ONE_DAY_MSEC = 24 * 3600 * 1000;
