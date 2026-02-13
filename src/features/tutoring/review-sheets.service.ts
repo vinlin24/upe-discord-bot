@@ -160,7 +160,7 @@ export class ReviewEventSheetsService extends SheetsService<
         !event.publicityDone
       ) {
         messageSections.push(
-          `${event.name} - Email to ${event.professor.name} via ${event.professor.email} is due! ${this.getPings(tutoringRole, event.leadHosts)}`,
+          `${event.name} - Publicity request is due! ${this.getPings(tutoringRole, event.leadHosts)}`,
         );
       }
 
@@ -180,9 +180,7 @@ export class ReviewEventSheetsService extends SheetsService<
     }
 
     if (messageSections.length !== 0) {
-      return `Tutoring Reminder ${todayNormalized.toFormat("DDD")}
-      
-      ${messageSections.join("\n")}`;
+      return `Tutoring Reminder - ${todayNormalized.toFormat("DDD")}\n\n` + messageSections.join("\n");
     }
     return null;
   }
