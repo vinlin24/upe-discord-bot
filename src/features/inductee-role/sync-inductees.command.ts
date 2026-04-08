@@ -163,17 +163,23 @@ class SyncInducteesCommand extends SlashCommandHandler {
     // Finally, log missing inductees, if any.
     const missingInductees = idsNotInServer.map(
       userId => registeredInductees.get(userId)!,
-    )
+    );
+    const invalidInductees = invalidIds.map(
+      userId => registeredInductees.get(userId)!,
+    );
     const messageReply = await interaction.fetchReply();
-    const loggedMessage = await this.logAllMissingInductees(
+    const loggedMessages = await this.logAllMissingInductees(
       missingInductees,
+      invalidInductees,
       messageReply.url as UrlString,
     )
 
-    if (loggedMessage !== null) {
+    if (loggedMessages !== null) {
+      const [loggedMessage1, loggedMessage2] = loggedMessages;
       // Have our command response & log dump message link to each other.
       await interaction.editReply({
-        content: `${messageReply.content}\nSee: ${loggedMessage.url}`,
+        content: `${messageReply.content}\n` +
+          `See: ${loggedMessage1.url}, ${loggedMessage2.url}`,
         embeds: [ackEmbed],
       });
     }
@@ -236,8 +242,9 @@ class SyncInducteesCommand extends SlashCommandHandler {
 
   private async logAllMissingInductees(
     missing: InducteeData[],
+    invalid: InducteeData[],
     interactionLink: UrlString,
-  ): Promise<Message | null> {
+  ): Promise<[Message, Message] | null> {
     if (missing.length === 0) {
       return null;
     }
@@ -250,13 +257,32 @@ class SyncInducteesCommand extends SlashCommandHandler {
       embedEntries.push(`${legalName} (${inlineCode(userMention(discordId))})`);
     }
 
-    const commaSepEmails = missing.map(info => info.preferredEmail).join(",");
+    const commaSepMissingIdEmails = missing
+      .map(info => info.preferredEmail).join(",");
     console.warn(
       "ENDWARNING. The following are the email addresses you can use to " +
-      "contact these users to let them know their Discord ID is invalid " +
-      "and/or they are not in the server:",
+      "contact these users to let them know their Discord ID is valid " +
+      "but they are not in the server:",
     );
-    console.warn(commaSepEmails);
+    console.warn(commaSepMissingIdEmails);
+
+    console.warn("WARNING: The following users provided invalid Discord IDs:");
+    const invalidIdEmbedEntries: string[] = [];
+
+    for (const { legalName, discordId } of invalid) {
+      console.error(`${legalName} (${discordId})`);
+      invalidIdEmbedEntries.push(
+        `${legalName} (invalid: ${inlineCode(discordId)})`,
+      );
+    }
+
+    const commaSepInvalidIdEmails = invalid
+      .map(info => info.preferredEmail).join(",");
+    console.warn(
+      "ENDWARNING. The following are the email addresses you can use to " +
+      "contact these users to let them know their Discord ID is invalid:",
+    );
+    console.warn(commaSepInvalidIdEmails);
 
     const logsChannel = channelsService.getLogSink();
     if (logsChannel === null) {
@@ -264,7 +290,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
     }
 
     const MAX_ENTRIES_PER_EMBED = 30;
-    const pages: EmbedBuilder[] = _
+    const missingIdPages: EmbedBuilder[] = _
       .chunk(embedEntries, MAX_ENTRIES_PER_EMBED)
       .map(toBulletedList)
       .map((description, index, array) => new EmbedBuilder()
@@ -273,17 +299,38 @@ class SyncInducteesCommand extends SlashCommandHandler {
         .setDescription(description)
         .setFooter({ text: `Page ${index + 1} / ${array.length}` }),
       );
-    pages.push(new EmbedBuilder()
+    missingIdPages.push(new EmbedBuilder()
       .setColor(Colors.Yellow)
       .setTitle(`${this.id}: Inductees Still Missing from Server`)
-      .setDescription(spoiler(codeBlock(commaSepEmails)))
+      .setDescription(spoiler(codeBlock(commaSepMissingIdEmails)))
       .setFooter({ text: "Emails to copy-paste" }),
     );
 
-    return await logsChannel.send({
+    const invalidIdPages: EmbedBuilder[] = _
+      .chunk(invalidIdEmbedEntries, MAX_ENTRIES_PER_EMBED)
+      .map(toBulletedList)
+      .map((description, index, array) => new EmbedBuilder()
+        .setColor(Colors.Red)
+        .setTitle(`${this.id}: Inductees with Invalid User IDs`)
+        .setDescription(description)
+        .setFooter({ text: `Page ${index + 1} / ${array.length}` }),
+      );
+    invalidIdPages.push(new EmbedBuilder()
+      .setColor(Colors.Red)
+      .setTitle(`${this.id}: Inductees with Invalid User IDs`)
+      .setDescription(spoiler(codeBlock(commaSepInvalidIdEmails)))
+      .setFooter({ text: "Emails to copy-paste" }),
+    );
+
+    const firstloggedMessage = await logsChannel.send({
       content: `From: ${interactionLink}`,
-      embeds: pages,
+      embeds: missingIdPages,
     });
+    const secondLoggedMessage = await logsChannel.send({
+      content: `From: ${interactionLink}`,
+      embeds: invalidIdPages,
+    });
+    return [firstloggedMessage, secondLoggedMessage];
   }
 
   // TODO: If this pattern is used enough, make it its own helper. At the
