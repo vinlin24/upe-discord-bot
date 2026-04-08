@@ -17,6 +17,15 @@ export function isUnknownMemberError(
 }
 
 /**
+ * DiscordAPIError[10013]: `Unknown User`.
+ */
+export function isUnknownUserError(
+  error: unknown,
+): error is DiscordAPIErrorWithCode<10013> {
+  return error instanceof DiscordAPIError && error.code === 10013
+}
+
+/**
  * DiscordAPIError[50001]: `Missing access`. This can happen if the bot is
  * missing the required role permissions. Confusingly, this is distinct from
  * DiscordAPIError[50013]: `You lack permissions to perform that action`.

@@ -37,7 +37,7 @@ import {
   EMOJI_INFORMATION,
   EMOJI_WARNING,
 } from "../../utils/emojis.utils";
-import { isUnknownMemberError } from "../../utils/errors.utils";
+import { isUnknownMemberError, isUnknownUserError } from "../../utils/errors.utils";
 import {
   boldNum,
   quietHyperlink,
@@ -99,7 +99,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
       `Attempting to grant role to ${idsNeedingRole.size} users`,
     );
     await interaction.editReply(this.formatLoadingLines(loadingLines));
-    const idsNotInServer = await this.grantInducteeRole(
+    const [idsNotInServer, invalidIds] = await this.grantInducteeRole(
       upe,
       idsNeedingRole,
       caller,
@@ -126,6 +126,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
     ];
     if (
       idsNotInServer.length === 0
+      && invalidIds.length === 0
       && activeIds.size === numInducteeUsersNow
     ) {
       ackEmbed.setColor(Colors.Green);
@@ -146,7 +147,11 @@ class SyncInducteesCommand extends SlashCommandHandler {
       ackDetails.push(
         `Couldn't find ${boldNum(idsNotInServer.length)} active ` +
         "inductees in the server",
-      )
+      );
+      ackDetails.push(
+        `${boldNum(invalidIds.length)} IDs do not seem like valid users: ` +
+        invalidIds.map(inlineCode).join(", "),
+      );
     }
     ackEmbed.setDescription(toBulletedList(ackDetails));
 
@@ -178,8 +183,9 @@ class SyncInducteesCommand extends SlashCommandHandler {
     upe: Guild,
     userIds: Iterable<UserId>,
     caller: GuildMember,
-  ): Promise<UserId[]> {
+  ): Promise<[missing: UserId[], invalid: UserId[]]> {
     const missingIds: UserId[] = [];
+    const invalidIds: UserId[] = [];
 
     for (const userId of userIds) {
       let member: GuildMember;
@@ -189,10 +195,15 @@ class SyncInducteesCommand extends SlashCommandHandler {
       catch (error) {
         if (isUnknownMemberError(error)) {
           console.warn(
-            `Inductee with user Id ${userId} active in registry but ` +
+            `Inductee with user ID ${userId} active in registry but ` +
             "not found in the server."
-          )
+          );
           missingIds.push(userId);
+          continue;
+        }
+        if (isUnknownUserError(error)) {
+          console.error(`User with ID ${userId} could not be fetched`);
+          invalidIds.push(userId);
           continue;
         }
         throw error;
@@ -204,7 +215,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
       );
     }
 
-    return missingIds;
+    return [missingIds, invalidIds];
   }
 
   private async revokeInducteeRole(
