@@ -41,7 +41,6 @@ class ReadyListener extends DiscordEventListener<Events.ClientReady> {
     await reviewSheetsService.initialize(channelsService.getUpe());
 
     const startupMessage = await this.makeStartupMessage(now);
-    await channelsService.sendDev(startupMessage);
     await channelsService.getLogSink()?.send(startupMessage);
 
     await client.user.setActivity({
