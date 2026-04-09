@@ -214,8 +214,10 @@ export class ReviewEventSheetsService extends SheetsService<
     for (let rowIndex = 1; rowIndex < rows.length; rowIndex += 2) {
       const row1 = rows[rowIndex];
       const row2 = rows[rowIndex + 1];
-      // Start of comments.
-      if (row1.length === 0) {
+      // End of table. The second condition is because sometimes we have "empty"
+      // rows that still have checkboxes (which are fetched as the string
+      // "FALSE"/"TRUE" in them).
+      if (row1.length === 0 || row1[0] === "") {
         break;
       }
       const entry = this.parseEntry(row1, row2);
