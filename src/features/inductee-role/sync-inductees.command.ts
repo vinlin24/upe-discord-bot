@@ -9,6 +9,7 @@ import {
   spoiler,
   userMention,
   type ChatInputCommandInteraction,
+  type ColorResolvable,
   type Guild,
   type GuildMember,
   type Message,
@@ -40,6 +41,7 @@ import {
 import { isUnknownMemberError, isUnknownUserError } from "../../utils/errors.utils";
 import {
   boldNum,
+  formatMailbox,
   quietHyperlink,
   toBulletedList,
 } from "../../utils/formatting.utils";
@@ -257,14 +259,14 @@ class SyncInducteesCommand extends SlashCommandHandler {
       embedEntries.push(`${legalName} (${inlineCode(userMention(discordId))})`);
     }
 
-    const commaSepMissingIdEmails = missing
-      .map(info => info.preferredEmail).join(",");
+
+    const emailsForMissingId = missing.map(info => info.preferredEmail);
     console.warn(
       "ENDWARNING. The following are the email addresses you can use to " +
       "contact these users to let them know their Discord ID is valid " +
       "but they are not in the server:",
     );
-    console.warn(commaSepMissingIdEmails);
+    console.warn(emailsForMissingId.join(","));
 
     console.warn("WARNING: The following users provided invalid Discord IDs:");
     const invalidIdEmbedEntries: string[] = [];
@@ -276,13 +278,12 @@ class SyncInducteesCommand extends SlashCommandHandler {
       );
     }
 
-    const commaSepInvalidIdEmails = invalid
-      .map(info => info.preferredEmail).join(",");
+    const emailsForInvalidId = invalid.map(info => info.preferredEmail);
     console.warn(
       "ENDWARNING. The following are the email addresses you can use to " +
       "contact these users to let them know their Discord ID is invalid:",
     );
-    console.warn(commaSepInvalidIdEmails);
+    console.warn(emailsForInvalidId.join(","));
 
     const logsChannel = channelsService.getLogSink();
     if (logsChannel === null) {
@@ -299,11 +300,8 @@ class SyncInducteesCommand extends SlashCommandHandler {
         .setDescription(description)
         .setFooter({ text: `Page ${index + 1} / ${array.length}` }),
       );
-    missingIdPages.push(new EmbedBuilder()
-      .setColor(Colors.Yellow)
-      .setTitle(`${this.id}: Inductees Still Missing from Server`)
-      .setDescription(spoiler(codeBlock(commaSepMissingIdEmails)))
-      .setFooter({ text: "Emails to copy-paste" }),
+    missingIdPages.push(
+      this.formatEmailInstructionEmbed(emailsForMissingId, Colors.Yellow),
     );
 
     const invalidIdPages: EmbedBuilder[] = _
@@ -315,11 +313,8 @@ class SyncInducteesCommand extends SlashCommandHandler {
         .setDescription(description)
         .setFooter({ text: `Page ${index + 1} / ${array.length}` }),
       );
-    invalidIdPages.push(new EmbedBuilder()
-      .setColor(Colors.Red)
-      .setTitle(`${this.id}: Inductees with Invalid User IDs`)
-      .setDescription(spoiler(codeBlock(commaSepInvalidIdEmails)))
-      .setFooter({ text: "Emails to copy-paste" }),
+    invalidIdPages.push(
+      this.formatEmailInstructionEmbed(emailsForInvalidId, Colors.Red),
     );
 
     const firstloggedMessage = await logsChannel.send({
@@ -369,6 +364,28 @@ class SyncInducteesCommand extends SlashCommandHandler {
       );
     }
     return role;
+  }
+
+  private formatEmailInstructionEmbed(
+    emails: string[],
+    color: ColorResolvable,
+  ): EmbedBuilder {
+    const undisclosedRecipients = formatMailbox(
+      "Undisclosed Recipients",
+      env.INDUCTION_EMAIL,
+    );
+    const instruction = (
+      "Emails to copy-paste. To keep the emails private, send to " +
+      `${inlineCode(undisclosedRecipients)} and BCC this email list:`
+    );
+    const emailList = spoiler(codeBlock(emails.join(",")));
+    const description = instruction + emailList;
+
+    return new EmbedBuilder()
+      .setColor(color)
+      .setTitle(`${this.id}: Inductees Still Missing from Server`)
+      .setDescription(description)
+      .setFooter({ text: "Emails to copy-paste" });
   }
 }
 
