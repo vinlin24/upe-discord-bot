@@ -139,11 +139,11 @@ The **repository secrets** and how to get them are:
   ```
 - `GOOGLE_CREDENTIALS_B64`: Base64 encoding of the [Google credentials file](#google-credentials-file).
   ```sh
-  cat src/assets/google-credentials.json | base64
+  base64 < src/assets/google-credentials.json
   ```
 - `ENV_FILE_B64`: Base64 encoding of the [.env file](#local-environment-recovery).
   ```sh
-  cat .env | base64
+  base64 < .env
   ```
 
 Guideline of when changes are needed:
