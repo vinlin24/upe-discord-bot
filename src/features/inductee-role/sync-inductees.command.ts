@@ -245,7 +245,7 @@ class SyncInducteesCommand extends SlashCommandHandler {
     invalid: InducteeData[],
     interactionLink: UrlString,
   ): Promise<[Message, Message] | null> {
-    if (missing.length === 0) {
+    if (missing.length === 0 && invalid.length === 0) {
       return null;
     }
 
