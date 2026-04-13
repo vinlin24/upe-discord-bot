@@ -62,7 +62,7 @@ class CreateByteGroupCommand extends SlashCommandHandler {
     .toJSON();
 
   public override readonly checks: SlashCommandCheck[] = [
-    new PrivilegeCheck(this).atLeast(Privilege.Induction),
+    new PrivilegeCheck(this).atLeast(Privilege.Mentorship),
     new BotPermissionCheck(this)
       // TODO: It could be nice to pass in a comment/explanation with each
       // permission so the check onFail can describe why it's needed.
