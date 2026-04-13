@@ -18,6 +18,7 @@ import {
   INDUCTEES_ROLE_ID,
   INDUCTION_AND_MEMBERSHIP_ROLE_ID,
   MEMBERS_ROLE_ID,
+  MENTORSHIP_ROLE_ID,
   OFFICERS_ROLE_ID,
 } from "../utils/snowflakes.utils";
 
@@ -26,6 +27,7 @@ export enum Privilege {
   Inductee,
   Member,
   Officer,
+  Mentorship,
   Induction,
   Administrator,
   Developer,
@@ -35,6 +37,7 @@ export const PRIVILEGE_ROLES = new BidirectionalMap<Privilege, RoleId>([
   [Privilege.Inductee, INDUCTEES_ROLE_ID],
   [Privilege.Member, MEMBERS_ROLE_ID],
   [Privilege.Officer, OFFICERS_ROLE_ID],
+  [Privilege.Mentorship, MENTORSHIP_ROLE_ID],
   [Privilege.Induction, INDUCTION_AND_MEMBERSHIP_ROLE_ID],
   [Privilege.Administrator, ADMINS_ROLE_ID],
   [Privilege.Developer, DEVELOPER_ROLE_ID],
