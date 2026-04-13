@@ -38,6 +38,7 @@ import {
   BYTE_ROLE_ID,
   INDUCTEES_ROLE_ID,
   INDUCTION_AND_MEMBERSHIP_ROLE_ID,
+  MENTORSHIP_ROLE_ID,
   UPE_BOT_ROLE_ID,
 } from "../../utils/snowflakes.utils";
 import env from "../../env";
@@ -212,6 +213,10 @@ class CreateByteGroupCommand extends SlashCommandHandler {
         },
         {
           id: INDUCTION_AND_MEMBERSHIP_ROLE_ID,
+          allow: [PermissionsBitField.Flags.ViewChannel],
+        },
+        {
+          id: MENTORSHIP_ROLE_ID,
           allow: [PermissionsBitField.Flags.ViewChannel],
         },
         {
