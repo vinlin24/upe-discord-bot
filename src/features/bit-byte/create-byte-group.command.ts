@@ -293,8 +293,10 @@ class CreateByteGroupCommand extends SlashCommandHandler {
     groupRole: Role,
   ): Promise<void> {
     for (const byte of bytes) {
-      await byte.roles.add(BYTE_ROLE_ID, `Added as part of ${this.id}`);
-      await byte.roles.add(groupRole.id, `Added as part of ${this.id}`);
+      await byte.roles.add(
+        [BYTE_ROLE_ID, groupRole.id],
+        `Added as part of ${this.id}`,
+      );
     }
   }
 
