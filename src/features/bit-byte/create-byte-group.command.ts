@@ -9,9 +9,11 @@ import {
   SlashCommandBuilder,
   time,
   TimestampStyles,
+  userMention,
   type CategoryChannel,
   type ChatInputCommandInteraction,
   type Guild,
+  type GuildMember,
   type GuildTextBasedChannel,
   type Role,
 } from "discord.js";
@@ -59,9 +61,30 @@ class CreateByteGroupCommand extends SlashCommandHandler {
       .setMaxLength(ROLE_NAME_MAX_LENGTH)
       .setRequired(true),
     )
+    .addUserOption(input => input
+      .setName("byte1")
+      .setDescription(
+        "Member to turn into a byte for this group " +
+        "(just to save manually giving them roles)",
+      ),
+    )
+    .addUserOption(input => input
+      .setName("byte2")
+      .setDescription(
+        "Member to turn into a byte for this group " +
+        "(just to save manually giving them roles)",
+      ),
+    )
+    .addUserOption(input => input
+      .setName("byte3")
+      .setDescription(
+        "Member to turn into a byte for this group " +
+        "(just to save manually giving them roles)",
+      ),
+    )
     .addRoleOption(input => input
       .setName("existing_role")
-      .setDescription("Existing role (to restore a deleted group).")
+      .setDescription("Existing role (restore a soft-deleted group).")
     )
     .toJSON();
 
@@ -84,6 +107,9 @@ class CreateByteGroupCommand extends SlashCommandHandler {
     const existingRole = interaction.options.getRole(
       "existing_role",
     ) as Role | null;
+    const byte1 = interaction.options.getMember("byte1") as GuildMember | null;
+    const byte2 = interaction.options.getMember("byte2") as GuildMember | null;
+    const byte3 = interaction.options.getMember("byte3") as GuildMember | null;
     const guild = interaction.guild as Guild;
 
     let progressString = "";
@@ -137,6 +163,18 @@ class CreateByteGroupCommand extends SlashCommandHandler {
       groupRole.id as RoleId,
       groupChannel.id as ChannelId,
     );
+
+    const byteMembers = [byte1, byte2, byte3].filter(Boolean) as GuildMember[];
+    if (byteMembers.length > 0) {
+      const mentionsString = byteMembers
+        .map(member => userMention(member.id))
+        .join(",");
+      progressString += (
+        `\nAdding roles to byte member(s) ${mentionsString}... (${this.ago()})`
+      );
+      await interaction.editReply(progressString);
+      await this.addByteRoles(byteMembers, groupRole);
+    }
 
     await this.finalAcknowledge(interaction, group);
   }
@@ -248,6 +286,18 @@ class CreateByteGroupCommand extends SlashCommandHandler {
     });
 
     return channel;
+  }
+
+  private async addByteRoles(
+    bytes: GuildMember[],
+    groupRole: Role,
+  ): Promise<void> {
+    for (const byte of bytes) {
+      await byte.roles.add(
+        [BYTE_ROLE_ID, groupRole.id],
+        `Added as part of ${this.id}`,
+      );
+    }
   }
 
   private async finalAcknowledge(
