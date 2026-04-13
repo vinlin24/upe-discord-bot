@@ -40,6 +40,7 @@ import {
   INDUCTION_AND_MEMBERSHIP_ROLE_ID,
   UPE_BOT_ROLE_ID,
 } from "../../utils/snowflakes.utils";
+import env from "../../env";
 
 const { CATEGORY_NAME: BIT_BYTE_CATEGORY_NAME } = BitByteService;
 
@@ -51,13 +52,15 @@ class CreateByteGroupCommand extends SlashCommandHandler {
     )
     .addStringOption(input => input
       .setName("role_name")
-      .setDescription("Initial name for the group role (can be changed later).")
+      .setDescription(
+        "Byte names, in the format /Name(-Name)*/ e.g. Clare-Lindsay",
+      )
       .setMaxLength(ROLE_NAME_MAX_LENGTH)
       .setRequired(true),
     )
     .addRoleOption(input => input
       .setName("existing_role")
-      .setDescription("Existing role to restore a delete group.")
+      .setDescription("Existing role (to restore a deleted group).")
     )
     .toJSON();
 
@@ -108,12 +111,13 @@ class CreateByteGroupCommand extends SlashCommandHandler {
 
     progressString += `\nCreating role for the group... (${this.ago()})`;
     await interaction.editReply(progressString);
-    const groupRole = await this.createGroupRole(guild, initialRoleName);
+    const seasonRoleName = `${env.SEASON_ID} ${initialRoleName}`;
+    const groupRole = await this.createGroupRole(guild, seasonRoleName);
     if (groupRole === null) {
       await interaction.editReply({
         embeds: [makeErrorEmbed(
-          `A role with the name ${inlineCode(initialRoleName)} ` +
-          "already exists! Please choose a different name.",
+          `A role with the name ${inlineCode(initialRoleName)} already ` +
+          `exists for ${env.SEASON_ID}! Please choose a different name.`,
         )],
       });
       return;
