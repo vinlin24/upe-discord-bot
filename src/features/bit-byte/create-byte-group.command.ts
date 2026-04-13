@@ -232,7 +232,7 @@ class CreateByteGroupCommand extends SlashCommandHandler {
       ],
     });
 
-    const message = await channel.send({
+    await channel.send({
       embeds: [new EmbedBuilder()
         .setTitle("Bit-Byte Group Channel Created")
         .setDescription(
@@ -241,7 +241,6 @@ class CreateByteGroupCommand extends SlashCommandHandler {
         ),
       ],
     });
-    await message.pin(`As part of creating #${channel.name} by ${this.id}`);
 
     return channel;
   }
