@@ -8,19 +8,14 @@ import {
   type Role,
 } from "discord.js";
 
-import type { SlashCommandCheck } from "../../abc/check.abc";
 import { SlashCommandHandler } from "../../abc/command.abc";
-import { BotPermissionCheck } from "../../middleware/bot-permission.middleware";
-import {
-  Privilege,
-  PrivilegeCheck,
-} from "../../middleware/privilege.middleware";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 
 class BatchRoleCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
     .setName("batchrole")
     .setDescription("Assign a role to multiple members at once.")
+    .setDefaultMemberPermissions(PermissionFlagsBits.ManageRoles)
     .addRoleOption(input => input
       .setName("role")
       .setDescription("The role to assign to members.")
@@ -36,11 +31,7 @@ class BatchRoleCommand extends SlashCommandHandler {
     )
     .toJSON();
 
-  public override readonly checks: SlashCommandCheck[] = [
-    new PrivilegeCheck(this).atLeast(Privilege.Mentorship),
-    new BotPermissionCheck(this)
-      .needsToHave(PermissionFlagsBits.ManageRoles),
-  ];
+  public override readonly checks = [];
 
   public override async execute(
     interaction: ChatInputCommandInteraction,
