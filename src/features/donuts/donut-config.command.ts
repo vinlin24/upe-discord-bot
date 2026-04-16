@@ -27,53 +27,64 @@ class DonutConfigCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
     .setName("donutconfig")
     .setDescription("Configure the donut chats feature.")
-    .addSubcommand(sub => sub
-      .setName("channel")
-      .setDescription("Set the channel where donut chat threads are created."),
-    )
-    .addSubcommand(sub => sub
-      .setName("timezone")
-      .setDescription("Set the timezone used to schedule donut chats.")
-      .addStringOption(option => option
-        .setName("timezone")
-        .setDescription("Timezone in IANA (tzdb) format, e.g. America/Los_Angeles")
-        .setRequired(true),
-      ),
-    )
-    .addSubcommand(sub => sub
-      .setName("schedule")
-      .setDescription("Set the weekly day and time donut chats start.")
-      .addIntegerOption(option => option
-        .setName("day")
-        .setDescription("Day of the week to send donut chats out")
-        .setRequired(true)
-        .addChoices(
-          { name: "Monday", value: 1 },
-          { name: "Tuesday", value: 2 },
-          { name: "Wednesday", value: 3 },
-          { name: "Thursday", value: 4 },
-          { name: "Friday", value: 5 },
-          { name: "Saturday", value: 6 },
-          { name: "Sunday", value: 7 },
+    .addSubcommand((sub) =>
+      sub
+        .setName("channel")
+        .setDescription(
+          "Set the channel where donut chat threads are created.",
         ),
-      )
-      .addIntegerOption(option => option
-        .setName("hour")
-        .setDescription("Hour of the day (24hr format). Defaults to 9.")
-        .setMinValue(0)
-        .setMaxValue(23),
-      )
-      .addIntegerOption(option => option
-        .setName("minute")
-        .setDescription("Minute of the hour. Defaults to 0.")
-        .setMinValue(0)
-        .setMaxValue(59),
-      ),
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("timezone")
+        .setDescription("Set the timezone used to schedule donut chats.")
+        .addStringOption((option) =>
+          option
+            .setName("timezone")
+            .setDescription(
+              "Timezone in IANA (tzdb) format, e.g. America/Los_Angeles",
+            )
+            .setRequired(true),
+        ),
+    )
+    .addSubcommand((sub) =>
+      sub
+        .setName("schedule")
+        .setDescription("Set the weekly day and time donut chats start.")
+        .addIntegerOption((option) =>
+          option
+            .setName("day")
+            .setDescription("Day of the week to send donut chats out")
+            .setRequired(true)
+            .addChoices(
+              { name: "Monday", value: 1 },
+              { name: "Tuesday", value: 2 },
+              { name: "Wednesday", value: 3 },
+              { name: "Thursday", value: 4 },
+              { name: "Friday", value: 5 },
+              { name: "Saturday", value: 6 },
+              { name: "Sunday", value: 7 },
+            ),
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName("hour")
+            .setDescription("Hour of the day (24hr format). Defaults to 9.")
+            .setMinValue(0)
+            .setMaxValue(23),
+        )
+        .addIntegerOption((option) =>
+          option
+            .setName("minute")
+            .setDescription("Minute of the hour. Defaults to 0.")
+            .setMinValue(0)
+            .setMaxValue(59),
+        ),
     )
     .toJSON();
 
   public override readonly checks: SlashCommandCheck[] = [
-    new PrivilegeCheck(this).atLeast(Privilege.Officer),
+    new PrivilegeCheck(this).atLeast(Privilege.Developer),
   ];
 
   public override async execute(
@@ -107,8 +118,9 @@ class DonutConfigCommand extends SlashCommandHandler {
           ? "Current: see prompt below. Pick a new one or dismiss."
           : "Select where to create donut chat threads",
       );
-    const row = new ActionRowBuilder<ChannelSelectMenuBuilder>()
-      .addComponents(channelSelect);
+    const row = new ActionRowBuilder<ChannelSelectMenuBuilder>().addComponents(
+      channelSelect,
+    );
 
     const prompt = new EmbedBuilder()
       .setTitle("Donut chat channel configuration")
@@ -116,8 +128,8 @@ class DonutConfigCommand extends SlashCommandHandler {
         (currentChannel
           ? `Current channel: ${channelMention(currentChannel)}\n\n`
           : "") +
-        "Select the channel where donut chat threads will be created. " +
-        "The bot must be able to send messages and create private threads in the selected channel.",
+          "Select the channel where donut chat threads will be created. " +
+          "The bot must be able to send messages and create private threads in the selected channel.",
       )
       .setFooter({
         text: "Hint: type the name of your desired channel if you don't see it in the dropdown!",
@@ -134,8 +146,8 @@ class DonutConfigCommand extends SlashCommandHandler {
       const confirmation = await response.awaitMessageComponent({
         componentType: ComponentType.ChannelSelect,
         time: 30_000,
-        filter: i => i.user.id === interaction.user.id
-          && i.customId === CHANNEL_SELECT_ID,
+        filter: (i) =>
+          i.user.id === interaction.user.id && i.customId === CHANNEL_SELECT_ID,
       });
 
       const chosenId = confirmation.values[0];
@@ -150,8 +162,7 @@ class DonutConfigCommand extends SlashCommandHandler {
         )
         .setColor(Colors.Green);
       await confirmation.update({ embeds: [success], components: [] });
-    }
-    catch {
+    } catch {
       const state = await donutService.getOrCreate();
       const failureEmbed = new EmbedBuilder();
       if (state.channelId) {
@@ -160,8 +171,7 @@ class DonutConfigCommand extends SlashCommandHandler {
             `The donut chat channel was not changed from ${channelMention(state.channelId)}.`,
           )
           .setColor(Colors.Yellow);
-      }
-      else {
+      } else {
         failureEmbed
           .setTitle("No channel was selected within 30 seconds; cancelling.")
           .setColor(Colors.Red);
@@ -180,10 +190,12 @@ class DonutConfigCommand extends SlashCommandHandler {
     const testTZ = DateTime.local().setZone(tz);
     if (!testTZ.isValid || testTZ.zone === null) {
       await interaction.reply({
-        embeds: [makeErrorEmbed(
-          "Time zone could not be parsed.",
-          "Provided time zone is required to be in IANA format. You can look up your time zone using [this tool](https://zones.arilyn.cc/).",
-        )],
+        embeds: [
+          makeErrorEmbed(
+            "Time zone could not be parsed.",
+            "Provided time zone is required to be in IANA format. You can look up your time zone using [this tool](https://zones.arilyn.cc/).",
+          ),
+        ],
         ephemeral: true,
       });
       return;
@@ -204,10 +216,12 @@ class DonutConfigCommand extends SlashCommandHandler {
     const state = await donutService.getOrCreate();
     if (!state.timezone || !state.channelId) {
       await interaction.reply({
-        embeds: [makeErrorEmbed(
-          "Please configure the channel and time zone first.",
-          "Use /donutconfig channel and /donutconfig timezone to set them up before scheduling.",
-        )],
+        embeds: [
+          makeErrorEmbed(
+            "Please configure the channel and time zone first.",
+            "Use /donutconfig channel and /donutconfig timezone to set them up before scheduling.",
+          ),
+        ],
         ephemeral: true,
       });
       return;
@@ -217,8 +231,12 @@ class DonutConfigCommand extends SlashCommandHandler {
     const hour = interaction.options.getInteger("hour") ?? 9;
     const minute = interaction.options.getInteger("minute") ?? 0;
 
-    let desired = DateTime.local({ zone: state.timezone })
-      .set({ hour, minute, second: 0, millisecond: 0 });
+    let desired = DateTime.local({ zone: state.timezone }).set({
+      hour,
+      minute,
+      second: 0,
+      millisecond: 0,
+    });
     while (desired < DateTime.now() || desired.weekday !== day) {
       desired = desired.plus({ days: 1 });
     }

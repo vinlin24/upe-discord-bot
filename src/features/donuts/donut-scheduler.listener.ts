@@ -11,10 +11,10 @@ class DonutSchedulerListener extends DiscordEventListener<Events.ClientReady> {
 
   public override async execute(client: Client<true>): Promise<void> {
     setInterval(() => {
-      donutService.runDueChats(client).catch(error => {
+      donutService.runDueChats(client).catch((error) => {
         console.error("[DONUT] scheduler poll failed:", error);
       });
-      donutService.runDueCheckIns(client).catch(error => {
+      donutService.runDueCheckIns(client).catch((error) => {
         console.error("[DONUT] check-in poll failed:", error);
       });
     }, POLL_INTERVAL_MSEC);

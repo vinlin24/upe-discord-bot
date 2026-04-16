@@ -20,7 +20,7 @@ class DonutStartCommand extends SlashCommandHandler {
     .toJSON();
 
   public override readonly checks: SlashCommandCheck[] = [
-    new PrivilegeCheck(this).atLeast(Privilege.Officer),
+    new PrivilegeCheck(this).atLeast(Privilege.Developer),
   ];
 
   public override async execute(

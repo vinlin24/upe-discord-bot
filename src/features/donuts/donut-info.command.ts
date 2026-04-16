@@ -30,8 +30,9 @@ class DonutInfoCommand extends SlashCommandHandler {
 
     const nextChatValue = state.timezone
       ? state.nextChat
-        ? DateTime.fromISO(state.nextChat, { zone: state.timezone })
-          .toLocaleString(DateTime.DATETIME_MED)
+        ? DateTime.fromISO(state.nextChat, {
+            zone: state.timezone,
+          }).toLocaleString(DateTime.DATETIME_MED)
         : "N/A, configure using /donutconfig schedule"
       : "Please configure the time zone using /donutconfig timezone first.";
 

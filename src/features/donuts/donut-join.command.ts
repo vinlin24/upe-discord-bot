@@ -24,13 +24,10 @@ class DonutJoinCommand extends SlashCommandHandler {
     const embed = new EmbedBuilder();
     if (added) {
       embed
-        .setTitle(
-          `${interaction.user.username} has just joined donut chats!`,
-        )
+        .setTitle(`${interaction.user.username} has just joined donut chats!`)
         .setDescription(":tada: :doughnut:")
         .setColor(Colors.Green);
-    }
-    else {
+    } else {
       embed.setTitle("You've already joined donut chats!");
     }
 

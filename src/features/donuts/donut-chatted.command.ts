@@ -24,7 +24,7 @@ class DonutChattedCommand extends SlashCommandHandler {
 
   public override async execute(
     _interaction: ChatInputCommandInteraction,
-  ): Promise<void> { }
+  ): Promise<void> {}
 
   public override async onComponent(
     interaction: MessageComponentInteraction,
@@ -33,13 +33,14 @@ class DonutChattedCommand extends SlashCommandHandler {
 
     if (result === "not_active") {
       await interaction.reply({
-        embeds: [new EmbedBuilder()
-          .setTitle("This donut chat is no longer active.")
-          .setDescription(
-            "A new cycle has started, so this button can't mark " +
-            "the old chat as complete anymore.",
-          )
-          .setColor(Colors.Red),
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("This donut chat is no longer active.")
+            .setDescription(
+              "A new cycle has started, so this button can't mark " +
+                "the old chat as complete anymore.",
+            )
+            .setColor(Colors.Red),
         ],
         ephemeral: true,
       });
@@ -48,9 +49,10 @@ class DonutChattedCommand extends SlashCommandHandler {
 
     if (result === "already_marked") {
       await interaction.reply({
-        embeds: [new EmbedBuilder()
-          .setTitle("This donut chat was already marked complete.")
-          .setColor(Colors.Blue),
+        embeds: [
+          new EmbedBuilder()
+            .setTitle("This donut chat was already marked complete.")
+            .setColor(Colors.Blue),
         ],
         ephemeral: true,
       });
@@ -58,12 +60,13 @@ class DonutChattedCommand extends SlashCommandHandler {
     }
 
     await interaction.reply({
-      embeds: [new EmbedBuilder()
-        .setTitle("This donut chat has been completed!")
-        .setDescription(
-          `:tada: Marked by ${userMention(interaction.user.id)}.`,
-        )
-        .setColor(Colors.Green),
+      embeds: [
+        new EmbedBuilder()
+          .setTitle("This donut chat has been completed!")
+          .setDescription(
+            `:tada: Marked by ${userMention(interaction.user.id)}.`,
+          )
+          .setColor(Colors.Green),
       ],
     });
   }

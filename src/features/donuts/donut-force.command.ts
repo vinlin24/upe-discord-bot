@@ -21,7 +21,7 @@ class DonutForceCommand extends SlashCommandHandler {
     .toJSON();
 
   public override readonly checks: SlashCommandCheck[] = [
-    new PrivilegeCheck(this).atLeast(Privilege.Officer),
+    new PrivilegeCheck(this).atLeast(Privilege.Developer),
   ];
 
   public override async execute(
@@ -30,10 +30,12 @@ class DonutForceCommand extends SlashCommandHandler {
     const state = await donutService.getOrCreate();
     if (!state.channelId || !state.timezone) {
       await interaction.reply({
-        embeds: [makeErrorEmbed(
-          "Could not force a new donut chat",
-          "Set the channel and timezone first. Use /donutconfig channel and /donutconfig timezone to do this!",
-        )],
+        embeds: [
+          makeErrorEmbed(
+            "Could not force a new donut chat",
+            "Set the channel and timezone first. Use /donutconfig channel and /donutconfig timezone to do this!",
+          ),
+        ],
         ephemeral: true,
       });
       return;

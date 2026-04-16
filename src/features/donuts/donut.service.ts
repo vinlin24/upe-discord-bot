@@ -20,7 +20,9 @@ export const DONUT_CHATTED_BUTTON_ID = "donut:chatted";
 const CHECK_IN_LEAD_DAYS = 2;
 
 export class DonutService {
-  public async getOrCreate(guildId: GuildId = UPE_GUILD_ID): Promise<DonutState> {
+  public async getOrCreate(
+    guildId: GuildId = UPE_GUILD_ID,
+  ): Promise<DonutState> {
     const existing = await DonutStateModel.findOne({ guildId });
     if (existing !== null) {
       return existing;
@@ -106,8 +108,7 @@ export class DonutService {
     for (const state of due) {
       try {
         await this.startDonutChat(client, state);
-      }
-      catch (error) {
+      } catch (error) {
         console.error("[DONUT] failed to run scheduled chat:", error);
       }
     }
@@ -123,17 +124,13 @@ export class DonutService {
     for (const state of due) {
       try {
         await this.sendCheckIns(client, state);
-      }
-      catch (error) {
+      } catch (error) {
         console.error("[DONUT] failed to send check-ins:", error);
       }
     }
   }
 
-  private async sendCheckIns(
-    client: Client,
-    state: DonutState,
-  ): Promise<void> {
+  private async sendCheckIns(client: Client, state: DonutState): Promise<void> {
     for (const threadId of state.threads) {
       if (state.completed.includes(threadId)) {
         continue;
@@ -144,8 +141,7 @@ export class DonutService {
           continue;
         }
         await this.sendCheckInMessage(thread as AnyThreadChannel);
-      }
-      catch (error) {
+      } catch (error) {
         console.error(
           `[DONUT] failed to send check-in to thread ${threadId}:`,
           error,
@@ -158,15 +154,13 @@ export class DonutService {
     );
   }
 
-  private async sendCheckInMessage(
-    thread: AnyThreadChannel,
-  ): Promise<void> {
+  private async sendCheckInMessage(thread: AnyThreadChannel): Promise<void> {
     const embed = new EmbedBuilder()
       .setTitle("Did you donut yet? :doughnut:")
       .setDescription(
         "The week is almost over! If you've met up, press the button " +
-        "below to mark this donut chat as complete. If not, there's " +
-        "still time to grab that coffee!",
+          "below to mark this donut chat as complete. If not, there's " +
+          "still time to grab that coffee!",
       )
       .setColor(Colors.Yellow);
     const button = new ButtonBuilder()
@@ -258,8 +252,7 @@ export class DonutService {
       for (const userId of group) {
         try {
           await thread.members.add(userId);
-        }
-        catch {
+        } catch {
           console.log(
             `[DONUT] failed to add user ${userId} to thread ${thread.id}`,
           );
@@ -268,7 +261,7 @@ export class DonutService {
       threadIds.push(thread.id);
       await thread.join();
 
-      const pings = group.map(id => `<@${id}>`);
+      const pings = group.map((id) => `<@${id}>`);
       const pingString =
         group.length === 1
           ? pings[0]
@@ -305,10 +298,9 @@ export class DonutService {
     await this.advanceSchedule(state);
 
     const refreshed = await DonutStateModel.findOne({ guildId: state.guildId });
-    const checkInAt = this.computeCheckInAt(
-      refreshed?.nextChat ?? null,
-      state.timezone,
-    ) ?? nowForHistory.plus({ days: 7 - CHECK_IN_LEAD_DAYS }).toISO();
+    const checkInAt =
+      this.computeCheckInAt(refreshed?.nextChat ?? null, state.timezone) ??
+      nowForHistory.plus({ days: 7 - CHECK_IN_LEAD_DAYS }).toISO();
 
     const newHistory = [...state.history, groups];
     await DonutStateModel.updateOne(
@@ -344,7 +336,9 @@ export class DonutService {
     if (state.nextChat === null || state.timezone === null) {
       return;
     }
-    const scheduled = DateTime.fromISO(state.nextChat, { zone: state.timezone });
+    const scheduled = DateTime.fromISO(state.nextChat, {
+      zone: state.timezone,
+    });
     if (!scheduled.isValid || scheduled >= DateTime.now()) {
       return;
     }
@@ -401,9 +395,9 @@ export class DonutService {
   ): number {
     let score = 0;
     prevMatching.forEach((week, i) => {
-      week.forEach(prevGroup => {
-        proposed.forEach(proposedGroup => {
-          if (proposedGroup.every(user => prevGroup.includes(user))) {
+      week.forEach((prevGroup) => {
+        proposed.forEach((proposedGroup) => {
+          if (proposedGroup.every((user) => prevGroup.includes(user))) {
             const weeksAgo = prevMatching.length - i;
             score += DonutService.getAgeWeighting(weeksAgo);
           }
