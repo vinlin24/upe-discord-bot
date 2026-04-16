@@ -13,13 +13,44 @@ import {
 import { DateTime } from "luxon";
 
 import { DonutStateModel, type DonutState } from "../../models/donut.model";
-import type { ChannelId, GuildId, UserId } from "../../types/branded.types";
+import channelsService from "../../services/channels.service";
+import type {
+  ChannelId,
+  GuildId,
+  Milliseconds,
+  UserId,
+} from "../../types/branded.types";
+import {
+  SystemDateClient,
+  UCLA_TIMEZONE,
+  type IDateClient,
+} from "../../utils/date.utils";
 import { UPE_GUILD_ID } from "../../utils/snowflakes.utils";
 
 export const DONUT_CHATTED_BUTTON_ID = "donut:chatted";
+
 const CHECK_IN_LEAD_DAYS = 2;
+const POLL_INTERVAL_MSEC = (60 * 1000) as Milliseconds;
 
 export class DonutService {
+  private client: Client | null = null;
+
+  public constructor(private readonly dates: IDateClient) { }
+
+  /**
+   * Startup hook: attach the client and begin the rolling poll loop that
+   * triggers scheduled donut chats and end-of-week check-ins.
+   */
+  public async initialize(client: Client): Promise<void> {
+    this.client = client;
+    // Catch up on anything overdue from downtime before scheduling.
+    await this.pollOnce();
+    this.schedulePoll();
+    console.log(
+      `[DONUT] scheduler started, polling every ${POLL_INTERVAL_MSEC}ms`,
+    );
+  }
+
   public async getOrCreate(
     guildId: GuildId = UPE_GUILD_ID,
   ): Promise<DonutState> {
@@ -98,80 +129,10 @@ export class DonutService {
     return "ok";
   }
 
-  public async runDueChats(client: Client): Promise<void> {
-    const nowIso = new Date().toISOString();
-    const due = await DonutStateModel.find({
-      paused: false,
-      channelId: { $ne: null },
-      nextChat: { $ne: null, $lte: nowIso },
-    });
-    for (const state of due) {
-      try {
-        await this.startDonutChat(client, state);
-      } catch (error) {
-        console.error("[DONUT] failed to run scheduled chat:", error);
-      }
-    }
-  }
-
-  public async runDueCheckIns(client: Client): Promise<void> {
-    const nowIso = new Date().toISOString();
-    const due = await DonutStateModel.find({
-      checkInSent: false,
-      checkInAt: { $ne: null, $lte: nowIso },
-      "threads.0": { $exists: true },
-    });
-    for (const state of due) {
-      try {
-        await this.sendCheckIns(client, state);
-      } catch (error) {
-        console.error("[DONUT] failed to send check-ins:", error);
-      }
-    }
-  }
-
-  private async sendCheckIns(client: Client, state: DonutState): Promise<void> {
-    for (const threadId of state.threads) {
-      if (state.completed.includes(threadId)) {
-        continue;
-      }
-      try {
-        const thread = await client.channels.fetch(threadId);
-        if (thread === null || !thread.isThread()) {
-          continue;
-        }
-        await this.sendCheckInMessage(thread as AnyThreadChannel);
-      } catch (error) {
-        console.error(
-          `[DONUT] failed to send check-in to thread ${threadId}:`,
-          error,
-        );
-      }
-    }
-    await DonutStateModel.updateOne(
-      { guildId: state.guildId },
-      { $set: { checkInSent: true } },
-    );
-  }
-
-  private async sendCheckInMessage(thread: AnyThreadChannel): Promise<void> {
-    const embed = new EmbedBuilder()
-      .setTitle("Did you donut yet? :doughnut:")
-      .setDescription(
-        "The week is almost over! If you've met up, press the button " +
-          "below to mark this donut chat as complete. If not, there's " +
-          "still time to grab that coffee!",
-      )
-      .setColor(Colors.Yellow);
-    const button = new ButtonBuilder()
-      .setCustomId(DONUT_CHATTED_BUTTON_ID)
-      .setLabel("We chatted!")
-      .setEmoji("🍩")
-      .setStyle(ButtonStyle.Success);
-    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
-    await thread.send({ embeds: [embed], components: [row] });
-  }
-
+  /**
+   * Kick off any donut chat whose scheduled start has passed. Safe to call
+   * on boot to catch up on missed cycles.
+   */
   public async startDonutChat(
     client: Client,
     state: DonutState,
@@ -233,18 +194,20 @@ export class DonutService {
       .setColor(Colors.Green);
     await textChannel.send({ embeds: [enoughEmbed] });
 
-    const nowForHistory = DateTime.now();
-
     const groups = DonutService.createHeuristicGrouping(
       state.users,
       state.history,
       100,
     );
 
+    const zone = state.timezone ?? UCLA_TIMEZONE;
+    const nowDate = this.dates.getDateTime(this.dates.getNow(), zone);
+    const threadNameDate = nowDate.toLocaleString(DateTime.DATE_MED);
+
     const threadIds: string[] = [];
     for (const group of groups) {
       const thread = await textChannel.threads.create({
-        name: `Donut Chat - ${DateTime.now().toLocaleString(DateTime.DATE_MED)}`,
+        name: `Donut Chat - ${threadNameDate}`,
         autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
         type: ChannelType.PrivateThread,
       });
@@ -252,7 +215,8 @@ export class DonutService {
       for (const userId of group) {
         try {
           await thread.members.add(userId);
-        } catch {
+        }
+        catch {
           console.log(
             `[DONUT] failed to add user ${userId} to thread ${thread.id}`,
           );
@@ -261,7 +225,7 @@ export class DonutService {
       threadIds.push(thread.id);
       await thread.join();
 
-      const pings = group.map((id) => `<@${id}>`);
+      const pings = group.map(id => `<@${id}>`);
       const pingString =
         group.length === 1
           ? pings[0]
@@ -299,8 +263,8 @@ export class DonutService {
 
     const refreshed = await DonutStateModel.findOne({ guildId: state.guildId });
     const checkInAt =
-      this.computeCheckInAt(refreshed?.nextChat ?? null, state.timezone) ??
-      nowForHistory.plus({ days: 7 - CHECK_IN_LEAD_DAYS }).toISO();
+      this.computeCheckInAt(refreshed?.nextChat ?? null, zone)
+      ?? nowDate.plus({ days: 7 - CHECK_IN_LEAD_DAYS }).toISO();
 
     const newHistory = [...state.history, groups];
     await DonutStateModel.updateOne(
@@ -317,14 +281,115 @@ export class DonutService {
     );
   }
 
+  private schedulePoll(): void {
+    setTimeout(async () => {
+      try {
+        await this.pollOnce();
+      }
+      catch (error) {
+        // This callback is outside our standard execution pipeline, so
+        // manually suppress exceptions to prevent bringing down the bot.
+        console.error("[DONUT] poll failed:", error);
+        if (error instanceof Error) {
+          await channelsService.sendDevError(error);
+        }
+      }
+      this.schedulePoll();
+    }, POLL_INTERVAL_MSEC);
+  }
+
+  private async pollOnce(): Promise<void> {
+    if (this.client === null) {
+      return;
+    }
+    await this.runDueChats(this.client);
+    await this.runDueCheckIns(this.client);
+  }
+
+  private async runDueChats(client: Client): Promise<void> {
+    const nowIso = this.nowIso();
+    const due = await DonutStateModel.find({
+      paused: false,
+      channelId: { $ne: null },
+      nextChat: { $ne: null, $lte: nowIso },
+    });
+    for (const state of due) {
+      try {
+        await this.startDonutChat(client, state);
+      }
+      catch (error) {
+        console.error("[DONUT] failed to run scheduled chat:", error);
+      }
+    }
+  }
+
+  private async runDueCheckIns(client: Client): Promise<void> {
+    const nowIso = this.nowIso();
+    const due = await DonutStateModel.find({
+      checkInSent: false,
+      checkInAt: { $ne: null, $lte: nowIso },
+      "threads.0": { $exists: true },
+    });
+    for (const state of due) {
+      try {
+        await this.sendCheckIns(client, state);
+      }
+      catch (error) {
+        console.error("[DONUT] failed to send check-ins:", error);
+      }
+    }
+  }
+
+  private async sendCheckIns(client: Client, state: DonutState): Promise<void> {
+    for (const threadId of state.threads) {
+      if (state.completed.includes(threadId)) {
+        continue;
+      }
+      try {
+        const thread = await client.channels.fetch(threadId);
+        if (thread === null || !thread.isThread()) {
+          continue;
+        }
+        await this.sendCheckInMessage(thread as AnyThreadChannel);
+      }
+      catch (error) {
+        console.error(
+          `[DONUT] failed to send check-in to thread ${threadId}:`,
+          error,
+        );
+      }
+    }
+    await DonutStateModel.updateOne(
+      { guildId: state.guildId },
+      { $set: { checkInSent: true } },
+    );
+  }
+
+  private async sendCheckInMessage(thread: AnyThreadChannel): Promise<void> {
+    const embed = new EmbedBuilder()
+      .setTitle("Did you donut yet? :doughnut:")
+      .setDescription(
+        "The week is almost over! If you've met up, press the button " +
+        "below to mark this donut chat as complete. If not, there's " +
+        "still time to grab that coffee!",
+      )
+      .setColor(Colors.Yellow);
+    const button = new ButtonBuilder()
+      .setCustomId(DONUT_CHATTED_BUTTON_ID)
+      .setLabel("We chatted!")
+      .setEmoji("🍩")
+      .setStyle(ButtonStyle.Success);
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
+    await thread.send({ embeds: [embed], components: [row] });
+  }
+
   private computeCheckInAt(
     nextChatIso: string | null,
-    timezone: string | null,
+    zone: string,
   ): string | null {
     if (nextChatIso === null) {
       return null;
     }
-    const zone = timezone ?? undefined;
     const scheduled = DateTime.fromISO(nextChatIso, { zone });
     if (!scheduled.isValid) {
       return null;
@@ -339,17 +404,22 @@ export class DonutService {
     const scheduled = DateTime.fromISO(state.nextChat, {
       zone: state.timezone,
     });
-    if (!scheduled.isValid || scheduled >= DateTime.now()) {
+    const now = this.dates.getDateTime(this.dates.getNow(), state.timezone);
+    if (!scheduled.isValid || scheduled >= now) {
       return;
     }
     let next = scheduled.plus({ days: 7 });
-    while (DateTime.now().diff(next).as("days") > 7) {
+    while (now.diff(next).as("days") > 7) {
       next = next.plus({ days: 7 });
     }
     const iso = next.toISO();
     if (iso !== null) {
       await this.setNextChat(iso, state.guildId);
     }
+  }
+
+  private nowIso(): string {
+    return this.dates.getDate(this.dates.getNow()).toISOString();
   }
 
   private static createHeuristicGrouping(
@@ -395,9 +465,9 @@ export class DonutService {
   ): number {
     let score = 0;
     prevMatching.forEach((week, i) => {
-      week.forEach((prevGroup) => {
-        proposed.forEach((proposedGroup) => {
-          if (proposedGroup.every((user) => prevGroup.includes(user))) {
+      week.forEach(prevGroup => {
+        proposed.forEach(proposedGroup => {
+          if (proposedGroup.every(user => prevGroup.includes(user))) {
             const weeksAgo = prevMatching.length - i;
             score += DonutService.getAgeWeighting(weeksAgo);
           }
@@ -412,4 +482,4 @@ export class DonutService {
   }
 }
 
-export default new DonutService();
+export default new DonutService(new SystemDateClient());
