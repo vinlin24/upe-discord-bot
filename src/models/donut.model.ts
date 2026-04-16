@@ -12,6 +12,8 @@ export type DonutState = {
   completed: string[];
   history: UserId[][][];
   paused: boolean;
+  checkInAt: string | null;
+  checkInSent: boolean;
 };
 
 const donutStateSchema = new mongoose.Schema<DonutState>({
@@ -24,6 +26,8 @@ const donutStateSchema = new mongoose.Schema<DonutState>({
   completed: { type: [String], default: [] },
   history: { type: mongoose.Schema.Types.Mixed, default: [] },
   paused: { type: Boolean, default: false },
+  checkInAt: { type: String, default: null },
+  checkInSent: { type: Boolean, default: false },
 });
 
 export const DonutStateModel = mongoose.model(

@@ -1,8 +1,12 @@
 import {
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
   ChannelType,
   Colors,
   EmbedBuilder,
   ThreadAutoArchiveDuration,
+  type AnyThreadChannel,
   type Client,
   type TextChannel,
 } from "discord.js";
@@ -11,6 +15,9 @@ import { DateTime } from "luxon";
 import { DonutStateModel, type DonutState } from "../../models/donut.model";
 import type { ChannelId, GuildId, UserId } from "../../types/branded.types";
 import { UPE_GUILD_ID } from "../../utils/snowflakes.utils";
+
+export const DONUT_CHATTED_BUTTON_ID = "donut:chatted";
+const CHECK_IN_LEAD_DAYS = 2;
 
 export class DonutService {
   public async getOrCreate(guildId: GuildId = UPE_GUILD_ID): Promise<DonutState> {
@@ -106,6 +113,71 @@ export class DonutService {
     }
   }
 
+  public async runDueCheckIns(client: Client): Promise<void> {
+    const nowIso = new Date().toISOString();
+    const due = await DonutStateModel.find({
+      checkInSent: false,
+      checkInAt: { $ne: null, $lte: nowIso },
+      "threads.0": { $exists: true },
+    });
+    for (const state of due) {
+      try {
+        await this.sendCheckIns(client, state);
+      }
+      catch (error) {
+        console.error("[DONUT] failed to send check-ins:", error);
+      }
+    }
+  }
+
+  private async sendCheckIns(
+    client: Client,
+    state: DonutState,
+  ): Promise<void> {
+    for (const threadId of state.threads) {
+      if (state.completed.includes(threadId)) {
+        continue;
+      }
+      try {
+        const thread = await client.channels.fetch(threadId);
+        if (thread === null || !thread.isThread()) {
+          continue;
+        }
+        await this.sendCheckInMessage(thread as AnyThreadChannel);
+      }
+      catch (error) {
+        console.error(
+          `[DONUT] failed to send check-in to thread ${threadId}:`,
+          error,
+        );
+      }
+    }
+    await DonutStateModel.updateOne(
+      { guildId: state.guildId },
+      { $set: { checkInSent: true } },
+    );
+  }
+
+  private async sendCheckInMessage(
+    thread: AnyThreadChannel,
+  ): Promise<void> {
+    const embed = new EmbedBuilder()
+      .setTitle("Did you donut yet? :doughnut:")
+      .setDescription(
+        "The week is almost over! If you've met up, press the button " +
+        "below to mark this donut chat as complete. If not, there's " +
+        "still time to grab that coffee!",
+      )
+      .setColor(Colors.Yellow);
+    const button = new ButtonBuilder()
+      .setCustomId(DONUT_CHATTED_BUTTON_ID)
+      .setLabel("We chatted!")
+      .setEmoji("🍩")
+      .setStyle(ButtonStyle.Success);
+    const row = new ActionRowBuilder<ButtonBuilder>().addComponents(button);
+    await thread.send({ embeds: [embed], components: [row] });
+  }
+
   public async startDonutChat(
     client: Client,
     state: DonutState,
@@ -167,6 +239,8 @@ export class DonutService {
       .setColor(Colors.Green);
     await textChannel.send({ embeds: [enoughEmbed] });
 
+    const nowForHistory = DateTime.now();
+
     const groups = DonutService.createHeuristicGrouping(
       state.users,
       state.history,
@@ -217,7 +291,8 @@ export class DonutService {
           {
             name: "We chatted! What do I do?",
             value:
-              "Use the /donutchatted slash command in this thread to mark it as complete!",
+              "Near the end of the week, I'll drop a button in this thread " +
+              "that any of you can press to mark this donut chat complete.",
           },
         )
         .setFooter({
@@ -229,6 +304,12 @@ export class DonutService {
 
     await this.advanceSchedule(state);
 
+    const refreshed = await DonutStateModel.findOne({ guildId: state.guildId });
+    const checkInAt = this.computeCheckInAt(
+      refreshed?.nextChat ?? null,
+      state.timezone,
+    ) ?? nowForHistory.plus({ days: 7 - CHECK_IN_LEAD_DAYS }).toISO();
+
     const newHistory = [...state.history, groups];
     await DonutStateModel.updateOne(
       { guildId: state.guildId },
@@ -237,9 +318,26 @@ export class DonutService {
           threads: threadIds,
           completed: [],
           history: newHistory,
+          checkInAt,
+          checkInSent: false,
         },
       },
     );
+  }
+
+  private computeCheckInAt(
+    nextChatIso: string | null,
+    timezone: string | null,
+  ): string | null {
+    if (nextChatIso === null) {
+      return null;
+    }
+    const zone = timezone ?? undefined;
+    const scheduled = DateTime.fromISO(nextChatIso, { zone });
+    if (!scheduled.isValid) {
+      return null;
+    }
+    return scheduled.minus({ days: CHECK_IN_LEAD_DAYS }).toISO();
   }
 
   private async advanceSchedule(state: DonutState): Promise<void> {

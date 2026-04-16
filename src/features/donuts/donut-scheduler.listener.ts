@@ -14,6 +14,9 @@ class DonutSchedulerListener extends DiscordEventListener<Events.ClientReady> {
       donutService.runDueChats(client).catch(error => {
         console.error("[DONUT] scheduler poll failed:", error);
       });
+      donutService.runDueCheckIns(client).catch(error => {
+        console.error("[DONUT] check-in poll failed:", error);
+      });
     }, POLL_INTERVAL_MSEC);
     console.log(
       `[DONUT] scheduler started, polling every ${POLL_INTERVAL_MSEC}ms`,
