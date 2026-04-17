@@ -35,7 +35,7 @@ const POLL_INTERVAL_MSEC = (60 * 1000) as Milliseconds;
 export class DonutService {
   private client: Client | null = null;
 
-  public constructor(private readonly dates: IDateClient) { }
+  public constructor(private readonly dates: IDateClient) {}
 
   /**
    * Startup hook: attach the client and begin the rolling poll loop that
@@ -212,8 +212,7 @@ export class DonutService {
       for (const userId of group) {
         try {
           await thread.members.add(userId);
-        }
-        catch (error) {
+        } catch (error) {
           console.error(
             `[DONUT] failed to add user ${userId} to thread ${thread.id}:`,
             error,
@@ -223,7 +222,7 @@ export class DonutService {
       threadIds.push(thread.id);
       await thread.join();
 
-      const pings = group.map(id => userMention(id));
+      const pings = group.map((id) => userMention(id));
       const pingString =
         group.length === 1
           ? pings[0]
@@ -261,8 +260,8 @@ export class DonutService {
 
     const refreshed = await DonutStateModel.findOne({ guildId: state.guildId });
     const checkInAt =
-      this.computeCheckInAt(refreshed?.nextChat ?? null, zone)
-      ?? nowDate.plus({ days: 7 - CHECK_IN_LEAD_DAYS }).toISO();
+      this.computeCheckInAt(refreshed?.nextChat ?? null, zone) ??
+      nowDate.plus({ days: 7 - CHECK_IN_LEAD_DAYS }).toISO();
 
     const newHistory = [...state.history, groups];
     await DonutStateModel.updateOne(
@@ -283,8 +282,7 @@ export class DonutService {
     setTimeout(async () => {
       try {
         await this.pollOnce();
-      }
-      catch (error) {
+      } catch (error) {
         // This callback is outside our standard execution pipeline, so
         // manually suppress exceptions to prevent bringing down the bot.
         console.error("[DONUT] poll failed:", error);
@@ -314,8 +312,7 @@ export class DonutService {
     for (const state of due) {
       try {
         await this.startDonutChat(state);
-      }
-      catch (error) {
+      } catch (error) {
         console.error("[DONUT] failed to run scheduled chat:", error);
         if (error instanceof Error) {
           await channelsService.sendDevError(error);
@@ -334,8 +331,7 @@ export class DonutService {
     for (const state of due) {
       try {
         await this.sendCheckIns(state);
-      }
-      catch (error) {
+      } catch (error) {
         console.error("[DONUT] failed to send check-ins:", error);
         if (error instanceof Error) {
           await channelsService.sendDevError(error);
@@ -356,8 +352,7 @@ export class DonutService {
           continue;
         }
         await this.sendCheckInMessage(thread as AnyThreadChannel);
-      }
-      catch (error) {
+      } catch (error) {
         console.error(
           `[DONUT] failed to send check-in to thread ${threadId}:`,
           error,
@@ -382,8 +377,8 @@ export class DonutService {
       .setTitle("Did you donut yet? :doughnut:")
       .setDescription(
         "The week is almost over! If you've met up, press the button " +
-        "below to mark this donut chat as complete. If not, there's " +
-        "still time to grab that coffee!",
+          "below to mark this donut chat as complete. If not, there's " +
+          "still time to grab that coffee!",
       )
       .setColor(Colors.Yellow);
     const button = new ButtonBuilder()
@@ -477,9 +472,9 @@ export class DonutService {
   ): number {
     let score = 0;
     prevMatching.forEach((week, i) => {
-      week.forEach(prevGroup => {
-        proposed.forEach(proposedGroup => {
-          if (proposedGroup.every(user => prevGroup.includes(user))) {
+      week.forEach((prevGroup) => {
+        proposed.forEach((proposedGroup) => {
+          if (proposedGroup.every((user) => prevGroup.includes(user))) {
             const weeksAgo = prevMatching.length - i;
             score += DonutService.getAgeWeighting(weeksAgo);
           }

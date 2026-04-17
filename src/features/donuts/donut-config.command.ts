@@ -88,7 +88,9 @@ class DonutConfigCommand extends SlashCommandHandler {
     new PrivilegeCheck(this).atLeast(Privilege.Developer),
   ];
 
-  public constructor(private readonly dateClient: IDateClient) { super(); }
+  public constructor(private readonly dateClient: IDateClient) {
+    super();
+  }
 
   public override async execute(
     interaction: ChatInputCommandInteraction,
