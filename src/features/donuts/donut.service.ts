@@ -6,9 +6,9 @@ import {
   Colors,
   EmbedBuilder,
   ThreadAutoArchiveDuration,
+  userMention,
   type AnyThreadChannel,
   type Client,
-  type TextChannel,
 } from "discord.js";
 import { DateTime } from "luxon";
 
@@ -112,7 +112,7 @@ export class DonutService {
   }
 
   public async markChatted(
-    threadId: string,
+    threadId: ChannelId,
     guildId: GuildId = UPE_GUILD_ID,
   ): Promise<"not_active" | "already_marked" | "ok"> {
     const state = await this.getOrCreate(guildId);
@@ -133,14 +133,12 @@ export class DonutService {
    * Kick off any donut chat whose scheduled start has passed. Safe to call
    * on boot to catch up on missed cycles.
    */
-  public async startDonutChat(
-    client: Client,
-    state: DonutState,
-  ): Promise<void> {
+  public async startDonutChat(state: DonutState): Promise<void> {
     if (state.channelId === null) {
       return;
     }
 
+    const client = this.getClient();
     const channel = await client.channels.fetch(state.channelId);
     if (channel === null || channel.type !== ChannelType.GuildText) {
       console.error(
@@ -148,7 +146,6 @@ export class DonutService {
       );
       return;
     }
-    const textChannel = channel as TextChannel;
 
     if (state.completed.length > 0) {
       const proportion = state.completed.length / state.threads.length;
@@ -163,7 +160,7 @@ export class DonutService {
         .setTitle("Last week's donut chats just ended!")
         .setDescription(finishedMessage)
         .setColor(Colors.Blue);
-      await textChannel.send({ embeds: [finishedEmbed] });
+      await channel.send({ embeds: [finishedEmbed] });
     }
 
     if (state.users.length < 2) {
@@ -173,7 +170,7 @@ export class DonutService {
           "There needs to be at least 2 people to chat with each other!",
         )
         .setColor(Colors.Red);
-      await textChannel.send({ embeds: [notEnoughEmbed] });
+      await channel.send({ embeds: [notEnoughEmbed] });
       await this.advanceSchedule(state);
       return;
     }
@@ -192,7 +189,7 @@ export class DonutService {
         text: "You can always opt-out with /donutleave, but we'll be sad to see you go!",
       })
       .setColor(Colors.Green);
-    await textChannel.send({ embeds: [enoughEmbed] });
+    await channel.send({ embeds: [enoughEmbed] });
 
     const groups = DonutService.createHeuristicGrouping(
       state.users,
@@ -206,7 +203,7 @@ export class DonutService {
 
     const threadIds: string[] = [];
     for (const group of groups) {
-      const thread = await textChannel.threads.create({
+      const thread = await channel.threads.create({
         name: `Donut Chat - ${threadNameDate}`,
         autoArchiveDuration: ThreadAutoArchiveDuration.OneWeek,
         type: ChannelType.PrivateThread,
@@ -216,16 +213,17 @@ export class DonutService {
         try {
           await thread.members.add(userId);
         }
-        catch {
-          console.log(
-            `[DONUT] failed to add user ${userId} to thread ${thread.id}`,
+        catch (error) {
+          console.error(
+            `[DONUT] failed to add user ${userId} to thread ${thread.id}:`,
+            error,
           );
         }
       }
       threadIds.push(thread.id);
       await thread.join();
 
-      const pings = group.map(id => `<@${id}>`);
+      const pings = group.map(id => userMention(id));
       const pingString =
         group.length === 1
           ? pings[0]
@@ -302,11 +300,11 @@ export class DonutService {
     if (this.client === null) {
       return;
     }
-    await this.runDueChats(this.client);
-    await this.runDueCheckIns(this.client);
+    await this.runDueChats();
+    await this.runDueCheckIns();
   }
 
-  private async runDueChats(client: Client): Promise<void> {
+  private async runDueChats(): Promise<void> {
     const nowIso = this.nowIso();
     const due = await DonutStateModel.find({
       paused: false,
@@ -315,15 +313,18 @@ export class DonutService {
     });
     for (const state of due) {
       try {
-        await this.startDonutChat(client, state);
+        await this.startDonutChat(state);
       }
       catch (error) {
         console.error("[DONUT] failed to run scheduled chat:", error);
+        if (error instanceof Error) {
+          await channelsService.sendDevError(error);
+        }
       }
     }
   }
 
-  private async runDueCheckIns(client: Client): Promise<void> {
+  private async runDueCheckIns(): Promise<void> {
     const nowIso = this.nowIso();
     const due = await DonutStateModel.find({
       checkInSent: false,
@@ -332,15 +333,19 @@ export class DonutService {
     });
     for (const state of due) {
       try {
-        await this.sendCheckIns(client, state);
+        await this.sendCheckIns(state);
       }
       catch (error) {
         console.error("[DONUT] failed to send check-ins:", error);
+        if (error instanceof Error) {
+          await channelsService.sendDevError(error);
+        }
       }
     }
   }
 
-  private async sendCheckIns(client: Client, state: DonutState): Promise<void> {
+  private async sendCheckIns(state: DonutState): Promise<void> {
+    const client = this.getClient();
     for (const threadId of state.threads) {
       if (state.completed.includes(threadId)) {
         continue;
@@ -363,6 +368,13 @@ export class DonutService {
       { guildId: state.guildId },
       { $set: { checkInSent: true } },
     );
+  }
+
+  private getClient(): Client {
+    if (this.client === null) {
+      throw new Error("donut service used before initialize()");
+    }
+    return this.client;
   }
 
   private async sendCheckInMessage(thread: AnyThreadChannel): Promise<void> {

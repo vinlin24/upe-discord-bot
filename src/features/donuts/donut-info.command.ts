@@ -67,7 +67,7 @@ class DonutInfoCommand extends SlashCommandHandler {
         },
       )
       .setFooter({
-        text: "Only officers can access /donutconfig, /donutforce, /donutpause, and /donutstart.",
+        text: "Only developers can access /donutconfig, /donutforce, /donutpause, and /donutstart.",
       })
       .setColor(Colors.Blue);
 

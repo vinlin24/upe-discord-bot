@@ -18,6 +18,7 @@ import {
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
 import type { ChannelId } from "../../types/branded.types";
+import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import donutService from "./donut.service";
 
@@ -86,6 +87,8 @@ class DonutConfigCommand extends SlashCommandHandler {
   public override readonly checks: SlashCommandCheck[] = [
     new PrivilegeCheck(this).atLeast(Privilege.Developer),
   ];
+
+  public constructor(private readonly dateClient: IDateClient) { super(); }
 
   public override async execute(
     interaction: ChatInputCommandInteraction,
@@ -187,7 +190,9 @@ class DonutConfigCommand extends SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const tz = interaction.options.getString("timezone", true);
-    const testTZ = DateTime.local().setZone(tz);
+    const testTZ = this.dateClient
+      .getDateTime(this.dateClient.getNow())
+      .setZone(tz);
     if (!testTZ.isValid || testTZ.zone === null) {
       await interaction.reply({
         embeds: [
@@ -231,13 +236,17 @@ class DonutConfigCommand extends SlashCommandHandler {
     const hour = interaction.options.getInteger("hour") ?? 9;
     const minute = interaction.options.getInteger("minute") ?? 0;
 
-    let desired = DateTime.local({ zone: state.timezone }).set({
+    const now = this.dateClient.getDateTime(
+      this.dateClient.getNow(),
+      state.timezone,
+    );
+    let desired = now.set({
       hour,
       minute,
       second: 0,
       millisecond: 0,
     });
-    while (desired < DateTime.now() || desired.weekday !== day) {
+    while (desired < now || desired.weekday !== day) {
       desired = desired.plus({ days: 1 });
     }
 
@@ -261,11 +270,11 @@ class DonutConfigCommand extends SlashCommandHandler {
         value: "Use the /donutjoin command!",
       })
       .setFooter({
-        text: "You can start this week's early by using /donutforce as an officer.",
+        text: "You can start this week's early by using /donutforce as a developer.",
       })
       .setColor(Colors.Green);
     await interaction.reply({ embeds: [embed] });
   }
 }
 
-export default new DonutConfigCommand();
+export default new DonutConfigCommand(new SystemDateClient());

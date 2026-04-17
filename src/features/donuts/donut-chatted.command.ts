@@ -8,6 +8,7 @@ import {
 } from "discord.js";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
+import type { ChannelId } from "../../types/branded.types";
 import donutService, { DONUT_CHATTED_BUTTON_ID } from "./donut.service";
 
 // Component-only handler: this "command" exists purely to subscribe to the
@@ -29,7 +30,9 @@ class DonutChattedCommand extends SlashCommandHandler {
   public override async onComponent(
     interaction: MessageComponentInteraction,
   ): Promise<void> {
-    const result = await donutService.markChatted(interaction.channelId);
+    const result = await donutService.markChatted(
+      interaction.channelId as ChannelId,
+    );
 
     if (result === "not_active") {
       await interaction.reply({

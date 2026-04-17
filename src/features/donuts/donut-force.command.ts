@@ -49,7 +49,7 @@ class DonutForceCommand extends SlashCommandHandler {
       .setColor(Colors.Blue);
     await interaction.reply({ embeds: [embed] });
 
-    await donutService.startDonutChat(interaction.client, state);
+    await donutService.startDonutChat(state);
   }
 }
 
