@@ -28,12 +28,12 @@ class DonutForceCommand extends SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const state = await donutService.getOrCreate();
-    if (!state.channelId || !state.timezone) {
+    if (!state.channelId) {
       await interaction.reply({
         embeds: [
           makeErrorEmbed(
             "Could not force a new donut chat",
-            "Set the channel and timezone first. Use /donutconfig channel and /donutconfig timezone to do this!",
+            "Set the channel first. Use /donutconfig channel to do this!",
           ),
         ],
         ephemeral: true,

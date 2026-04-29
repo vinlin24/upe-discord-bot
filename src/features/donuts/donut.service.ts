@@ -68,13 +68,6 @@ export class DonutService {
     await DonutStateModel.updateOne({ guildId }, { $set: { channelId } });
   }
 
-  public async setTimezone(
-    timezone: string,
-    guildId: GuildId = UPE_GUILD_ID,
-  ): Promise<void> {
-    await DonutStateModel.updateOne({ guildId }, { $set: { timezone } });
-  }
-
   public async setNextChat(
     nextChat: string,
     guildId: GuildId = UPE_GUILD_ID,
@@ -197,8 +190,7 @@ export class DonutService {
       100,
     );
 
-    const zone = state.timezone ?? UCLA_TIMEZONE;
-    const nowDate = this.dates.getDateTime(this.dates.getNow(), zone);
+    const nowDate = this.dates.getDateTime(this.dates.getNow(), UCLA_TIMEZONE);
     const threadNameDate = nowDate.toLocaleString(DateTime.DATE_MED);
 
     const threadIds: string[] = [];
@@ -260,7 +252,7 @@ export class DonutService {
 
     const refreshed = await DonutStateModel.findOne({ guildId: state.guildId });
     const checkInAt =
-      this.computeCheckInAt(refreshed?.nextChat ?? null, zone) ??
+      this.computeCheckInAt(refreshed?.nextChat ?? null) ??
       nowDate.plus({ days: 7 - CHECK_IN_LEAD_DAYS }).toISO();
 
     const newHistory = [...state.history, groups];
@@ -390,14 +382,11 @@ export class DonutService {
     await thread.send({ embeds: [embed], components: [row] });
   }
 
-  private computeCheckInAt(
-    nextChatIso: string | null,
-    zone: string,
-  ): string | null {
+  private computeCheckInAt(nextChatIso: string | null): string | null {
     if (nextChatIso === null) {
       return null;
     }
-    const scheduled = DateTime.fromISO(nextChatIso, { zone });
+    const scheduled = DateTime.fromISO(nextChatIso, { zone: UCLA_TIMEZONE });
     if (!scheduled.isValid) {
       return null;
     }
@@ -405,13 +394,13 @@ export class DonutService {
   }
 
   private async advanceSchedule(state: DonutState): Promise<void> {
-    if (state.nextChat === null || state.timezone === null) {
+    if (state.nextChat === null) {
       return;
     }
     const scheduled = DateTime.fromISO(state.nextChat, {
-      zone: state.timezone,
+      zone: UCLA_TIMEZONE,
     });
-    const now = this.dates.getDateTime(this.dates.getNow(), state.timezone);
+    const now = this.dates.getDateTime(this.dates.getNow(), UCLA_TIMEZONE);
     if (!scheduled.isValid || scheduled >= now) {
       return;
     }

@@ -18,7 +18,11 @@ import {
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
 import type { ChannelId } from "../../types/branded.types";
-import { SystemDateClient, type IDateClient } from "../../utils/date.utils";
+import {
+  SystemDateClient,
+  UCLA_TIMEZONE,
+  type IDateClient,
+} from "../../utils/date.utils";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 import donutService from "./donut.service";
 
@@ -33,19 +37,6 @@ class DonutConfigCommand extends SlashCommandHandler {
         .setName("channel")
         .setDescription(
           "Set the channel where donut chat threads are created.",
-        ),
-    )
-    .addSubcommand((sub) =>
-      sub
-        .setName("timezone")
-        .setDescription("Set the timezone used to schedule donut chats.")
-        .addStringOption((option) =>
-          option
-            .setName("timezone")
-            .setDescription(
-              "Timezone in IANA (tzdb) format, e.g. America/Los_Angeles",
-            )
-            .setRequired(true),
         ),
     )
     .addSubcommand((sub) =>
@@ -100,10 +91,6 @@ class DonutConfigCommand extends SlashCommandHandler {
 
     if (sub === "channel") {
       await this.handleChannel(interaction, state.channelId);
-      return;
-    }
-    if (sub === "timezone") {
-      await this.handleTimezone(interaction);
       return;
     }
     if (sub === "schedule") {
@@ -188,45 +175,16 @@ class DonutConfigCommand extends SlashCommandHandler {
     }
   }
 
-  private async handleTimezone(
-    interaction: ChatInputCommandInteraction,
-  ): Promise<void> {
-    const tz = interaction.options.getString("timezone", true);
-    const testTZ = this.dateClient
-      .getDateTime(this.dateClient.getNow())
-      .setZone(tz);
-    if (!testTZ.isValid || testTZ.zone === null) {
-      await interaction.reply({
-        embeds: [
-          makeErrorEmbed(
-            "Time zone could not be parsed.",
-            "Provided time zone is required to be in IANA format. You can look up your time zone using [this tool](https://zones.arilyn.cc/).",
-          ),
-        ],
-        ephemeral: true,
-      });
-      return;
-    }
-
-    const tzIana = testTZ.zone.name;
-    await donutService.setTimezone(tzIana);
-
-    const success = new EmbedBuilder()
-      .setTitle(`The donut chat time zone was changed to ${tzIana}!`)
-      .setColor(Colors.Green);
-    await interaction.reply({ embeds: [success] });
-  }
-
   private async handleSchedule(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const state = await donutService.getOrCreate();
-    if (!state.timezone || !state.channelId) {
+    if (!state.channelId) {
       await interaction.reply({
         embeds: [
           makeErrorEmbed(
-            "Please configure the channel and time zone first.",
-            "Use /donutconfig channel and /donutconfig timezone to set them up before scheduling.",
+            "Please configure the channel first.",
+            "Use /donutconfig channel to set it up before scheduling.",
           ),
         ],
         ephemeral: true,
@@ -240,7 +198,7 @@ class DonutConfigCommand extends SlashCommandHandler {
 
     const now = this.dateClient.getDateTime(
       this.dateClient.getNow(),
-      state.timezone,
+      UCLA_TIMEZONE,
     );
     let desired = now.set({
       hour,

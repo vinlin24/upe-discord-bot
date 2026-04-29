@@ -8,6 +8,7 @@ import {
 import { DateTime } from "luxon";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
+import { UCLA_TIMEZONE } from "../../utils/date.utils";
 import donutService from "./donut.service";
 
 class DonutInfoCommand extends SlashCommandHandler {
@@ -24,17 +25,15 @@ class DonutInfoCommand extends SlashCommandHandler {
     const description =
       state.threads.length > 0
         ? "There is a donut chat happening right now!"
-        : state.channelId && state.timezone && state.nextChat
+        : state.channelId && state.nextChat
           ? "There is no active donut chat."
           : "Donut chats are not ready to begin. Please ensure that all settings listed below are configured.";
 
-    const nextChatValue = state.timezone
-      ? state.nextChat
-        ? DateTime.fromISO(state.nextChat, {
-            zone: state.timezone,
-          }).toLocaleString(DateTime.DATETIME_MED)
-        : "N/A, configure using /donutconfig schedule"
-      : "Please configure the time zone using /donutconfig timezone first.";
+    const nextChatValue = state.nextChat
+      ? DateTime.fromISO(state.nextChat, {
+          zone: UCLA_TIMEZONE,
+        }).toLocaleString(DateTime.DATETIME_MED)
+      : "N/A, configure using /donutconfig schedule";
 
     const embed = new EmbedBuilder()
       .setTitle(`Donut chat config for ${interaction.guild?.name}`)
@@ -54,7 +53,7 @@ class DonutInfoCommand extends SlashCommandHandler {
         },
         {
           name: "Time zone",
-          value: state.timezone ?? "N/A, configure using /donutconfig timezone",
+          value: UCLA_TIMEZONE,
         },
         {
           name: "Next Scheduled Donut Chat",
