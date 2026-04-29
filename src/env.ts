@@ -55,6 +55,10 @@ export const ENV_SPEC = {
     desc: "Discord ID of the seasonal inductees chat channel.",
   }),
 
+  DONUT_CHANNEL_ID: channelIdValidator({
+    desc: "Discord ID of the channel where donut chat threads are created.",
+  }),
+
   INDUCTEE_DATA_SPREADSHEET_ID: envalid.str({
     desc: "ID of the seasonal inductee data Google Sheets spreadsheet.",
   }),

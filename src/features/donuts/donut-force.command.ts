@@ -11,7 +11,6 @@ import {
   Privilege,
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
-import { makeErrorEmbed } from "../../utils/errors.utils";
 import donutService from "./donut.service";
 
 class DonutForceCommand extends SlashCommandHandler {
@@ -28,23 +27,12 @@ class DonutForceCommand extends SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const state = await donutService.getOrCreate();
-    if (!state.channelId) {
-      await interaction.reply({
-        embeds: [
-          makeErrorEmbed(
-            "Could not force a new donut chat",
-            "Set the channel first. Use /donutconfig channel to do this!",
-          ),
-        ],
-        ephemeral: true,
-      });
-      return;
-    }
 
     const embed = new EmbedBuilder()
       .setTitle("Forcing a new donut chat")
       .setDescription(
-        "A new donut chat is being created right now! This does not change the regular schedule. Use /donutconfig schedule to change the weekly cadence.",
+        "A new donut chat is being created right now! This does not change " +
+          "the regular weekly schedule.",
       )
       .setColor(Colors.Blue);
     await interaction.reply({ embeds: [embed] });

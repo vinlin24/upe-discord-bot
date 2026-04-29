@@ -9,6 +9,7 @@ import { DateTime } from "luxon";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { UCLA_TIMEZONE } from "../../utils/date.utils";
+import { DONUT_CHANNEL_ID } from "../../utils/snowflakes.utils";
 import donutService from "./donut.service";
 
 class DonutInfoCommand extends SlashCommandHandler {
@@ -25,15 +26,13 @@ class DonutInfoCommand extends SlashCommandHandler {
     const description =
       state.threads.length > 0
         ? "There is a donut chat happening right now!"
-        : state.channelId && state.nextChat
-          ? "There is no active donut chat."
-          : "Donut chats are not ready to begin. Please ensure that all settings listed below are configured.";
+        : "There is no active donut chat.";
 
     const nextChatValue = state.nextChat
       ? DateTime.fromISO(state.nextChat, {
           zone: UCLA_TIMEZONE,
         }).toLocaleString(DateTime.DATETIME_MED)
-      : "N/A, configure using /donutconfig schedule";
+      : "Pending — schedule will sync on next bot startup.";
 
     const embed = new EmbedBuilder()
       .setTitle(`Donut chat config for ${interaction.guild?.name}`)
@@ -41,9 +40,7 @@ class DonutInfoCommand extends SlashCommandHandler {
       .addFields(
         {
           name: "Channel",
-          value: state.channelId
-            ? channelMention(state.channelId)
-            : "N/A, configure using /donutconfig channel",
+          value: channelMention(DONUT_CHANNEL_ID),
           inline: true,
         },
         {
@@ -66,7 +63,10 @@ class DonutInfoCommand extends SlashCommandHandler {
         },
       )
       .setFooter({
-        text: "Only developers can access /donutconfig, /donutforce, /donutpause, and /donutstart.",
+        text:
+          "Channel and weekly schedule are configured via environment " +
+          "variables. Only developers can access /donutforce, /donutpause, " +
+          "and /donutstart.",
       })
       .setColor(Colors.Blue);
 

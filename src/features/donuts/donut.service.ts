@@ -25,12 +25,21 @@ import {
   UCLA_TIMEZONE,
   type IDateClient,
 } from "../../utils/date.utils";
-import { UPE_GUILD_ID } from "../../utils/snowflakes.utils";
+import {
+  DONUT_CHANNEL_ID,
+  UPE_GUILD_ID,
+} from "../../utils/snowflakes.utils";
 
 export const DONUT_CHATTED_BUTTON_ID = "donut:chatted";
 
 const CHECK_IN_LEAD_DAYS = 2;
 const POLL_INTERVAL_MSEC = (60 * 1000) as Milliseconds;
+
+// Weekly cadence anchor in UCLA local time: Monday at 9:00 AM. Luxon
+// weekdays are 1=Monday through 7=Sunday.
+const SCHEDULE_WEEKDAY = 1;
+const SCHEDULE_HOUR = 9;
+const SCHEDULE_MINUTE = 0;
 
 export class DonutService {
   private client: Client | null = null;
@@ -43,6 +52,7 @@ export class DonutService {
    */
   public async initialize(client: Client): Promise<void> {
     this.client = client;
+    await this.alignNextChatWithSchedule();
     // Catch up on anything overdue from downtime before scheduling.
     await this.pollOnce();
     this.schedulePoll();
@@ -61,18 +71,57 @@ export class DonutService {
     return await DonutStateModel.create({ guildId });
   }
 
-  public async setChannel(
-    channelId: ChannelId,
-    guildId: GuildId = UPE_GUILD_ID,
-  ): Promise<void> {
-    await DonutStateModel.updateOne({ guildId }, { $set: { channelId } });
-  }
-
-  public async setNextChat(
+  private async setNextChat(
     nextChat: string,
     guildId: GuildId = UPE_GUILD_ID,
   ): Promise<void> {
     await DonutStateModel.updateOne({ guildId }, { $set: { nextChat } });
+  }
+
+  /**
+   * Reconcile the persisted `nextChat` with the hardcoded weekly schedule.
+   * Recomputes when missing or when the persisted day/hour/minute no longer
+   * matches, so cadence changes take effect on next boot.
+   */
+  private async alignNextChatWithSchedule(
+    guildId: GuildId = UPE_GUILD_ID,
+  ): Promise<void> {
+    const state = await this.getOrCreate(guildId);
+    const persisted =
+      state.nextChat === null
+        ? null
+        : DateTime.fromISO(state.nextChat, { zone: UCLA_TIMEZONE });
+
+    const matchesSchedule =
+      persisted !== null &&
+      persisted.isValid &&
+      persisted.weekday === SCHEDULE_WEEKDAY &&
+      persisted.hour === SCHEDULE_HOUR &&
+      persisted.minute === SCHEDULE_MINUTE;
+
+    if (matchesSchedule) {
+      return;
+    }
+
+    const now = this.dates.getDateTime(this.dates.getNow(), UCLA_TIMEZONE);
+    const next = DonutService.nextScheduledOccurrence(now);
+    const iso = next.toISO();
+    if (iso !== null) {
+      await this.setNextChat(iso, guildId);
+    }
+  }
+
+  private static nextScheduledOccurrence(after: DateTime): DateTime {
+    let candidate = after.set({
+      hour: SCHEDULE_HOUR,
+      minute: SCHEDULE_MINUTE,
+      second: 0,
+      millisecond: 0,
+    });
+    while (candidate < after || candidate.weekday !== SCHEDULE_WEEKDAY) {
+      candidate = candidate.plus({ days: 1 });
+    }
+    return candidate;
   }
 
   public async setPaused(
@@ -127,15 +176,11 @@ export class DonutService {
    * on boot to catch up on missed cycles.
    */
   public async startDonutChat(state: DonutState): Promise<void> {
-    if (state.channelId === null) {
-      return;
-    }
-
     const client = this.getClient();
-    const channel = await client.channels.fetch(state.channelId);
+    const channel = await client.channels.fetch(DONUT_CHANNEL_ID);
     if (channel === null || channel.type !== ChannelType.GuildText) {
       console.error(
-        `[DONUT] configured channel ${state.channelId} is not a text channel`,
+        `[DONUT] configured channel ${DONUT_CHANNEL_ID} is not a text channel`,
       );
       return;
     }
@@ -298,7 +343,6 @@ export class DonutService {
     const nowIso = this.nowIso();
     const due = await DonutStateModel.find({
       paused: false,
-      channelId: { $ne: null },
       nextChat: { $ne: null, $lte: nowIso },
     });
     for (const state of due) {
@@ -401,13 +445,14 @@ export class DonutService {
       zone: UCLA_TIMEZONE,
     });
     const now = this.dates.getDateTime(this.dates.getNow(), UCLA_TIMEZONE);
+    // Don't advance if the scheduled firing hasn't happened yet — this
+    // preserves the regular cadence when /donutforce is invoked early.
     if (!scheduled.isValid || scheduled >= now) {
       return;
     }
-    let next = scheduled.plus({ days: 7 });
-    while (now.diff(next).as("days") > 7) {
-      next = next.plus({ days: 7 });
-    }
+    // Step past today's firing before snapping to the env schedule, so a
+    // chat that just fired doesn't immediately re-qualify as overdue.
+    const next = DonutService.nextScheduledOccurrence(now.plus({ days: 1 }));
     const iso = next.toISO();
     if (iso !== null) {
       await this.setNextChat(iso, state.guildId);

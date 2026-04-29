@@ -1,10 +1,9 @@
 import mongoose from "mongoose";
 
-import type { ChannelId, GuildId, UserId } from "../types/branded.types";
+import type { GuildId, UserId } from "../types/branded.types";
 
 export type DonutState = {
   guildId: GuildId;
-  channelId: ChannelId | null;
   users: UserId[];
   nextChat: string | null;
   threads: string[];
@@ -17,7 +16,6 @@ export type DonutState = {
 
 const donutStateSchema = new mongoose.Schema<DonutState>({
   guildId: { type: String, required: true, unique: true },
-  channelId: { type: String, default: null },
   users: { type: [String], default: [] },
   nextChat: { type: String, default: null },
   threads: { type: [String], default: [] },
