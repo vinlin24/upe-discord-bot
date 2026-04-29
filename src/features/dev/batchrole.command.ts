@@ -1,8 +1,10 @@
 import {
   EmbedBuilder,
+  inlineCode,
   PermissionFlagsBits,
   roleMention,
   SlashCommandBuilder,
+  userMention,
   type ChatInputCommandInteraction,
   type Guild,
   type Role,
@@ -82,12 +84,14 @@ class BatchRoleCommand extends SlashCommandHandler {
           targetRole,
           `Assigned via ${this.id}`,
         );
-        results.success.push(`${member.user.username} (${member.id})`);
-      } catch (error) {
+        results.success.push(
+          `${userMention(member.id)} (${inlineCode(member.id)})`,
+        );
+      }
+      catch (error) {
         results.failed.push(
-          `${identifier} (error: ${
-            error instanceof Error ? error.message : "unknown"
-          })`,
+          `${inlineCode(identifier)} (error: ` +
+          `${error instanceof Error ? inlineCode(error.message) : "unknown"})`,
         );
       }
     }

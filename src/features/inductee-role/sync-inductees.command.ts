@@ -141,7 +141,9 @@ class SyncInducteesCommand extends SlashCommandHandler {
     else {
       ackEmbed.setColor(Colors.Red);
       ackEmbed.setTitle(`${EMOJI_WARNING} ${this.id} Partial Success`);
-      const actualNumGranted = idsNeedingRole.size - idsNotInServer.length;
+      const actualNumGranted = (
+        idsNeedingRole.size - (idsNotInServer.length + invalidIds.length)
+      );
       ackDetails.push(
         `Granted ${roleMention(INDUCTEES_ROLE_ID)} to ` +
         `${boldNum(actualNumGranted)} server members`,
