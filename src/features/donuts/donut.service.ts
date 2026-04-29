@@ -10,20 +10,13 @@ import { DateTime } from "luxon";
 
 import { DonutStateModel, type DonutState } from "../../models/donut.model";
 import channelsService from "../../services/channels.service";
-import type {
-  GuildId,
-  Milliseconds,
-  UserId,
-} from "../../types/branded.types";
+import type { GuildId, Milliseconds, UserId } from "../../types/branded.types";
 import {
   SystemDateClient,
   UCLA_TIMEZONE,
   type IDateClient,
 } from "../../utils/date.utils";
-import {
-  DONUT_CHANNEL_ID,
-  UPE_GUILD_ID,
-} from "../../utils/snowflakes.utils";
+import { DONUT_CHANNEL_ID, UPE_GUILD_ID } from "../../utils/snowflakes.utils";
 
 const POLL_INTERVAL_MSEC = (60 * 1000) as Milliseconds;
 
@@ -224,18 +217,11 @@ export class DonutService {
       const introductionEmbed = new EmbedBuilder()
         .setTitle("Let's donut!")
         .setDescription(`Welcome, ${pingString}! :doughnut: :speaking_head:`)
-        .addFields(
-          {
-            name: "How does this work?",
-            value:
-              "Introduce yourselves and grab some coffee or food together sometime soon!",
-          },
-          {
-            name: "What should we talk about?",
-            value:
-              "Share your favorite lecture hall, your go-to boba order, or your wildest UPE induction memory.",
-          },
-        )
+        .addFields({
+          name: "How does this work?",
+          value:
+            "Introduce yourselves and grab some coffee or food together sometime soon!",
+        })
         .setFooter({
           text: "Please note that this thread is private but may still be visible to server moderators. Take any private conversations into DMs!",
         })
