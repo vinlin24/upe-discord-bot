@@ -23,11 +23,6 @@ class DonutInfoCommand extends SlashCommandHandler {
   ): Promise<void> {
     const state = await donutService.getOrCreate();
 
-    const description =
-      state.threads.length > 0
-        ? "There is a donut chat happening right now!"
-        : "There is no active donut chat.";
-
     const nextChatValue = state.nextChat
       ? DateTime.fromISO(state.nextChat, {
           zone: UCLA_TIMEZONE,
@@ -36,7 +31,6 @@ class DonutInfoCommand extends SlashCommandHandler {
 
     const embed = new EmbedBuilder()
       .setTitle(`Donut chat config for ${interaction.guild?.name}`)
-      .setDescription(description)
       .addFields(
         {
           name: "Channel",

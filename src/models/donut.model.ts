@@ -6,24 +6,16 @@ export type DonutState = {
   guildId: GuildId;
   users: UserId[];
   nextChat: string | null;
-  threads: string[];
-  completed: string[];
   history: UserId[][][];
   paused: boolean;
-  checkInAt: string | null;
-  checkInSent: boolean;
 };
 
 const donutStateSchema = new mongoose.Schema<DonutState>({
   guildId: { type: String, required: true, unique: true },
   users: { type: [String], default: [] },
   nextChat: { type: String, default: null },
-  threads: { type: [String], default: [] },
-  completed: { type: [String], default: [] },
   history: { type: mongoose.Schema.Types.Mixed, default: [] },
   paused: { type: Boolean, default: false },
-  checkInAt: { type: String, default: null },
-  checkInSent: { type: Boolean, default: false },
 });
 
 export const DonutStateModel = mongoose.model(
