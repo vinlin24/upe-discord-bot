@@ -155,6 +155,8 @@ export class DonutService {
       return;
     }
 
+    await this.advanceSchedule(state);
+
     if (state.users.length < 2) {
       const notEnoughEmbed = new EmbedBuilder()
         .setTitle("A donut chat was scheduled but not enough people joined.")
@@ -163,7 +165,6 @@ export class DonutService {
         )
         .setColor(Colors.Red);
       await channel.send({ embeds: [notEnoughEmbed] });
-      await this.advanceSchedule(state);
       return;
     }
 
