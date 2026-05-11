@@ -8,7 +8,9 @@ import {
 import { DateTime } from "luxon";
 
 import { SlashCommandHandler } from "../../abc/command.abc";
+import type { UnixSeconds } from "../../types/branded.types";
 import { UCLA_TIMEZONE } from "../../utils/date.utils";
+import { timestampPair } from "../../utils/formatting.utils";
 import { DONUT_CHANNEL_ID } from "../../utils/snowflakes.utils";
 import donutService from "./donut.service";
 
@@ -23,11 +25,18 @@ class DonutInfoCommand extends SlashCommandHandler {
   ): Promise<void> {
     const state = await donutService.getOrCreate();
 
-    const nextChatValue = state.nextChat
-      ? DateTime.fromISO(state.nextChat, {
-          zone: UCLA_TIMEZONE,
-        }).toLocaleString(DateTime.DATETIME_MED)
-      : "Pending — schedule will sync on next bot startup.";
+    let nextChatValue: string;
+    if (state.nextChatIsoTime === null) {
+      nextChatValue = "Pending — schedule will sync on next bot startup.";
+    } else {
+      const scheduled = DateTime.fromISO(state.nextChatIsoTime, {
+        zone: UCLA_TIMEZONE,
+      });
+      const unixSeconds = scheduled.toUnixInteger() as UnixSeconds;
+      const [nextChatMention, nextChatRelativeMention] =
+        timestampPair(unixSeconds);
+      nextChatValue = `${nextChatMention} (${nextChatRelativeMention})`;
+    }
 
     const embed = new EmbedBuilder()
       .setTitle(`Donut chat config for ${interaction.guild?.name}`)

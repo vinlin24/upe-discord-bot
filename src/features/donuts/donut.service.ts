@@ -27,7 +27,7 @@ const SCHEDULE_HOUR = 9;
 const SCHEDULE_MINUTE = 0;
 
 export class DonutService {
-  private client: Client | null = null;
+  private bot: Client | null = null;
 
   public constructor(private readonly dates: IDateClient) {}
 
@@ -36,7 +36,7 @@ export class DonutService {
    * triggers scheduled donut chats.
    */
   public async initialize(client: Client): Promise<void> {
-    this.client = client;
+    this.bot = client;
     await this.alignNextChatWithSchedule();
     // Catch up on anything overdue from downtime before scheduling.
     await this.pollOnce();
@@ -57,25 +57,28 @@ export class DonutService {
   }
 
   private async setNextChat(
-    nextChat: string,
+    nextChatIsoTime: string,
     guildId: GuildId = UPE_GUILD_ID,
   ): Promise<void> {
-    await DonutStateModel.updateOne({ guildId }, { $set: { nextChat } });
+    await DonutStateModel.updateOne(
+      { guildId },
+      { $set: { nextChatIsoTime } },
+    );
   }
 
   /**
-   * Reconcile the persisted `nextChat` with the hardcoded weekly schedule.
-   * Recomputes when missing or when the persisted day/hour/minute no longer
-   * matches, so cadence changes take effect on next boot.
+   * Reconcile the persisted `nextChatIsoTime` with the hardcoded weekly
+   * schedule. Recomputes when missing or when the persisted day/hour/minute
+   * no longer matches, so cadence changes take effect on next boot.
    */
   private async alignNextChatWithSchedule(
     guildId: GuildId = UPE_GUILD_ID,
   ): Promise<void> {
     const state = await this.getOrCreate(guildId);
     const persisted =
-      state.nextChat === null
+      state.nextChatIsoTime === null
         ? null
-        : DateTime.fromISO(state.nextChat, { zone: UCLA_TIMEZONE });
+        : DateTime.fromISO(state.nextChatIsoTime, { zone: UCLA_TIMEZONE });
 
     const matchesSchedule =
       persisted !== null &&
@@ -143,8 +146,8 @@ export class DonutService {
    * on boot to catch up on missed cycles.
    */
   public async startDonutChat(state: DonutState): Promise<void> {
-    const client = this.getClient();
-    const channel = await client.channels.fetch(DONUT_CHANNEL_ID);
+    const bot = this.getBot();
+    const channel = await bot.channels.fetch(DONUT_CHANNEL_ID);
     if (channel === null || channel.type !== ChannelType.GuildText) {
       console.error(
         `[DONUT] configured channel ${DONUT_CHANNEL_ID} is not a text channel`,
@@ -229,8 +232,6 @@ export class DonutService {
       await thread.send({ embeds: [introductionEmbed] });
     }
 
-    await this.advanceSchedule(state);
-
     const newHistory = [...state.history, groups];
     await DonutStateModel.updateOne(
       { guildId: state.guildId },
@@ -255,19 +256,28 @@ export class DonutService {
   }
 
   private async pollOnce(): Promise<void> {
-    if (this.client === null) {
+    if (this.bot === null) {
       return;
     }
     await this.runDueChats();
   }
 
   private async runDueChats(): Promise<void> {
-    const nowIso = this.nowIso();
-    const due = await DonutStateModel.find({
+    const now = this.dates.getDateTime(this.dates.getNow(), UCLA_TIMEZONE);
+    const candidates = await DonutStateModel.find({
       paused: false,
-      nextChat: { $ne: null, $lte: nowIso },
+      nextChatIsoTime: { $ne: null },
     });
-    for (const state of due) {
+    for (const state of candidates) {
+      if (state.nextChatIsoTime === null) {
+        continue;
+      }
+      const scheduled = DateTime.fromISO(state.nextChatIsoTime, {
+        zone: UCLA_TIMEZONE,
+      });
+      if (!scheduled.isValid || scheduled > now) {
+        continue;
+      }
       try {
         await this.startDonutChat(state);
       } catch (error) {
@@ -279,18 +289,18 @@ export class DonutService {
     }
   }
 
-  private getClient(): Client {
-    if (this.client === null) {
+  private getBot(): Client {
+    if (this.bot === null) {
       throw new Error("donut service used before initialize()");
     }
-    return this.client;
+    return this.bot;
   }
 
   private async advanceSchedule(state: DonutState): Promise<void> {
-    if (state.nextChat === null) {
+    if (state.nextChatIsoTime === null) {
       return;
     }
-    const scheduled = DateTime.fromISO(state.nextChat, {
+    const scheduled = DateTime.fromISO(state.nextChatIsoTime, {
       zone: UCLA_TIMEZONE,
     });
     const now = this.dates.getDateTime(this.dates.getNow(), UCLA_TIMEZONE);
@@ -306,10 +316,6 @@ export class DonutService {
     if (iso !== null) {
       await this.setNextChat(iso, state.guildId);
     }
-  }
-
-  private nowIso(): string {
-    return this.dates.getDate(this.dates.getNow()).toISOString();
   }
 
   private static createHeuristicGrouping(
