@@ -208,6 +208,9 @@ export class DonutService {
             `[DONUT] failed to add user ${userId} to thread ${thread.id}:`,
             error,
           );
+          if (error instanceof Error) {
+            await channelsService.sendDevError(error);
+          }
         }
       }
       await thread.join();
@@ -245,8 +248,6 @@ export class DonutService {
       try {
         await this.pollOnce();
       } catch (error) {
-        // This callback is outside our standard execution pipeline, so
-        // manually suppress exceptions to prevent bringing down the bot.
         console.error("[DONUT] poll failed:", error);
         if (error instanceof Error) {
           await channelsService.sendDevError(error);
