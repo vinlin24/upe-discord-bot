@@ -13,6 +13,8 @@ GIT_BRANCH="$(git rev-parse --abbrev-ref --symbolic-full-name HEAD)"
 UPSTREAM_BRANCH="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} || echo '')"
 if [ -z "$UPSTREAM_BRANCH" ]; then
     git push -u origin HEAD
+else
+    git push
 fi
 
 # Check out to desired branch and ensure dependencies are updated.
