@@ -1,6 +1,4 @@
 #!/bin/bash
-# NOTE: You can also pass an optional GIT_BRANCH argument to specify pulling and
-# running that version on the remote server.
 
 set -e
 set -x
@@ -8,9 +6,13 @@ set -x
 SCRIPT_DIR="$(dirname "$0")";
 SSH="${SCRIPT_DIR}/droplet-ssh.sh"
 
-GIT_BRANCH=main
-if [ -n "$1" ]; then
-    GIT_BRANCH="$1"
+GIT_BRANCH="$(git rev-parse --abbrev-ref --symbolic-full-name HEAD)"
+
+# If the branch doesn't exist upstream yet, push so that it exists and the
+# droplet can checkout that branch. Ref: https://stackoverflow.com/a/9753364.
+UPSTREAM_BRANCH="$(git rev-parse --abbrev-ref --symbolic-full-name @{u} || echo '')"
+if [ -z "$UPSTREAM_BRANCH" ]; then
+    git push -u origin HEAD
 fi
 
 # Check out to desired branch and ensure dependencies are updated.
