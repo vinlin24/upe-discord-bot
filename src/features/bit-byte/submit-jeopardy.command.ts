@@ -16,10 +16,7 @@ import {
 import { BitByteGroupModel } from "../../models/bit-byte.model";
 import type { RoleId } from "../../types/branded.types";
 
-/** @deprecated As of F25, jeopardy is no longer a bit-byte event. */
 class SubmitJeopardyCommand extends SlashCommandHandler {
-  public override readonly shouldRegister = false;
-
   public override readonly definition = new SlashCommandBuilder()
     .setName("jeopardybitbyte")
     .setDescription("Submit the jeopardy event for a bit-byte group.")
