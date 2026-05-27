@@ -33,7 +33,7 @@ enum Column {
 
 const REVIEW_EVENT_ROW_FIELDS = [
   z.string().trim(), // Event name; (blank).
-  z.string().trim(), // Professor email; Professor name.
+  z.string().trim(), // Professor name; Professor email.
   z.string().trim(), // Email date; (blank).
   z.string().trim(), // Email checkbox; (blank).
   z.string().trim(), // Publicity date; (blank).
@@ -242,8 +242,8 @@ export class ReviewEventSheetsService extends SheetsService<
 
     const eventName = data1[Column.Event];
     const professor = {
-      name: data2[Column.Professor],
-      email: data1[Column.Professor],
+      name: data1[Column.Professor],
+      email: data2[Column.Professor],
     };
     const emailDate = this.resolveDateString(data1[Column.EmailDate]);
     const emailDone = data1[Column.EmailCheckbox] === "TRUE";
