@@ -38,7 +38,6 @@ const COMMITTEE_ENTRIES: readonly Committee[] = [
   Committee.Web,
   Committee.Corporate,
   Committee.InductionAndMembership,
-  Committee.Entrepreneurship,
 ];
 
 const ONE_HOUR_SECONDS = 3600;
