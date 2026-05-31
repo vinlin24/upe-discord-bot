@@ -13,6 +13,8 @@ import {
 import { SlashCommandHandler } from "../../abc/command.abc";
 import { makeErrorEmbed } from "../../utils/errors.utils";
 
+const MEMBER_LIMIT = 20;
+
 class BatchRoleCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
     .setName("batchrole")
@@ -49,6 +51,18 @@ class BatchRoleCommand extends SlashCommandHandler {
     if (memberIdentifiers.length === 0) {
       await interaction.reply({
         embeds: [makeErrorEmbed("Please provide at least one member.")],
+        ephemeral: true,
+      });
+      return;
+    }
+
+    // Discord imposes a 1024-byte limit on embed bodies; see EMBED_FIELD_VALUE_LIMIT.
+    if (memberIdentifiers.length > MEMBER_LIMIT) {
+      await interaction.reply({
+        embeds: [makeErrorEmbed(
+          `Too many members (${memberIdentifiers.length}). ` +
+          `The limit is ${MEMBER_LIMIT} per command.`,
+        )],
         ephemeral: true,
       });
       return;
