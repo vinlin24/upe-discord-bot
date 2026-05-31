@@ -39,6 +39,15 @@ class CommandsCommand extends SlashCommandHandler {
     }
 
     const pages = splitIntoEmbedPages(entries);
+
+    if (pages.length === 0) {
+      await this.replyError(
+        interaction,
+        "No commands found somehow! This is a bug.",
+      );
+      return;
+    }
+
     await pagination({
       // @ts-expect-error: Requires Embed, but Embed constructor is private, and
       // we can't get Embed from EmbedBuilder. Leaving it as EmbedBuilder seems
