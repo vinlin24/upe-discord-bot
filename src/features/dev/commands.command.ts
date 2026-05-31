@@ -1,8 +1,6 @@
 import { pagination } from "@devraelfreeze/discordjs-pagination";
 import {
-  chatInputApplicationCommandMention,
   inlineCode,
-  quote,
   SlashCommandBuilder,
   type ChatInputCommandInteraction,
 } from "discord.js";
@@ -14,6 +12,7 @@ import {
   PrivilegeCheck,
 } from "../../middleware/privilege.middleware";
 import { splitIntoEmbedPages } from "../../utils/formatting.utils";
+import { commandLoader } from "../../bot/loaders";
 
 class CommandsCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
@@ -28,14 +27,13 @@ class CommandsCommand extends SlashCommandHandler {
   public override async execute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
-    const { client } = interaction;
-    const commands = await client.application.commands.fetch();
+    const loadedCommands = commandLoader.getAll();
 
     const entries: string[] = [];
-    for (const apiCommand of commands.values()) {
-      const { id, name, description } = apiCommand;
-      const mention = chatInputApplicationCommandMention(name, id);
-      entries.push(`${mention}: ${inlineCode(mention)}\n${quote(description)}`);
+    for (const handler of loadedCommands.values()) {
+      const { name, description } = handler.definition;
+      const formattedName = inlineCode(`/${name}`);
+      entries.push(`${formattedName}: ${description}`);
     }
 
     const pages = splitIntoEmbedPages(entries);
