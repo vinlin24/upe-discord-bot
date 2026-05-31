@@ -29,9 +29,10 @@ class CommandsCommand extends SlashCommandHandler {
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
     const { client } = interaction;
+    const commands = await client.application.commands.fetch();
 
     const entries: string[] = [];
-    for (const apiCommand of client.application.commands.cache.values()) {
+    for (const apiCommand of commands.values()) {
       const { id, name, description } = apiCommand;
       const mention = chatInputApplicationCommandMention(name, id);
       entries.push(`${mention}: ${inlineCode(mention)}\n${quote(description)}`);
