@@ -27,6 +27,7 @@ import { AUTOCOMPLETE_MAX_CHOICES } from "../../utils/limits.utils";
 import { ExtendedSlashCommandBuilder } from "../../utils/options.utils";
 import { TUTORING_ROLE_ID } from "../../utils/snowflakes.utils";
 import reviewSheetsService, { type ReviewEvent } from "./review-sheets.service";
+import type { UrlString } from "../../types/branded.types";
 
 class ReviewEventCommand extends SlashCommandHandler {
   public override readonly definition = new ExtendedSlashCommandBuilder()
@@ -35,7 +36,6 @@ class ReviewEventCommand extends SlashCommandHandler {
     .addStringOption(input => input
       .setName("event")
       .setDescription("Name of event.")
-      .setRequired(true)
       .setAutocomplete(true),
     )
     .addBroadcastOption()
@@ -44,8 +44,16 @@ class ReviewEventCommand extends SlashCommandHandler {
   public override async execute(
     interaction: ChatInputCommandInteraction,
   ): Promise<void> {
-    const eventName = interaction.options.getString("event", true);
+    const eventName = interaction.options.getString("event");
     const broadcast = interaction.options.getBoolean("broadcast");
+
+    if (eventName === null) {
+      const embed = new EmbedBuilder()
+        .setTitle("UPE Review Sessions")
+        .setDescription(this.getSheetsUrl());
+      await interaction.reply({ embeds: [embed], ephemeral: !broadcast });
+      return;
+    }
 
     const eventData = await reviewSheetsService.getData(eventName);
     if (eventData === null) {
@@ -110,7 +118,7 @@ class ReviewEventCommand extends SlashCommandHandler {
 
     const spreadsheetHyperlink = quietHyperlink(
       "UPE Tutoring events spreadsheet",
-      GoogleSheetsClient.idToUrl(env.REVIEW_EVENTS_SPREADSHEET_ID),
+      this.getSheetsUrl(),
     );
     const moreInformation = (
       `${EMOJI_INFORMATION} Review sessions are organized by our ` +
@@ -123,6 +131,10 @@ class ReviewEventCommand extends SlashCommandHandler {
     return new EmbedBuilder()
       .setTitle(`UPE Review Session: ${eventData.name}`)
       .setDescription(description);
+  }
+
+  private getSheetsUrl(): UrlString {
+    return GoogleSheetsClient.idToUrl(env.REVIEW_EVENTS_SPREADSHEET_ID);
   }
 }
 
