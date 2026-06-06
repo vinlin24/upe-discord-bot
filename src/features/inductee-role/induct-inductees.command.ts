@@ -25,10 +25,6 @@ class InductInducteesCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
     .setName("inductall")
     .setDescription("Exchange everyone's inductee role for the members role.")
-    .addBooleanOption((option) => option
-      .setName("preserve")
-      .setDescription("Preserve inductee role, just add members role.")
-    )
     .toJSON();
 
   public override readonly checks: SlashCommandCheck[] = [
@@ -68,13 +64,10 @@ class InductInducteesCommand extends SlashCommandHandler {
       return;
     }
 
-    const preserveInductees = !!interaction.options.getBoolean("preserve");
-
     await this.exchangeRoleForAllInductees(
       inducteesRole,
       membersRole,
       interaction,
-      preserveInductees,
     );
   }
 
@@ -82,7 +75,6 @@ class InductInducteesCommand extends SlashCommandHandler {
     inducteesRole: Role,
     membersRole: Role,
     interaction: ChatInputCommandInteraction,
-    preserveInductees: boolean = false,
   ): Promise<void> {
     await interaction.deferReply();
 
@@ -95,9 +87,6 @@ class InductInducteesCommand extends SlashCommandHandler {
     for (const guildMember of inducteesRole.members.values()) {
       try {
         await guildMember.roles.add(membersRole, reason);
-        if (!preserveInductees) {
-          await guildMember.roles.remove(inducteesRole, reason);
-        }
         numSucceeded += 1;
       }
       catch (error) {
@@ -115,8 +104,8 @@ class InductInducteesCommand extends SlashCommandHandler {
     const embed = new EmbedBuilder()
       .setColor(membersRole.color)
       .setDescription(
-        `Converted ${numSucceeded}/${numInductees} ` +
-        `${inducteesRole} to ${membersRole}. Congratulations!`,
+        `Gave ${membersRole} to ${numSucceeded}/${numInductees} ` +
+        `${inducteesRole}. Congratulations!`,
       );
 
     await interaction.editReply({ embeds: [embed] });
