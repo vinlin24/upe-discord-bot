@@ -1,6 +1,5 @@
 import {
   EmbedBuilder,
-  PermissionFlagsBits,
   SlashCommandBuilder,
   inlineCode,
   type ChatInputCommandInteraction,
@@ -16,17 +15,25 @@ import {
   INDUCTEES_ROLE_ID,
   MEMBERS_ROLE_ID,
 } from "../../utils/snowflakes.utils";
+import type { SlashCommandCheck } from "../../abc/check.abc";
+import {
+  PrivilegeCheck,
+  Privilege,
+} from "../../middleware/privilege.middleware";
 
 class InductInducteesCommand extends SlashCommandHandler {
   public override readonly definition = new SlashCommandBuilder()
     .setName("inductall")
     .setDescription("Exchange everyone's inductee role for the members role.")
-    .setDefaultMemberPermissions(PermissionFlagsBits.Administrator)
     .addBooleanOption((option) => option
       .setName("preserve")
       .setDescription("Preserve inductee role, just add members role.")
     )
     .toJSON();
+
+  public override readonly checks: SlashCommandCheck[] = [
+    new PrivilegeCheck(this).atLeast(Privilege.Induction),
+  ];
 
   public override async execute(
     interaction: ChatInputCommandInteraction,
